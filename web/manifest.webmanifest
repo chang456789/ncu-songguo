@@ -1,0 +1,16 @@
+{
+  "name": "松果 中大生活通",
+  "short_name": "松果",
+  "description": "中央大學學生的匿名生活圈：公車、拼車、二手、住宿、系所、美食地圖。",
+  "lang": "zh-Hant",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#f1f4f0",
+  "theme_color": "#235c45",
+  "icons": [
+    { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "/icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

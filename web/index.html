@@ -1,0 +1,1624 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="description" content="中央大學學生的匿名生活圈：公車時刻、拼車、二手市集、租屋與宿舍、系所看板、美食地圖。">
+<meta name="theme-color" content="#235c45">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="松果">
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="icon" type="image/png" href="/icons/icon-192.png">
+<link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css">
+<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
+<title>松果中大生活通</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=Noto+Serif+TC:wght@700;900&family=IBM+Plex+Mono:wght@500;600&display=swap">
+<style>
+/* Layout: app shell. Top bar + tab row on desktop, bottom tab bar on phones; one content column (max 1040px).
+   Signature details: pine-forest hero drawn in code, blue Taiwanese address plates (門牌) for every building,
+   departure-board digits for bus times. */
+:root{
+  --bg:#f1f4f0; --surface:#ffffff; --sunk:#e6ebe4; --ink:#14211b; --muted:#56655d; --line:#d5ddd3;
+  --pine:#235c45; --pine-ink:#ffffff; --pine-soft:#dcebe2;
+  --plate:#1d4f9e; --plate-ink:#ffffff;
+  --bus:#c98a00; --bus-soft:#fbf0d4; --board:#17201c; --board-ink:#ffd36b;
+  --warn:#b23f0e; --warn-soft:#fbe8de; --ok:#2a7a55;
+  --fc1:#235c45; --fc2:#c98a00; --fc3:#c2552b; --fc4:#1d4f9e; --fc5:#7a3fa0; --fc6:#c23a6e; --map-bg:#eef2ea; --map-grid:#dbe3d6;
+  --f-display:"Noto Serif TC","Songti TC",serif;
+  --f-body:"Noto Sans TC","PingFang TC","Microsoft JhengHei",system-ui,sans-serif;
+  --f-data:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+  --r:12px;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0d1411; --surface:#151e1a; --sunk:#1b2621; --ink:#e3ebe6; --muted:#93a59b; --line:#26332c;
+  --pine:#4f9c7a; --pine-ink:#08120d; --pine-soft:#1d3229;
+  --plate:#3b6fc4; --plate-ink:#ffffff;
+  --bus:#f0b43a; --bus-soft:#33280f; --board:#0a0f0d; --board-ink:#ffd36b;
+  --warn:#f08a4b; --warn-soft:#3a2418; --ok:#5bbf8e; --fc1:#5bb08a; --fc2:#f0b43a; --fc3:#f08a5b; --fc4:#6b9be6; --fc5:#b685d6; --fc6:#e8789f; --map-bg:#121a16; --map-grid:#1f2a24; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0d1411; --surface:#151e1a; --sunk:#1b2621; --ink:#e3ebe6; --muted:#93a59b; --line:#26332c;
+  --pine:#4f9c7a; --pine-ink:#08120d; --pine-soft:#1d3229;
+  --plate:#3b6fc4; --plate-ink:#ffffff;
+  --bus:#f0b43a; --bus-soft:#33280f; --board:#0a0f0d; --board-ink:#ffd36b;
+  --warn:#f08a4b; --warn-soft:#3a2418; --ok:#5bbf8e; --fc1:#5bb08a; --fc2:#f0b43a; --fc3:#f08a5b; --fc4:#6b9be6; --fc5:#b685d6; --fc6:#e8789f; --map-bg:#121a16; --map-grid:#1f2a24; color-scheme:dark}
+*{box-sizing:border-box}
+html,body{min-height:100%}
+body{background:var(--bg);color:var(--ink);font:15px/1.6 var(--f-body);margin:0}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+button:disabled{cursor:not-allowed;opacity:.5}
+:focus-visible{outline:2px solid var(--pine);outline-offset:2px}
+.mono{font-family:var(--f-data);font-variant-numeric:tabular-nums}
+.muted{color:var(--muted)}
+.small{font-size:13px}
+
+/* ---------- shell ---------- */
+header.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:10;background:color-mix(in srgb,var(--bg) 92%,transparent);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+.top-in{max-width:1040px;margin:0 auto;padding:10px 16px;display:flex;gap:12px;align-items:center}
+.brand{display:flex;align-items:center;gap:10px;margin-right:auto;background:none;border:0;padding:0;text-align:left}
+.brand svg{width:30px;height:30px;flex:none}
+.brand b{font-family:var(--f-display);font-weight:900;font-size:20px;letter-spacing:.04em;line-height:1}
+.brand small{display:block;font-family:var(--f-data);font-size:10px;color:var(--muted);letter-spacing:.12em;margin-top:3px}
+.online-pill{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted);white-space:nowrap}
+.online-pill i{width:8px;height:8px;border-radius:50%;background:var(--ok);box-shadow:0 0 0 3px color-mix(in srgb,var(--ok) 25%,transparent)}
+.me-btn{display:flex;align-items:center;gap:8px;background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:4px 12px 4px 4px;font-size:13px;max-width:180px}
+.me-btn .av{width:26px;height:26px;border-radius:50%;background:var(--pine);color:var(--pine-ink);display:grid;place-items:center;font-weight:700;font-size:12px;flex:none}
+.me-btn span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+nav.tabs{max-width:1040px;margin:0 auto;padding:0 16px;display:flex;gap:4px;overflow-x:auto;scrollbar-width:none}
+nav.tabs::-webkit-scrollbar{display:none}
+.tab{display:flex;align-items:center;gap:6px;background:none;border:0;border-bottom:2px solid transparent;padding:8px 12px 10px;color:var(--muted);font-weight:500;white-space:nowrap;position:relative}
+.tab svg{width:18px;height:18px}
+.tab[aria-current="page"]{color:var(--ink);border-bottom-color:var(--pine)}
+.badge{min-width:18px;height:18px;border-radius:9px;background:var(--warn);color:#fff;font-size:11px;font-weight:700;display:inline-grid;place-items:center;padding:0 5px;font-family:var(--f-data)}
+.wrap{max-width:1040px;margin:0 auto;padding-inline:16px;padding-block:20px 40px}
+@media (max-width:720px){
+  nav.tabs{position:fixed;left:0;right:0;bottom:0;z-index:10;max-width:none;background:var(--surface);border-top:1px solid var(--line);padding:4px 4px calc(4px + env(safe-area-inset-bottom,0px));justify-content:space-around;gap:0}
+  .tab{flex-direction:column;gap:2px;font-size:11px;padding:6px 4px;border-bottom:0;flex:1}
+  .tab[aria-current="page"]{color:var(--pine)}
+  .tab .badge{position:absolute;top:0;right:calc(50% - 22px)}
+  .wrap{padding-block:16px calc(84px + env(safe-area-inset-bottom,0px))}
+  .online-pill b{display:none}
+  .me-btn{padding-right:4px}.me-btn span{display:none}
+}
+
+/* ---------- shared atoms ---------- */
+.plate{display:inline-flex;align-items:center;background:var(--plate);color:var(--plate-ink);border-radius:4px;padding:2px 3px;font-weight:700;font-size:12px;line-height:1.3;white-space:nowrap}
+.plate>span{border:1px solid color-mix(in srgb,var(--plate-ink) 70%,transparent);border-radius:2px;padding:1px 7px}
+.primary{background:var(--pine);color:var(--pine-ink);border:0;border-radius:10px;padding:9px 16px;font-weight:700;white-space:nowrap}
+.ghost{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:8px 14px;white-space:nowrap}
+.linkbtn{background:none;border:0;color:var(--pine);padding:0;text-decoration:underline;text-underline-offset:3px;font-size:13px}
+.chips{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.chip{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:4px 12px;font-size:13px;color:var(--muted);white-space:nowrap}
+.chip[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.section-title{display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin:0}
+.section-title h2{font-family:var(--f-display);font-weight:900;font-size:20px;margin:0;letter-spacing:.02em}
+.eyebrow{font-size:11px;letter-spacing:.16em;color:var(--muted);font-weight:700;margin:0}
+.stack{display:flex;flex-direction:column;gap:14px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:14px 16px}
+.notice{border:1px solid var(--warn);background:var(--warn-soft);border-radius:var(--r);padding:12px 14px;font-size:13px;line-height:1.75}
+.notice b{color:var(--warn)}
+.info{border:1px solid var(--line);background:var(--sunk);border-radius:var(--r);padding:10px 14px;font-size:13px;color:var(--muted)}
+.empty{border:1px dashed var(--line);border-radius:var(--r);padding:22px 18px;display:flex;flex-direction:column;gap:10px;align-items:flex-start}
+.empty h3{margin:0;font-size:16px}
+.empty p{margin:0;color:var(--muted);font-size:14px}
+.ideas{display:flex;gap:8px;flex-wrap:wrap}
+.ideas button{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:5px 12px;font-size:13px}
+.ideas button:hover{border-color:var(--pine)}
+
+/* ---------- home ---------- */
+.hero{position:relative;border-radius:18px;overflow:hidden;background:var(--pine);color:var(--pine-ink);min-height:200px;display:flex;align-items:flex-end}
+.hero svg.scene{position:absolute;inset:0;width:100%;height:100%}
+.hero-in{position:relative;padding:22px 22px 20px;display:flex;flex-direction:column;gap:6px;max-width:34rem}
+.hero h1{font-family:var(--f-display);font-weight:900;font-size:clamp(26px,5vw,38px);line-height:1.15;margin:0;text-wrap:balance;color:#fff;text-shadow:0 1px 12px rgba(0,0,0,.25)}
+.hero p{margin:0;color:rgba(255,255,255,.9);font-size:14px}
+.quick{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.qbtn{display:flex;flex-direction:column;gap:4px;align-items:flex-start;text-align:left;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:12px 14px}
+.qbtn svg{width:22px;height:22px;color:var(--pine)}
+.qbtn b{font-size:15px}
+.qbtn span{font-size:12px;color:var(--muted)}
+.qbtn:hover{border-color:var(--pine)}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px;align-items:start}
+.list{display:flex;flex-direction:column}
+.li{display:flex;gap:10px;align-items:baseline;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--line);background:none;border-left:0;border-right:0;border-top:0;text-align:left;width:100%}
+.li:last-child{border-bottom:0}
+.li .t{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:500}
+.li small{color:var(--muted);font-size:12px;white-space:nowrap}
+
+/* ---------- departure board ---------- */
+.board{background:var(--board);color:var(--board-ink);border-radius:var(--r);padding:12px 14px;display:flex;flex-direction:column;gap:2px;overflow-x:auto}
+.board .row{display:grid;grid-template-columns:56px minmax(0,1fr) auto;gap:12px;align-items:center;padding:8px 0;border-bottom:1px dashed rgba(255,211,107,.18)}
+.board .row:last-child{border-bottom:0}
+.board .rt{font-family:var(--f-data);font-weight:600;font-size:18px;background:var(--board-ink);color:var(--board);border-radius:4px;text-align:center;padding:2px 0}
+.board .dest{color:#f3efe2;font-size:14px;min-width:0}
+.board .dest small{display:block;color:rgba(243,239,226,.6);font-size:11px}
+.board .when{font-family:var(--f-data);font-size:20px;font-weight:600;text-align:right;white-space:nowrap}
+.board .when small{display:block;font-size:11px;color:rgba(255,211,107,.75);font-weight:500}
+.board .none{color:rgba(243,239,226,.5);font-size:13px}
+.board-note{font-size:12px;color:var(--muted);margin:0}
+.ttable{display:flex;flex-direction:column;gap:14px}
+.troute{display:flex;flex-direction:column;gap:8px}
+.troute h3{margin:0;font-size:16px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.rtag{font-family:var(--f-data);font-weight:600;background:var(--bus);color:#1b1500;border-radius:4px;padding:0 8px}
+.times{display:flex;flex-wrap:wrap;gap:6px}
+.times span{font-family:var(--f-data);font-size:13px;border:1px solid var(--line);border-radius:6px;padding:2px 8px;background:var(--surface)}
+.times span.past{opacity:.4;text-decoration:line-through}
+.times span.next{background:var(--bus);border-color:var(--bus);color:#1b1500;font-weight:600}
+
+.rtag.r1{background:var(--bus);color:#1b1500}.rtag.r2{background:var(--pine);color:var(--pine-ink)}.rtag.r3{background:var(--plate);color:var(--plate-ink)}.rtag.r4{background:var(--warn);color:#fff}.rtag.r5{background:var(--ink);color:var(--bg)}
+.rtag{display:inline-block;min-width:48px;text-align:center;font-size:12px}
+.tlist{display:flex;flex-direction:column;max-height:420px;overflow-y:auto;margin:0 -4px}
+.trow{display:grid;grid-template-columns:76px 56px minmax(0,1fr);gap:10px;align-items:center;padding:6px 4px;border-bottom:1px solid var(--line)}
+.trow:last-child{border-bottom:0}
+.trow .tt{font-size:14px;font-weight:600}
+.trow.past{opacity:.4}
+.trow.next{background:var(--bus-soft);border-radius:6px}
+.tips{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:4px;font-size:13px}
+@media (max-width:520px){.trow{grid-template-columns:68px 52px minmax(0,1fr);gap:8px}}
+/* ---------- rides ---------- */
+.ride{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:14px;align-items:center}
+.ride .clock{font-family:var(--f-data);text-align:center;border-right:1px solid var(--line);padding-right:14px;min-width:64px}
+.ride .clock b{display:block;font-size:22px;font-weight:600;line-height:1.1}
+.ride .clock small{font-size:11px;color:var(--muted)}
+.ride .route{display:flex;flex-direction:column;gap:2px;min-width:0}
+.ride .route b{font-size:16px}
+.ride .route small{color:var(--muted);font-size:12px}
+.seats{display:flex;gap:3px}
+.seats i{width:12px;height:16px;border-radius:3px 3px 2px 2px;border:1.5px solid var(--pine)}
+.seats i.on{background:var(--pine)}
+.ride-acts{grid-column:1/-1;display:flex;gap:10px;flex-wrap:wrap;align-items:center;font-size:13px}
+@media (max-width:520px){.ride{grid-template-columns:auto minmax(0,1fr)}.ride .side{grid-column:1/-1}}
+
+/* ---------- spaces ---------- */
+.dir{display:flex;flex-direction:column;gap:12px}
+.dir details{border:1px solid var(--line);border-radius:var(--r);background:var(--surface)}
+.dir summary{cursor:pointer;padding:10px 14px;font-weight:700;display:flex;justify-content:space-between;gap:10px;list-style:none}
+.dir summary::-webkit-details-marker{display:none}
+.dir summary::after{content:"＋";color:var(--muted);font-weight:400}
+.dir details[open] summary::after{content:"－"}
+.dir summary small{font-weight:400;color:var(--muted);margin-left:auto}
+.dir .opts{display:flex;flex-wrap:wrap;gap:8px;padding:0 14px 14px}
+.spbtn{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:var(--bg);border-radius:8px;padding:5px 10px;font-size:13px}
+.spbtn[aria-current="true"]{border-color:var(--pine);background:var(--pine-soft);font-weight:700}
+.spbtn .n{font-family:var(--f-data);font-size:11px;color:var(--muted)}
+.spbtn .lane{font-size:11px;color:var(--muted)}
+.seg{display:flex;background:var(--sunk);border-radius:10px;padding:3px;gap:2px;width:max-content;max-width:100%;overflow-x:auto}
+.seg button{border:0;background:none;border-radius:8px;padding:6px 14px;font-size:14px;color:var(--muted);white-space:nowrap}
+.seg button[aria-pressed="true"]{background:var(--surface);color:var(--ink);font-weight:700;box-shadow:0 1px 2px rgba(0,0,0,.08)}
+.sphead{display:flex;flex-direction:column;gap:8px}
+.sphead h1{font-family:var(--f-display);font-weight:900;font-size:clamp(22px,4vw,30px);line-height:1.2;margin:0;text-wrap:balance}
+.sphead p{margin:0;color:var(--muted);max-width:62ch;font-size:14px}
+.bar{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.spacer{flex:1}
+.online-row{display:flex;gap:6px;flex-wrap:wrap;align-items:center;font-size:13px}
+.person{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:3px 10px 3px 4px;font-size:13px}
+.person i{width:20px;height:20px;border-radius:50%;background:var(--pine-soft);color:var(--pine);font-style:normal;display:grid;place-items:center;font-size:11px;font-weight:700;position:relative}
+.person i::after{content:"";position:absolute;right:-1px;bottom:-1px;width:7px;height:7px;border-radius:50%;background:var(--ok);border:1.5px solid var(--surface)}
+.person:hover{border-color:var(--pine)}
+
+/* ---------- posts ---------- */
+.feed{display:flex;flex-direction:column;gap:12px}
+.post{display:flex;flex-direction:column;gap:8px;min-width:0}
+.post .meta{display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:12px;color:var(--muted)}
+.cat{font-size:11px;font-weight:700;letter-spacing:.04em;padding:1px 8px;border-radius:4px;background:var(--sunk);color:var(--ink)}
+.cat.warn{background:var(--warn-soft);color:var(--warn)}
+.where{font-size:12px;color:var(--pine);font-weight:700}
+.post h3{margin:0;font-size:17px;line-height:1.4;overflow-wrap:anywhere}
+.post .body{margin:0;white-space:pre-wrap;overflow-wrap:anywhere}
+.post .acts{display:flex;gap:16px;flex-wrap:wrap;font-size:13px;align-items:center}
+.post .acts button{background:none;border:0;padding:0;color:var(--muted);display:inline-flex;align-items:center;gap:4px}
+.post .acts button:hover{color:var(--ink)}
+.post .acts button.liked{color:var(--warn)}
+.post .acts svg{width:16px;height:16px}
+.post.hidden-post{opacity:.75;border-style:dashed}
+.scores{display:flex;gap:16px;flex-wrap:wrap}
+.score{display:flex;flex-direction:column;gap:2px;font-size:12px;color:var(--muted)}
+.dots{display:flex;gap:3px}
+.dots i{width:14px;height:6px;border-radius:2px;background:var(--line)}
+.dots i.on{background:var(--pine)}
+.price{font-family:var(--f-data);font-weight:600;color:var(--ok);font-size:15px}
+.thread{border-top:1px solid var(--line);padding-top:10px;display:flex;flex-direction:column;gap:8px}
+.cmt{font-size:14px;display:flex;flex-direction:column;gap:2px;padding-left:10px;border-left:2px solid var(--line)}
+.cmt .who{font-size:12px;color:var(--muted)}
+.cform{display:flex;gap:8px}
+.cform input{flex:1;min-width:0}
+
+/* ---------- inbox ---------- */
+.req{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+.req .t{flex:1;min-width:180px}
+.req .t small{display:block;color:var(--muted);font-size:12px}
+.status{font-size:12px;font-weight:700;padding:1px 8px;border-radius:4px;background:var(--sunk)}
+.status.ok{background:var(--pine-soft);color:var(--pine)}
+.status.no{background:var(--warn-soft);color:var(--warn)}
+.chat{display:flex;flex-direction:column;gap:8px;max-height:min(60vh,520px);overflow-y:auto;padding:4px 2px}
+.msg{max-width:78%;padding:8px 12px;border-radius:14px;background:var(--sunk);align-self:flex-start;white-space:pre-wrap;overflow-wrap:anywhere;font-size:14px}
+.msg.mine{align-self:flex-end;background:var(--pine);color:var(--pine-ink)}
+.msg small{display:block;font-family:var(--f-data);font-size:10px;opacity:.7;margin-top:2px}
+.lock{display:inline-flex;gap:6px;align-items:center;font-size:12px;color:var(--ok)}
+.lock svg{width:14px;height:14px}
+
+/* ---------- forms & sheets ---------- */
+input[type=text],input[type=number],input[type=datetime-local],textarea,select{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:8px 10px;width:100%;min-width:0}
+textarea{min-height:110px;resize:vertical}
+label.f,div.f{display:flex;flex-direction:column;gap:4px;font-size:13px;font-weight:500;min-width:0}
+label.f small,div.f small{color:var(--muted);font-weight:400}
+.frow{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px}
+.radios{display:flex;gap:6px;flex-wrap:wrap}
+.radios label{display:flex;align-items:center;gap:6px;border:1px solid var(--line);border-radius:8px;padding:6px 10px;font-size:13px;cursor:pointer;font-weight:400}
+.radios input{accent-color:var(--pine)}
+.rate{display:flex;flex-direction:column;gap:4px;font-size:13px}
+.rate .stars{display:flex;gap:4px}
+.rate .stars button{width:30px;height:28px;border-radius:6px;border:1px solid var(--line);background:var(--surface);font-family:var(--f-data);font-size:12px}
+.rate .stars button.on{background:var(--pine);color:var(--pine-ink);border-color:var(--pine)}
+.check{display:flex;gap:10px;align-items:flex-start;font-size:13px;font-weight:400}
+.check input{margin-top:4px;accent-color:var(--warn);width:16px;height:16px;flex:none}
+.scrim{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:30;display:flex;align-items:flex-start;justify-content:center;padding:max(5vh,env(safe-area-inset-top,0px)) 16px 16px;overflow:auto}
+.sheet{background:var(--surface);border:1px solid var(--line);border-radius:16px;width:100%;max-width:560px;padding:20px;display:flex;flex-direction:column;gap:14px}
+.sheet h2{font-family:var(--f-display);font-weight:900;font-size:21px;margin:0}
+.sheet .foot{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap}
+.sheet ol{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px;font-size:14px}
+.err{color:var(--warn);font-size:13px;margin:0}
+.suggest{background:var(--sunk);border-radius:8px;padding:10px 12px;font-size:13px;display:flex;flex-direction:column;gap:8px}
+.toast{position:fixed;left:50%;bottom:calc(90px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:8px 16px;border-radius:8px;font-size:13px;z-index:40;max-width:calc(100vw - 32px)}
+@media (min-width:721px){.toast{bottom:24px}}
+
+/* ---------- gate ---------- */
+.gate{min-height:100vh;display:grid;grid-template-rows:auto 1fr}
+.gate .hero{border-radius:0;min-height:240px}
+.gate-card{max-width:460px;width:100%;margin:0 auto;padding:24px 16px 40px;display:flex;flex-direction:column;gap:14px}
+.nick-row{display:flex;gap:8px}
+.nick-row input{flex:1;min-width:0;font-size:17px;padding:10px 12px}
+
+/* ---------- food map ---------- */
+.map-wrap{position:relative}
+.lmap{cursor:auto;touch-action:auto}
+.lmap.placing{cursor:crosshair}
+.map-home{position:absolute;right:10px;bottom:24px;z-index:500;font-size:13px;padding:6px 10px}
+.map-wrap .map-hint{z-index:600}
+.lm-icon span{display:inline-block;transform:translate(-50%,-50%);white-space:nowrap;font:700 12px var(--f-body);color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:1px 6px}
+.leaflet-container{font:inherit;background:var(--map-bg)}
+.leaflet-tooltip{font:500 12px var(--f-body)}
+.map{position:relative;height:min(62vh,460px);min-height:300px;border-radius:var(--r);overflow:hidden;background:var(--map-bg);border:1px solid var(--line);touch-action:none;cursor:grab;user-select:none}
+.map:active{cursor:grabbing}
+.map-svg{display:block;width:100%;height:100%}
+.map .grid{stroke:var(--map-grid);stroke-width:1}
+.map .ring{fill:none;stroke:var(--pine);stroke-opacity:.35;stroke-dasharray:4 5}
+.map .ring-label{font:11px var(--f-data);fill:var(--muted)}
+.map .lm{fill:var(--ink)}
+.map .lm-label{font:700 12px var(--f-body);fill:var(--ink);paint-order:stroke;stroke:var(--map-bg);stroke-width:3px}
+.map .pin{cursor:pointer}
+.map .pin path{stroke:var(--map-bg);stroke-width:1.5}
+.map .pin-dot{fill:var(--map-bg)}
+.map .pin.sel path{stroke:var(--ink);stroke-width:2}
+.map .pin-label{font:500 12px var(--f-body);fill:var(--ink);paint-order:stroke;stroke:var(--map-bg);stroke-width:3px}
+.map .pin:focus-visible path{stroke:var(--ink);stroke-width:3}
+.map .scalebar{stroke:var(--ink);stroke-width:2}
+.map .north{font:600 12px var(--f-data);fill:var(--ink)}
+.map .north-arrow{fill:var(--ink)}
+.map-ctrl{position:absolute;right:10px;bottom:10px;display:flex;flex-direction:column;gap:6px}
+.map-ctrl button{width:36px;height:36px;border-radius:8px;border:1px solid var(--line);background:var(--surface);font-size:18px;line-height:1}
+.map-hint{position:absolute;left:50%;top:10px;transform:translateX(-50%);background:var(--ink);color:var(--bg);border-radius:999px;padding:4px 6px 4px 14px;display:flex;gap:10px;align-items:center;font-size:13px;white-space:nowrap}
+.map-hint .ghost{padding:2px 10px;font-size:12px;color:var(--ink)}
+.cdot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:4px;vertical-align:1px;font-style:normal}
+.cdot.lg{width:14px;height:14px;margin:0}
+.stars-row{display:flex;gap:2px}
+.star{background:none;border:0;font-size:24px;line-height:1;color:var(--line);padding:0 2px}
+.star.on{color:var(--bus)}
+.star:hover:not(:disabled){color:var(--bus)}
+a.primary,a.ghost{display:inline-flex;align-items:center}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+
+</head>
+<body>
+<div id="app"></div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.2/dist/umd/supabase.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="/config.js"></script>
+<script src="/shim.js"></script>
+
+
+<script>
+(() => {
+"use strict";
+
+/* =====================================================================
+   STATIC REFERENCE DATA
+   ===================================================================== */
+/* Bus data — transcribed from 國立中央大學總務處「對外交通資訊」(115.02.26) 附件1、5、6-1、6-2.
+   days: D 每日 / W 平日 / H 假日 / WT 學期中平日（非寒暑假） / HB 假日與寒暑假 */
+const BUS = {
+  source: "中大總務處「對外交通資訊」115.02.26 版",
+  fare: { city:"全票 18 元、半票 9 元", "9025A":"中大↔松山機場 全票 84 元、半票 42 元" },
+  // 中壢 → 中大：[路線, 中壢開, 約到中大, 行駛日]
+  zl: [
+    ["132","07:00","07:20","D"],["132","07:30","07:50","W"],["133","07:40","08:00","HB"],["133","07:45","08:05","WT"],
+    ["132","08:00","08:20","D"],["133","08:15","08:35","WT"],["133A","08:30","08:50","W"],["133","08:40","09:00","HB"],
+    ["133","08:45","09:05","WT"],["132","09:00","09:20","D"],["133","09:15","09:35","WT"],["133","09:40","10:00","HB"],
+    ["133","09:45","10:05","WT"],["132","10:00","10:20","D"],["133","10:30","11:00","WT"],["133","10:40","11:05","HB"],
+    ["132","11:00","11:20","D"],["133","11:35","12:05","WT"],["132","12:00","12:20","D"],["133","12:40","13:05","WT"],
+    ["132","13:00","13:20","D"],["133","13:30","14:05","WT"],["132","14:00","14:20","D"],["133","14:30","15:05","WT"],
+    ["132","15:00","15:20","D"],["133","15:30","15:55","WT"],["133","15:40","16:00","HB"],["132","16:00","16:20","D"],
+    ["133A","16:25","16:45","W"],["132","16:30","16:50","W"],["133","16:40","17:00","HB"],["133A","16:45","17:05","W"],
+    ["132","17:00","17:20","D"],["133A","17:30","17:55","W"],["132","18:00","18:20","D"],["132","19:00","19:20","D"],
+    ["132","19:40","20:00","H"],["132","20:20","20:40","D"],["132","21:40","22:00","D"],
+  ],
+  // 中大 ↔ 高鐵：[路線, 中大開, 高鐵站開, 行駛日, 中原大學開(172A)]
+  hsr: {
+    normal: [
+      ["173","07:15","07:50","W"],["172","07:50","08:20","W"],["172","08:30","09:00","W"],["173","09:00","09:30","W"],
+      ["172","09:30","10:00","H"],["173","09:40","10:10","W"],["172","10:10","10:40","W"],["173","10:35","11:05","H"],
+      ["173","11:20","11:50","W"],["172","11:40","12:10","H"],["172","12:30","13:00","W"],["173","12:45","13:15","H"],
+      ["173","13:30","14:00","W"],["172","14:30","15:00","D"],["173","15:40","16:10","D"],["172","16:50","17:20","D"],
+      ["173","18:00","18:30","D"],
+    ],
+    trial: [
+      ["173","07:25","08:05","W"],["172A","08:10",null,"W","07:00"],["173","08:45","09:20","W"],["173","10:00","10:30","W"],
+      ["172A","10:20",null,"W","09:20"],["173","11:10","11:40","W"],["172A","12:45",null,"W","11:40"],["172A","14:05",null,"W","13:00"],
+      ["173","14:30","15:00","W"],["173","15:40","16:10","W"],["172A","16:10",null,"W","15:10"],["173","16:50","17:30","W"],
+      ["172加","18:00","18:30","W"],["172A","18:40",null,"W","17:40"],
+      ["172A","08:55",null,"H","07:55"],["172A","11:10",null,"H","10:10"],["173","12:45","13:20","H"],["173","14:00","14:35","H"],
+      ["172A","14:30",null,"H","13:30"],["173","15:10","15:40","H"],["173","16:20","17:00","H"],["172A","16:40",null,"H","15:40"],
+    ],
+  },
+  // 9025A：out [中壢開, 約中大, 約松山機場, 日]；in [松山機場開, 約中大, 日]
+  tpeOut: [["12:00","12:13","13:13","W"],["16:00","16:13","17:13","W"],["17:00","17:13","18:19","W"],["17:50","18:02","19:00","W"],
+           ["07:00","07:10","08:05","H"],["07:30","07:40","08:35","H"],["16:20","16:33","17:33","H"],["18:00","18:14","19:17","H"]],
+  tpeIn:  [["06:37","07:25","W"],["07:10","08:03","W"],["07:50","08:43","W"],["09:40","10:27","W"],["11:20","12:19","W"],
+           ["07:30","08:23","H"],["17:00","18:04","H"],["18:00","19:00","H"],["19:00","19:54","H"]],
+};
+const BUS_CFG_DEFAULT = {
+  hsrMode: "trial",
+  breaks: [ { label:"寒假", from:"2027-01-18", to:"2027-02-21" }, { label:"暑假", from:"2027-06-21", to:"2027-09-12" } ],
+};
+
+const DEPTS = [
+  ["文學院", ["中國文學系","英美語文學系","法國語文學系","哲學研究所","藝術學研究所","歷史研究所","學習與教學研究所"]],
+  ["理學院", ["物理學系","數學系","化學學系","光電科學與工程學系","統計研究所","天文研究所"]],
+  ["工學院", ["化學工程與材料工程學系","土木工程學系","機械工程學系","能源工程研究所","環境工程研究所","材料科學與工程研究所"]],
+  ["管理學院", ["企業管理學系","資訊管理學系","財務金融學系","經濟學系","會計研究所","產業經濟研究所","人力資源管理研究所","工業管理研究所"]],
+  ["資訊電機學院", ["電機工程學系","資訊工程學系","通訊工程學系","網路學習科技研究所","人工智慧國際碩士學位學程"]],
+  ["地球科學學院", ["地球科學學系","大氣科學學系","太空科學與工程學系","應用地質研究所","水文與海洋科學研究所"]],
+  ["客家學院", ["客家語文暨社會科學學系","法律與政府研究所"]],
+  ["生醫理工學院", ["生命科學系","生醫科學與工程學系","認知神經科學研究所"]],
+  ["松濤全人學院", ["通識教育","語言中心","體育室"]],
+];
+
+const DORMS = [
+  ["東區", [["f14","女14舍","女"],["intl","國際學舍","女"],["m11","男11舍","115學年為女宿"],["m5","男5舍","研究生"]]],
+  ["南區", [["m6","男6舍","男"],["m7","男7舍","男"],["m13","男13舍","男"]]],
+  ["西區", [["f1","女1舍","女"],["f2","女2舍","女"],["f3","女3舍","女"],["f4","女4舍","女"],["m3","男3舍","115學年為女宿"]]],
+  ["北區", [["m9a","男9A舍","男"],["m9b","男9B舍","男"],["m12","男12舍","男"],["xw","曦望居","性別友善"],["guest","中大會館","性別友善"]]],
+];
+
+const ZONES = [
+  { id:"back",  name:"後門・中央路", sub:"後門商圈" },
+  { id:"232",   name:"中央路 232 巷", sub:"後門商圈巷弄" },
+  { id:"216",   name:"中央路 216 巷", sub:"含 86 弄" },
+  { id:"wx",    name:"宵夜街・五興路", sub:"含 331 巷" },
+  { id:"zd",    name:"中大路・側門", sub:"" },
+  { id:"xx",    name:"新興路・環中東路", sub:"" },
+  { id:"zz",    name:"中正路・中壢市區", sub:"" },
+  { id:"ot",    name:"其他地區", sub:"" },
+];
+const PRESET_LOCS = [
+  ["jipin","中央極品","back",""],["minglu","名盧學舍","back",""],["pingke","萍客屋","back",""],
+  ["elephant","大象公寓","back",""],["yongan","永安居","back",""],
+  ["haolai","好來屋","232","232巷"],["huang","皇樓","232","232巷"],["maoyuan","茂緣","232","232巷"],
+  ["mingde","明德居","216","216巷"],["he","荷居","216","216巷86弄"],["heyuan","和園","216","216巷"],["baigong","白宮","216","216巷"],
+  ["xinyuan","歆園","wx","331巷"],["baoshu","寶樹屋","wx",""],["sanyou","三友新村","zd",""],
+].map(([id,name,zone,lane]) => ({ id, name, zone, lane, preset:true }));
+const HOUSE_TYPES = ["獨立套房","分租套房","雅房","家庭式整層","整棟透天","其他"];
+
+const DISCLAIMER = "本人保證所述內容皆為親身經歷之事實，未捏造或誇大，並對發文內容自負法律責任（包括但不限於刑法第 310 條誹謗罪及民事損害賠償）。本站僅提供交流平台，不代表本站立場，亦不擔保內容之真實性。請勿揭露房東或他人之全名、電話、身分證字號等個人資料。被檢舉內容將暫時隱藏並由管理員審核。";
+
+const ADJ = ["半夜煮泡麵的","熬夜趕報告的","232巷的","中大湖邊的","後門的","愛曬棉被的","常收包裹的","早八的","練吉他的","養多肉的","搶不到132的","宵夜街常客"];
+const NOUN = ["小貓","吉他手","室友","鄰居","房客","夜貓子","學長姐","路人","松鼠","宵夜仔","通勤族","松果"];
+const randNick = () => ADJ[Math.random()*ADJ.length|0] + NOUN[Math.random()*NOUN.length|0];
+
+const RIDE_PLACES = ["中央大學（正門）","中央大學（後門）","中壢火車站","高鐵桃園站","台北車站","松山機場","桃園機場","大江購物中心","中原商圈・中原夜市","龍岡・忠貞市場","中壢觀光夜市","青埔","其他"];
+
+/* ---------- spaces: every board or hub a post can live in ---------- */
+const SPACES = {};
+function addSpace(s){ SPACES[s.id] = s; }
+// campus general
+[["g:chat","閒聊","什麼都能聊的中大綜合版。",["閒聊","心情","問題"]],
+ ["g:course","課程評價","選課前先看：甜涼度、作業量、考試方式、老師風格。",["評價","選課","共筆"]],
+ ["g:club","社團活動","社團招生、活動宣傳、演出與比賽。",["招生","活動","宣傳"]],
+ ["g:lost","失物招領","撿到或遺失東西都可以在這裡發。",["遺失","拾獲"]],
+ ["g:food","美食","後門宵夜街、松苑、中壢市區哪間好吃。",["推薦","踩雷","揪吃"]],
+ ["g:help","求助問答","行政流程、選課系統、校園生活的大小問題。",["問題","教學"]],
+].forEach(([id,name,desc,cats]) => addSpace({id,name,desc,cats,tab:"campus",group:"綜合"}));
+// departments
+DEPTS.forEach(([college, list]) => list.forEach((d,i) => addSpace({
+  id:`dept:${college}:${i}`, name:d, college, desc:`${college}・${d} 的大小事：課程、考試、系上活動、學長姐經驗。`,
+  cats:["閒聊","課程","考試","活動","求助"], tab:"campus", group:college })));
+// market
+addSpace({ id:"m:all", name:"二手市集", desc:"買賣、交換、免費贈送都在這裡。面交地點建議選校內人多的地方。", cats:["書籍講義","家具家電","3C","機車單車","生活用品","免費送","徵求"], tab:"market", price:true });
+// housing boards
+addSpace({ id:"hb:review", name:"租屋避雷與心得", desc:"匿名點評房東、隔音、採光、壁癌、電費計算。請以親身經歷的事實描述。", cats:["避雷","心得","問題"], tab:"housing", group:"租屋看板", review:true });
+addSpace({ id:"hb:list", name:"招租・轉租", desc:"房間要轉租、房東招租都在這裡，請寫清楚租金、坪數、可入住日。", cats:["轉租","招租","短租"], tab:"housing", group:"租屋看板", rent:true });
+addSpace({ id:"hb:mate", name:"徵室友", desc:"找人分租、找室友一起租整層。", cats:["徵室友","找房一起租"], tab:"housing", group:"租屋看板" });
+addSpace({ id:"d:all", name:"宿舍綜合", desc:"抽籤、候補、退宿、換床位、宿舍規定。", cats:["抽籤候補","換床位","規定","閒聊"], tab:"housing", group:"校內宿舍" });
+DORMS.forEach(([area, list]) => list.forEach(([id,name,tag]) => addSpace({
+  id:`d:${id}`, name, area, tag, desc:`${area}・${name}（${tag}）的大廳：洗衣機、交誼廳、門禁、包裹、揪宵夜。`,
+  cats:["閒聊交友","居住溝通","公用設施"], tab:"housing", group:"校內宿舍", hub:true, dorm:true })));
+ZONES.forEach(z => addSpace({ id:`hz:${z.id}`, name:`${z.name} 全區廣播`, short:"全區廣播", zone:z.id,
+  desc:`發給整個「${z.name}」的公告：停水停電、垃圾車時間、可疑人士、巷口施工。`, cats:["公告","詢問","閒聊"], tab:"housing", group:"校外租屋" }));
+function locSpace(l){
+  return { id:`h:${l.id}`, name:l.name, loc:l, zone:l.zone, lane:l.lane,
+    desc:`只有住在「${l.name}」的鄰居才懂的事：噪音協調、包裹、公用設備、揪宵夜。`+(l.custom?"（使用者新增的社區頻道）":""),
+    cats:["閒聊交友","居住溝通","公用設施"], tab:"housing", group:"校外租屋", hub:true };
+}
+PRESET_LOCS.forEach(l => addSpace(locSpace(l)));
+
+const IDEAS = {
+  hub:["有人要一起訂外送嗎？","今晚宵夜街走起","烘衣機是不是壞了？","子母車爆滿了","包裹被誤拿了"],
+  "hb:review":["隔音實測心得","電費一度怎麼算才合理？"],
+  "hb:list":["寒假轉租，2 月可入住","後門套房招租"],
+  "hb:mate":["徵室友一起租整層","缺一位女室友"],
+  "m:all":["畢業出清：除濕機","免費送三層櫃","徵二手計算機概論課本"],
+  "d:all":["候補第幾號有機會？","想跟人換床位"],
+  "g:course":["微積分哪個老師推薦？","通識甜課整理"],
+  default:["有人知道…？","分享一下今天發生的事"],
+};
+
+/* =====================================================================
+   HELPERS
+   ===================================================================== */
+const LS = {
+  get(k){ try{ return localStorage.getItem(k); }catch{ return null; } },
+  set(k,v){ try{ localStorage.setItem(k,v); }catch{} },
+  del(k){ try{ localStorage.removeItem(k); }catch{} },
+  json(k,d){ try{ const v = JSON.parse(localStorage.getItem(k)); return v ?? d; }catch{ return d; } },
+};
+function h(tag, attrs, ...kids){
+  const el = document.createElement(tag);
+  for (const [k,v] of Object.entries(attrs||{})){
+    if (v == null || v === false) continue;
+    if (k.startsWith("on")) el.addEventListener(k.slice(2), v);
+    else if (k === "class") el.className = v;
+    else el.setAttribute(k, v === true ? "" : v);
+  }
+  for (const c of kids.flat(Infinity)){
+    if (c == null || c === false) continue;
+    el.append(c.nodeType ? c : document.createTextNode(String(c)));
+  }
+  return el;
+}
+const SVGNS = "http://www.w3.org/2000/svg";
+const ICONS = {
+  home:"M3 11 12 4l9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z",
+  bus:"M6 3h12a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2v2h-2v-2H8v2H6v-2a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2zM4 10h16M8 15h.01M16 15h.01",
+  bag:"M5 8h14l-1 12H6zM9 8V6a3 3 0 0 1 6 0v2",
+  house:"M4 21V9l8-5 8 5v12M9 21v-6h6v6M2 21h20",
+  campus:"M3 9l9-5 9 5-9 5zM7 11v5c0 1.5 2.2 3 5 3s5-1.5 5-3v-5",
+  chat:"M4 5h16v11H9l-5 4z",
+  heart:"M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z",
+  reply:"M4 5h16v11H9l-5 4z",
+  flag:"M5 21V4h11l-2 4 2 4H5",
+  trash:"M5 7h14M10 7V4h4v3M7 7l1 13h8l1-13",
+  lock:"M6 11h12v10H6zM8 11V8a4 4 0 0 1 8 0v3",
+  car:"M5 16l1.5-5A2 2 0 0 1 8.4 9.5h7.2a2 2 0 0 1 1.9 1.5L19 16M4 16h16v3H4zM7 19v2M17 19v2",
+  pin:"M12 21s-7-6.2-7-11.5a7 7 0 0 1 14 0C19 14.8 12 21 12 21zM12 12a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5z",
+  phone:"M8 2h8a1 1 0 0 1 1 1v18a1 1 0 0 1-1 1H8a1 1 0 0 1-1-1V3a1 1 0 0 1 1-1zM11 19h2",
+};
+function icon(name){
+  const s = document.createElementNS(SVGNS,"svg");
+  s.setAttribute("viewBox","0 0 24 24"); s.setAttribute("fill","none"); s.setAttribute("stroke","currentColor");
+  s.setAttribute("stroke-width","1.8"); s.setAttribute("stroke-linecap","round"); s.setAttribute("stroke-linejoin","round"); s.setAttribute("aria-hidden","true");
+  const p = document.createElementNS(SVGNS,"path"); p.setAttribute("d", ICONS[name]); s.append(p); return s;
+}
+const plate = txt => h("span",{class:"plate"}, h("span",{},txt));
+const pad = n => String(n).padStart(2,"0");
+const ago = ts => {
+  const s = (Date.now()-ts)/1000;
+  if (s < 60) return "剛剛";
+  if (s < 3600) return Math.floor(s/60)+" 分鐘前";
+  if (s < 86400) return Math.floor(s/3600)+" 小時前";
+  if (s < 86400*7) return Math.floor(s/86400)+" 天前";
+  const d = new Date(ts); return `${d.getMonth()+1}/${d.getDate()}`;
+};
+const WK = ["日","一","二","三","四","五","六"];
+const fmtWhen = ts => { const d = new Date(ts); return { day:`${d.getMonth()+1}/${d.getDate()}（${WK[d.getDay()]}）`, time:`${pad(d.getHours())}:${pad(d.getMinutes())}` }; };
+const initial = s => (s||"?").trim().slice(-1);
+
+/* =====================================================================
+   STATE
+   ===================================================================== */
+const S = {
+  nick: LS.get("pc.nick") || "", dept: LS.get("pc.dept") || "", home: LS.get("pc.home") || "",
+  tab: LS.get("pc.tab") || "home",
+  space: LS.json("pc.space", {}),     // last space per tab
+  housingSeg: LS.get("pc.hseg") || "off",
+  filter: "", sort: "new",
+  db:null, room:null, uid:null, isOwner:false, canEdit:false, canWrite:null, dbState:"loading",
+  posts:[], likes:{}, reports:{}, customLocs:[], rides:[], riders:{}, bus:null,
+  reqIn:[], reqOut:[], peers:[],
+  open:null, comments:[], unsubComments:null,
+  chat:null, chatMsgs:[], unsubChat:null,
+  modal:null, dirty:false,
+  busCfg:null, busDest:LS.get("pc.busDest")||"zl", busDir:LS.get("pc.busDir")||"out", dayMode:LS.get("pc.dayMode")||"auto", homeDir:LS.get("pc.hdir")||"out",
+  food:[], foodRates:{}, foodSel:null, foodFilter:"", foodSort:"dist", landmarks:null, map:null,
+};
+const saveSpace = () => LS.set("pc.space", JSON.stringify(S.space));
+const canPost = () => S.dbState === "ok" && S.canWrite !== false && !!S.nick;
+
+function allLocs(){ return [...PRESET_LOCS, ...S.customLocs]; }
+function spaceById(id){
+  if (SPACES[id]) return SPACES[id];
+  if (id && id.startsWith("h:c-")){ const l = S.customLocs.find(x => "h:"+x.id === id); if (l) return locSpace(l); }
+  return null;
+}
+function homeOptions(){
+  const opts = [];
+  DORMS.forEach(([area, list]) => opts.push({ group:"校內宿舍・"+area, items:list.map(([id,name]) => ({ id:"d:"+id, name })) }));
+  ZONES.forEach(z => { const items = allLocs().filter(l => l.zone===z.id).map(l => ({ id:"h:"+l.id, name:l.name + (l.lane?`（${l.lane}）`:"") })); if (items.length) opts.push({ group:"校外・"+z.name, items }); });
+  return opts;
+}
+
+/* similarity check for custom locations */
+const norm = s => (s||"").replace(/\s+/g,"").replace(/[（）()·・\-]/g,"").replace(/(大樓|公寓|學舍|社區|套房|雅房|透天|宿舍)$/,"").toLowerCase();
+function lev(a,b){ const m=a.length,n=b.length; if(!m) return n; if(!n) return m; let p=[...Array(n+1).keys()];
+  for(let i=1;i<=m;i++){ const c=[i]; for(let j=1;j<=n;j++) c[j]=Math.min(p[j]+1,c[j-1]+1,p[j-1]+(a[i-1]===b[j-1]?0:1)); p=c; } return p[n]; }
+function similarLocs(name, lane){
+  const a = norm(name); if (!a) return [];
+  return allLocs().filter(l => { const b = norm(l.name); if (!b) return false;
+    if (a===b || a.includes(b) || b.includes(a)) return true;
+    const sim = 1 - lev(a,b)/Math.max(a.length,b.length);
+    return sim >= .7 || (lane && l.lane && norm(lane)===norm(l.lane) && sim >= .5); });
+}
+
+const likeCount = id => S.likes[id] ? S.likes[id].size : 0;
+const reportCount = id => S.reports[id] ? S.reports[id].size : 0;
+const isHidden = p => reportCount(p.id) >= 3;
+const postsIn = id => S.posts.filter(p => p.space === id);
+const visibleTo = p => !isHidden(p) || S.isOwner || p.uid === S.uid;
+
+/* =====================================================================
+   BUS LOGIC
+   ===================================================================== */
+const isWeekend = d => d.getDay()===0 || d.getDay()===6;
+const toMin = t => { const [a,b] = t.split(":").map(Number); return a*60+b; };
+const fromMin = m => `${pad(Math.floor(m/60)%24)}:${pad(m%60)}`;
+const isoDay = d => `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+const busCfg = () => ({ ...BUS_CFG_DEFAULT, ...(S.busCfg||{}) });
+const DEST = { zl:"中壢火車站", hsr:"高鐵桃園站", tpe:"台北・松山機場" };
+const DAYMODES = [["auto","自動判斷"],["term","學期中平日"],["break","寒暑假平日"],["holiday","假日"]];
+function dayCtx(d = new Date(), mode = S.dayMode){
+  const cfg = busCfg(); const iso = isoDay(d);
+  const inBreak = (cfg.breaks||[]).find(b => iso >= b.from && iso <= b.to);
+  if (mode==="term") return { weekend:false, brk:false, label:"學期中平日" };
+  if (mode==="break") return { weekend:false, brk:true, label:"寒暑假平日" };
+  if (mode==="holiday") return { weekend:true, brk:false, label:"假日" };
+  const weekend = isWeekend(d);
+  return { weekend, brk:!!inBreak, label: weekend ? "假日" : inBreak ? `${inBreak.label}平日` : "學期中平日" };
+}
+const dayOk = (days, c) => days==="D" || (days==="W" && !c.weekend) || (days==="H" && c.weekend) || (days==="WT" && !c.weekend && !c.brk) || (days==="HB" && (c.weekend || c.brk));
+const BOARD_ZL = { "132":"中壢公車站（復興路，NET 旁）", "133":"中壢客運中壢總站（建國路 100 號）", "133A":"中壢客運中壢總站（建國路 100 號）" };
+/* trips for one destination & direction on a given day. Each: {route, t, approx, sub, live} */
+function trips(dest, dir, c){
+  const out = [];
+  if (dest==="zl"){
+    for (const [r,dep,ncu,days] of BUS.zl){ if (!dayOk(days,c)) continue;
+      if (dir==="out") out.push({ route:r, t:toMin(ncu), approx:true, sub:`中壢 ${dep} 發車，約此時到中大，繞校內後開回中壢` });
+      else out.push({ route:r, t:toMin(dep), approx:false, sub:`${BOARD_ZL[r]}上車・約 ${ncu} 到中大` }); }
+  } else if (dest==="hsr"){
+    for (const [r,ncu,hsr,days,cy] of BUS.hsr[busCfg().hsrMode]||[]){ if (!dayOk(days,c)) continue;
+      if (dir==="out") out.push({ route:r, t:toMin(ncu), approx:r==="172A", sub: r==="172A" ? `中原大學 ${cy} 發車，到中大警衛室候車後開往高鐵` : `中大警衛室發車${hsr ? `・高鐵回程 ${hsr}` : ""}` });
+      else if (hsr) out.push({ route:r, t:toMin(hsr), approx:false, sub:`高鐵站外 8 號月台上車` });
+      else out.push({ route:r, t:toMin(ncu), approx:true, offBoard:true, sub:`中原大學 ${cy} 發車，經高鐵站（時間未公告），約此時到中大` }); }
+  } else {
+    if (dir==="out") for (const [zl,ncu,ss,days] of BUS.tpeOut){ if (dayOk(days,c)) out.push({ route:"9025A", t:toMin(ncu), approx:true, sub:`中壢 ${zl} 發車・約 ${ss} 到松山機場` }); }
+    else for (const [ss,ncu,days] of BUS.tpeIn){ if (dayOk(days,c)) out.push({ route:"9025A", t:toMin(ss), approx:false, sub:`松山機場 3 號候車亭上車・約 ${ncu} 到中大` }); }
+  }
+  return out.sort((a,b) => a.t-b.t);
+}
+function nowMin(){ const n = new Date(); return n.getHours()*60+n.getMinutes(); }
+function nextTrips(dest, dir, n = 3){
+  const c = dayCtx(); const cur = nowMin();
+  const list = trips(dest, dir, c).filter(x => !x.offBoard && x.t >= cur);
+  if (list.length) return { list:list.slice(0,n), tomorrow:null };
+  const tm = new Date(Date.now()+86400e3); const t2 = trips(dest, dir, dayCtx(tm, S.dayMode==="auto"?"auto":S.dayMode)).filter(x => !x.offBoard);
+  return { list:[], tomorrow:t2[0] || null };
+}
+function minsUntil(m){ const d = m - nowMin(); return d <= 0 ? "即將發車" : d < 60 ? `${d} 分鐘後` : `${Math.floor(d/60)} 小時 ${d%60} 分後`; }
+const rtClass = r => "rtag r" + (r.startsWith("132") ? "1" : r.startsWith("133") ? "2" : r.startsWith("172") ? "3" : r.startsWith("173") ? "4" : "5");
+
+/* =====================================================================
+   RENDER
+   ===================================================================== */
+const app = document.getElementById("app");
+function render(){
+  app.replaceChildren();
+  if (!S.nick){ app.append(gate()); renderOverlay(); return; }
+  app.append(topbar(), h("main",{class:"wrap"}, page()));
+  renderOverlay();
+}
+function renderKeep(){
+  if (S.modal || S.dragging){ S.dirty = true; return; }
+  const a = document.activeElement; const id = a && a.id; const val = a && a.value; const pos = a && a.selectionStart;
+  const chatEl = document.querySelector(".chat"); const atBottom = chatEl && chatEl.scrollHeight - chatEl.scrollTop - chatEl.clientHeight < 40;
+  const y = window.scrollY;
+  render();
+  window.scrollTo(0, y);
+  const chat2 = document.querySelector(".chat"); if (chat2 && (atBottom || !chatEl)) chat2.scrollTop = chat2.scrollHeight;
+  if (id){ const el = document.getElementById(id); if (el){ el.value = val; el.focus({preventScroll:true}); try{ el.setSelectionRange(pos,pos); }catch{} } }
+}
+
+function scene(){
+  const s = document.createElementNS(SVGNS,"svg");
+  s.setAttribute("class","scene"); s.setAttribute("viewBox","0 0 800 260"); s.setAttribute("preserveAspectRatio","xMidYMax slice"); s.setAttribute("aria-hidden","true");
+  const add = (tag, at) => { const e = document.createElementNS(SVGNS, tag); for (const k in at) e.setAttribute(k, at[k]); s.append(e); return e; };
+  const g = add("linearGradient",{id:"sky",x1:"0",y1:"0",x2:"0",y2:"1"});
+  [["0","#4f8f73"],["1","#1d4a37"]].forEach(([o,c]) => { const st = document.createElementNS(SVGNS,"stop"); st.setAttribute("offset",o); st.setAttribute("stop-color",c); g.append(st); });
+  add("rect",{x:0,y:0,width:800,height:260,fill:"url(#sky)"});
+  add("circle",{cx:640,cy:70,r:30,fill:"#f6e7b0",opacity:.85});
+  // seeded pine silhouettes, three depths
+  let seed = 7; const rnd = () => (seed = (seed*9301+49297)%233280)/233280;
+  [[150,"#2f6d52",.9,22],[185,"#24563f",1,18],[220,"#173a2b",1.15,14]].forEach(([base,col,sc,count]) => {
+    for (let i=0;i<count;i++){
+      const x = i*(820/count) + rnd()*30 - 20, hgt = (60 + rnd()*70)*sc, w = hgt*.42;
+      let d = `M${x} ${base}`;
+      for (let k=0;k<4;k++){ const y = base - hgt*(k+1)/4, ww = w*(1-k/4.6); d += ` L${x+ww/2} ${y+hgt/6} L${x+ww/5} ${y+hgt/6}`; }
+      d += ` L${x} ${base-hgt-8}`;
+      for (let k=3;k>=0;k--){ const y = base - hgt*(k+1)/4, ww = w*(1-k/4.6); d += ` L${x-ww/5} ${y+hgt/6} L${x-ww/2} ${y+hgt/6}`; }
+      d += " Z"; add("path",{d,fill:col});
+    }
+    add("rect",{x:0,y:base-2,width:800,height:260-base+2,fill:col});
+  });
+  // lake
+  add("ellipse",{cx:250,cy:236,rx:190,ry:16,fill:"#7fb3a0",opacity:.35});
+  // small bus on the road
+  add("rect",{x:520,y:214,width:70,height:24,rx:5,fill:"#f0b43a"});
+  [528,546,564].forEach(x => add("rect",{x,y:219,width:13,height:8,rx:1.5,fill:"#173a2b"}));
+  add("circle",{cx:536,cy:240,r:4,fill:"#0b1d15"}); add("circle",{cx:576,cy:240,r:4,fill:"#0b1d15"});
+  return s;
+}
+function brandMark(){
+  const s = document.createElementNS(SVGNS,"svg"); s.setAttribute("viewBox","0 0 32 32"); s.setAttribute("aria-hidden","true");
+  const p = (d,f) => { const e = document.createElementNS(SVGNS,"path"); e.setAttribute("d",d); e.setAttribute("fill",f); s.append(e); };
+  p("M16 2c6 4 9 9 9 15a9 9 0 0 1-18 0c0-6 3-11 9-15z","var(--pine)");
+  p("M11 13h10M10 18h12M11 23h10","none");
+  [[11,13,21,13],[10,18,22,18],[11,23,21,23],[16,6,16,28]].forEach(([a,b,c,d]) => { const l = document.createElementNS(SVGNS,"path"); l.setAttribute("d",`M${a} ${b}L${c} ${d}`); l.setAttribute("stroke","var(--pine-ink)"); l.setAttribute("stroke-width","1.6"); l.setAttribute("opacity",".75"); s.append(l); });
+  return s;
+}
+
+function gate(){
+  let val = randNick();
+  const input = h("input",{type:"text",id:"nick-in",maxlength:"16",value:val,"aria-label":"匿名暱稱",oninput:e=>val=e.target.value});
+  const err = h("p",{class:"err",hidden:true});
+  const go = () => { const v = val.trim();
+    if (v.length < 2){ err.textContent="暱稱至少要 2 個字。"; err.hidden=false; return; }
+    S.nick = v; LS.set("pc.nick", v); saveProfile(); render(); };
+  input.addEventListener("keydown", e => { if (e.key==="Enter" && !e.isComposing) go(); });
+  return h("div",{class:"gate"},
+    h("div",{class:"hero"}, scene(), h("div",{class:"hero-in"}, h("p",{class:"eyebrow",style:"color:rgba(255,255,255,.8)"},"中央大學・匿名生活圈"), h("h1",{},"松果"), h("p",{},"公車時刻、拼車、二手、租屋與宿舍、系所大小事，全部在同一個地方。"))),
+    h("div",{class:"gate-card"},
+      h("label",{class:"f",for:"nick-in"},"取一個匿名暱稱", h("small",{},"不用註冊、不用學號。之後隨時可以改；每次發文也能改用一次性暱稱。")),
+      h("div",{class:"nick-row"}, input, h("button",{class:"ghost",onclick:()=>{val=randNick();input.value=val;}},"換一個")), err,
+      h("div",{}, h("button",{class:"primary",onclick:go},"進入松果"))));
+}
+
+const TABS = [["home","首頁","home"],["transit","交通","bus"],["market","市集","bag"],["housing","住宿","house"],["food","美食","pin"],["campus","系所","campus"],["inbox","私訊","chat"]];
+function topbar(){
+  const pending = S.reqIn.filter(r => r.status==="pending").length;
+  const online = new Set(S.peers.filter(p=>p.kind==="viewer").map(p => p.by || p.peer)).size;
+  return h("header",{class:"top"},
+    h("div",{class:"top-in"},
+      h("button",{class:"brand",onclick:()=>go("home")}, brandMark(), h("div",{}, h("b",{},"松果"), h("small",{},"NCU LIFE"))),
+      S.room ? h("span",{class:"online-pill",title:"目前開著松果的人數"}, h("i",{}), h("b",{},"在線 "), h("span",{class:"mono"},online||1)) : null,
+      h("button",{class:"me-btn",onclick:()=>openModal({k:"profile"}),"aria-label":"我的設定"}, h("i",{class:"av",style:"font-style:normal"},initial(S.nick)), h("span",{},S.nick))),
+    h("nav",{class:"tabs","aria-label":"主選單"}, TABS.map(([id,label,ic]) =>
+      h("button",{class:"tab","aria-current":S.tab===id?"page":null,onclick:()=>go(id)}, icon(ic), label, id==="inbox" && pending ? h("span",{class:"badge"},pending) : null))));
+}
+function go(tab, space){
+  S.tab = tab; LS.set("pc.tab", tab); S.filter = ""; closeThread();
+  if (space){ S.space[tab] = space; saveSpace(); if (tab==="housing"){ S.housingSeg = space.startsWith("d:") ? "dorm" : space.startsWith("hb:") ? "boards" : "off"; LS.set("pc.hseg",S.housingSeg); } }
+  if (tab !== "inbox") closeChat();
+  presence(); render(); window.scrollTo({top:0});
+}
+function presence(){ if (S.room) S.room.presence({ nick:S.nick, where: currentSpaceId() || S.tab }).catch(()=>{}); }
+function currentSpaceId(){
+  if (S.tab==="market") return "m:all";
+  if (S.tab==="housing" || S.tab==="campus") return S.space[S.tab] || null;
+  return null;
+}
+
+function page(){
+  if (S.tab==="transit") return transitPage();
+  if (S.tab==="market") return spaceView("m:all");
+  if (S.tab==="housing") return housingPage();
+  if (S.tab==="campus") return campusPage();
+  if (S.tab==="inbox") return inboxPage();
+  if (S.tab==="food") return foodPage();
+  return homePage();
+}
+function statusBanner(){
+  if (S.dbState==="none") return h("div",{class:"info"},"目前連不上伺服器，所以看不到也無法發布內容。請檢查網路後重新整理。");
+  if (S.canWrite===false) return h("div",{class:"info"},"你目前是唯讀身分：可以瀏覽，但無法發文、留言或私訊。");
+  return null;
+}
+
+/* ---------- HOME ---------- */
+function homePage(){
+  const rides = upcomingRides().slice(0,3);
+  const hot = S.posts.filter(visibleTo).filter(p => Date.now()-p.ts < 7*86400e3)
+    .sort((a,b) => (likeCount(b.id)*3 + (b.ts/36e5)) - (likeCount(a.id)*3 + (a.ts/36e5))).slice(0,6);
+  const homeSp = S.home && spaceById(S.home);
+  return h("div",{class:"stack"},
+    h("section",{class:"hero"}, scene(), h("div",{class:"hero-in"},
+      h("p",{class:"eyebrow",style:"color:rgba(255,255,255,.8)"}, fmtWhen(Date.now()).day),
+      h("h1",{},`${S.nick}，今天要去哪？`),
+      h("p",{},"公車、拼車、二手、租屋、宿舍、系上的事，都在這裡。"))),
+    statusBanner(),
+    h("div",{class:"quick"},
+      qbtn("car","揪拼車","火車站、高鐵、機場",()=>{ go("transit"); openModal({k:"ride"}); }),
+      qbtn("bag","賣東西","二手、免費送、徵求",()=>go("market")),
+      homeSp ? qbtn("house",homeSp.name,"我住的地方大廳",()=>go("housing",homeSp.id)) : qbtn("house","設定住處","宿舍或校外租屋",()=>openModal({k:"profile"})),
+      S.dept ? qbtn("campus",spaceById(S.dept)?.name||"我的系","系上大小事",()=>go("campus",S.dept)) : qbtn("campus","選我的系","進入系所看板",()=>openModal({k:"profile"})),
+      qbtn("pin","美食地圖","後門、宵夜街、市區",()=>go("food")),
+      qbtn("phone","安裝到手機","iOS・Android",()=>openModal({k:"install"}))),
+    h("div",{class:"grid2"},
+      homeBusBoard(),
+      h("section",{class:"stack"},
+        h("div",{class:"section-title"}, h("h2",{},"即將出發的拼車"), h("button",{class:"linkbtn",onclick:()=>go("transit")},"全部")),
+        rides.length ? h("div",{class:"stack"}, rides.map(rideCard)) :
+          h("div",{class:"empty"}, h("h3",{},"還沒有人揪車"), h("p",{},"不用再在 LINE 群組裡洗訊息，開一團讓同路的人直接加入。"),
+            h("button",{class:"primary",disabled:!canPost(),onclick:()=>{ go("transit"); openModal({k:"ride"}); }},"開一團")))),
+    h("section",{class:"stack"},
+      h("div",{class:"section-title"}, h("h2",{},"這週熱門")),
+      hot.length ? h("div",{class:"card list"}, hot.map(p => h("button",{class:"li",onclick:()=>jumpToPost(p)},
+          h("span",{class:"t"}, h("span",{class:"where"}, spaceLabel(p.space)), "　", p.title),
+          h("small",{class:"mono"}, "♥ ", likeCount(p.id), "・", ago(p.ts))))) :
+        h("div",{class:"info"}, S.dbState==="loading" ? "正在載入…" : "這週還沒有貼文。到系所、市集或住宿發第一篇吧。")));
+}
+function qbtn(ic, title, sub, onclick){ return h("button",{class:"qbtn",onclick}, icon(ic), h("b",{},title), h("span",{},sub)); }
+function spaceLabel(id){ const s = spaceById(id); return s ? (s.short && s.zone ? ZONES.find(z=>z.id===s.zone).name : s.name) : "已移除的版"; }
+function jumpToPost(p){ const sp = spaceById(p.space); if (!sp) return; go(sp.tab, sp.id); openThread(p.id); }
+
+/* ---------- BUS UI ---------- */
+function boardRows(dest, dir, n){
+  const { list, tomorrow } = nextTrips(dest, dir, n);
+  if (!list.length) return [h("div",{class:"row"}, h("span",{class:"rt"},"—"), h("span",{class:"dest"}, "今天已無班次", h("small",{}, tomorrow ? `明天首班 ${tomorrow.route}・${fromMin(tomorrow.t)}` : "")), h("span",{class:"none"},"考慮拼車"))];
+  return list.map(x => h("div",{class:"row",role:"row"},
+    h("span",{class:"rt"}, x.route),
+    h("span",{class:"dest"}, dir==="out" ? `往 ${DEST[dest]}` : `從 ${DEST[dest]} 回中大`, h("small",{}, x.sub)),
+    h("span",{class:"when"}, (x.approx?"約 ":"")+fromMin(x.t), h("small",{}, minsUntil(x.t)))));
+}
+function homeBusBoard(){
+  const dir = S.homeDir || "out";
+  return h("section",{class:"stack"},
+    h("div",{class:"section-title"}, h("h2",{},"下一班公車"),
+      h("div",{class:"seg",style:"padding:2px"},
+        h("button",{"aria-pressed":dir==="out"?"true":"false",onclick:()=>{S.homeDir="out";LS.set("pc.hdir","out");render();}},"從中大出發"),
+        h("button",{"aria-pressed":dir==="in"?"true":"false",onclick:()=>{S.homeDir="in";LS.set("pc.hdir","in");render();}},"回中大"))),
+    h("div",{class:"board",role:"table","aria-label":"下一班公車"}, ["zl","hsr","tpe"].map(d => boardRows(d, dir, 1))),
+    h("p",{class:"board-note"}, `今天以「${dayCtx().label}」班表計算・`, h("button",{class:"linkbtn",onclick:()=>go("transit")},"完整時刻表與搭車資訊")));
+}
+function busPage(seg){
+  const dest = S.busDest || "zl", dir = S.busDir || "out", c = dayCtx(), cur = nowMin();
+  const all = trips(dest, dir, c);
+  const cfg = busCfg();
+  const setv = (k,v) => { S[k] = v; LS.set("pc."+k, v); render(); };
+  const ridesTo = upcomingRides().filter(r => dest==="zl" ? /中壢火車站/.test(dir==="out"?r.to:r.from) : dest==="hsr" ? /高鐵/.test(dir==="out"?r.to:r.from) : /台北|松山/.test(dir==="out"?r.to:r.from));
+  const nextIdx = all.findIndex(x => !x.offBoard && x.t >= cur);
+  const where = dest==="zl" ? (dir==="out" ? "校內 5 站都能上車：前門警衛室、中大湖、依仁堂、後門、觀景台。" : "132 在中壢公車站（復興路，NET 旁）上車；133、133A 在中壢客運中壢總站（建國路 100 號，火車前站左側）上車。")
+    : dest==="hsr" ? (dir==="out" ? "從前門警衛室發車，校內另停中大湖、依仁堂、後門、觀景台。" : "高鐵桃園站出站後，到站外 8 號月台上車。")
+    : (dir==="out" ? "在中大警衛室或依仁堂站牌上車，經中壢交流道上國道 1 號。" : "松山機場 3 號候車亭上車，經行天宮，終點中壢。");
+  const ride = dest==="tpe" ? "到松山機場約 1 小時" : "車程約 20–30 分鐘";
+  const fare = dest==="tpe" ? BUS.fare["9025A"] : BUS.fare.city;
+  return h("div",{class:"stack"}, seg,
+    h("div",{class:"sphead"}, h("h1",{},"公車時刻"), h("p",{}, "依", BUS.source, "整理。標「約」的是客運的預估時間，實際以公車動態為準。")),
+    h("div",{class:"seg"}, Object.entries(DEST).map(([k,l]) => h("button",{"aria-pressed":dest===k?"true":"false",onclick:()=>setv("busDest",k)}, l))),
+    h("div",{class:"bar"},
+      h("div",{class:"seg"}, h("button",{"aria-pressed":dir==="out"?"true":"false",onclick:()=>setv("busDir","out")},"從中大出發"), h("button",{"aria-pressed":dir==="in"?"true":"false",onclick:()=>setv("busDir","in")},"回中大")),
+      h("span",{class:"spacer"}),
+      h("label",{class:"small muted",for:"day-sel",style:"display:flex;align-items:center;gap:6px"}, "班表",
+        h("select",{id:"day-sel",style:"width:auto",onchange:e=>setv("dayMode",e.target.value)}, DAYMODES.map(([k,l]) => h("option",{value:k,selected:(S.dayMode||"auto")===k}, k==="auto" ? `自動（今天：${dayCtx(new Date(),"auto").label}）` : l))))),
+    dest==="hsr" ? h("div",{class:"notice",style:"border-color:var(--plate);background:var(--sunk)"},
+      h("b",{style:"color:var(--plate)"}, cfg.hsrMode==="trial" ? "目前顯示 172A 試辦班表　" : "目前顯示一般班表　"),
+      cfg.hsrMode==="trial" ? "總務處公告的試辦期到 115/3/31（172 停駛，改開 172A 與 18:00 的 172 加班車）。公車動態目前仍只看到 172 加班車，所以先用試辦班表；若 172 恢復正常行駛，請切到一般班表。" :
+        "172、173 一般班表。若客運仍在行駛 172A 試辦路線，請切到試辦班表。",
+      " ", h("button",{class:"linkbtn",onclick:async()=>{ const m = cfg.hsrMode==="trial"?"normal":"trial"; if (S.canEdit && S.db){ try { await S.db.doc("config/bus").set({ ...cfg, hsrMode:m, checked:isoDay(new Date()) }); toast("已切換全站班表"); } catch(e){ toast(writeErr(e)); } } else { S.busCfg = { ...(S.busCfg||{}), hsrMode:m }; render(); } }}, cfg.hsrMode==="trial" ? "看一般班表" : "看試辦班表")) : null,
+    h("div",{class:"board",role:"table","aria-label":"接下來的班次"}, boardRows(dest, dir, 4)),
+    h("section",{class:"card stack",style:"gap:10px"},
+      h("div",{class:"section-title"}, h("h2",{style:"font-size:17px"}, `今天全部班次（${c.label}）`), h("span",{class:"muted small mono"}, `${all.length} 班`)),
+      all.length ? h("div",{class:"tlist"}, all.map((x,i) => h("div",{class:"trow"+(i===nextIdx?" next":x.t<cur?" past":"")},
+        h("span",{class:"mono tt"}, (x.approx?"約 ":"")+fromMin(x.t)), h("span",{class:rtClass(x.route)}, x.route), h("span",{class:"small muted"}, x.sub)))) :
+        h("p",{class:"muted small",style:"margin:0"},"這個班表今天沒有班次。")),
+    ridesTo.length || canPost() ? h("div",{class:"card bar"},
+      h("span",{style:"flex:1;min-width:200px"}, h("b",{}, "沒趕上公車？"), h("span",{class:"muted small"}, ridesTo.length ? `　目前有 ${ridesTo.length} 團拼車同方向` : "　計程車到中壢車站約 165 元，4 人分攤每人約 40 元。")),
+      ridesTo.length ? h("button",{class:"ghost",onclick:()=>{S.space.transit="rides";saveSpace();render();}},"看拼車") : null,
+      h("button",{class:"primary",disabled:!canPost(),onclick:()=>openModal({k:"ride", from: dir==="out"?"中央大學（正門）":(dest==="zl"?"中壢火車站":dest==="hsr"?"高鐵桃園站":"松山機場"), to: dir==="out"?(dest==="zl"?"中壢火車站":dest==="hsr"?"高鐵桃園站":"松山機場"):"中央大學（正門）"})},"開一團")) : null,
+    h("div",{class:"grid2"},
+      h("section",{class:"card stack",style:"gap:6px"}, h("b",{},"在哪裡上車"), h("p",{class:"small",style:"margin:0"}, where), h("p",{class:"small muted",style:"margin:0"}, ride, "・", fare, "・可刷悠遊卡、一卡通")),
+      h("section",{class:"card stack",style:"gap:6px"}, h("b",{},"搭車小提醒"),
+        h("ul",{class:"tips"},
+          h("li",{},"週五下午、連假前一天和收假日是尖峰，建議提早 30–40 分鐘到警衛室排隊，那裡有各路線的排隊標示。"),
+          h("li",{},"Google 地圖的公車時間常不準，出門前看「桃園公車動態」或 Bus+ 的即時位置。"),
+          h("li",{},"132、133 客滿時，可以走到後門外的雙連坡站搭 50 開頭的公車（如 5026、5027）往中壢。"),
+          h("li",{},"每天 23:00–05:00 校內禁止車輛深入，深夜叫車請約在前門。")))),
+    h("p",{class:"board-note"},
+      h("a",{href:"https://ebus.tycg.gov.tw/ebus",target:"_blank",rel:"noopener"},"桃園公車動態"), "・",
+      h("a",{href:"https://www.oga.ncu.edu.tw/",target:"_blank",rel:"noopener"},"中大總務處交通資訊"),
+      cfg.checked ? `・管理員最後確認 ${cfg.checked}` : "",
+      S.canEdit ? [" ・", h("button",{class:"linkbtn",onclick:()=>openModal({k:"bus"})},"管理員：班表設定")] : null));
+}
+function busSheet(){
+  const cfg = busCfg(); const err = h("p",{class:"err",hidden:true});
+  const mode = h("select",{id:"bs-mode"}, h("option",{value:"trial",selected:cfg.hsrMode==="trial"},"172A 試辦班表（172 停駛）"), h("option",{value:"normal",selected:cfg.hsrMode==="normal"},"172、173 一般班表"));
+  const ta = h("textarea",{id:"bs-breaks",style:"min-height:80px"}, (cfg.breaks||[]).map(b => `${b.label}, ${b.from}, ${b.to}`).join("\n"));
+  return sheet("班表設定",
+    h("p",{class:"muted small",style:"margin:0"},"這裡的設定會套用到所有人。各班次時間依總務處公告寫在頁面裡，公告更新時請跟我說，我會重新整理。"),
+    h("label",{class:"f",for:"bs-mode"},"高鐵線使用的班表",mode),
+    h("label",{class:"f",for:"bs-breaks"},"寒暑假期間", h("small",{},"133 在寒暑假改用假日班次。一行一段：名稱, 開始日, 結束日（例：寒假, 2027-01-18, 2027-02-21）"), ta),
+    err, foot(h("button",{class:"primary",onclick:async()=>{
+      const breaks = [];
+      for (const line of ta.value.split("\n").map(s=>s.trim()).filter(Boolean)){
+        const m = line.match(/^(.+?)[,，]\s*(\d{4}-\d{2}-\d{2})\s*[,，]\s*(\d{4}-\d{2}-\d{2})$/); if (!m) return fail(err,"格式不對："+line);
+        breaks.push({ label:m[1].trim(), from:m[2], to:m[3] }); }
+      try { await S.db.doc("config/bus").set({ hsrMode:mode.value, breaks, checked:isoDay(new Date()) }); closeModal(); toast("班表設定已更新"); } catch(e){ fail(err, writeErr(e)); } }},"儲存")));
+}
+
+/* ---------- TRANSIT ---------- */
+function upcomingRides(){ return S.rides.filter(r => r.when > Date.now() - 30*60e3).sort((a,b) => a.when-b.when); }
+function transitPage(){
+  const now = new Date(); const cur = now.getHours()*60+now.getMinutes();
+  const sub = S.space.transit || "bus";
+  const seg = h("div",{class:"seg"},
+    h("button",{"aria-pressed":sub==="rides"?"true":"false",onclick:()=>{S.space.transit="rides";saveSpace();render();}},"拼車"),
+    h("button",{"aria-pressed":sub==="bus"?"true":"false",onclick:()=>{S.space.transit="bus";saveSpace();render();}},"公車時刻"));
+  if (sub === "bus") return busPage(seg);
+  const rides = upcomingRides();
+  return h("div",{class:"stack"}, seg,
+    h("div",{class:"sphead"}, h("h1",{},"拼車"), h("p",{},"公車少又擠，就揪人一起搭計程車。開團寫好時間、起訖和人數，同路的人按「加入」就能占位，留言區直接討論集合點。")),
+    statusBanner(),
+    h("div",{class:"bar"}, h("span",{class:"muted small"}, `${rides.length} 團即將出發`), h("span",{class:"spacer"}), h("button",{class:"primary",disabled:!canPost(),onclick:()=>openModal({k:"ride"})},"開一團")),
+    rides.length ? h("div",{class:"stack"}, rides.map(rideCard)) :
+      h("div",{class:"empty"}, h("h3",{},"目前沒有人揪車"), h("p",{},"週五下午回家、週日晚上回學校最常有人一起搭。開第一團吧。"),
+        h("div",{class:"ideas"}, [["中央大學（後門）","中壢火車站"],["中央大學（正門）","高鐵桃園站"],["高鐵桃園站","中央大學（正門）"]].map(([a,b]) => h("button",{disabled:!canPost(),onclick:()=>openModal({k:"ride",from:a,to:b})},`${a} → ${b}`)))));
+}
+function rideCard(r){
+  const riders = [...(S.riders[r.id]?.values()||[])];
+  const taken = 1 + riders.length; const total = r.seats;
+  const joined = S.uid && S.riders[r.id]?.has(S.uid);
+  const mine = r.uid && r.uid === S.uid;
+  const w = fmtWhen(r.when);
+  const left = Math.max(0,total-taken);
+  const isOpen = S.open === "ride:"+r.id;
+  const card = h("article",{class:"card ride"},
+    h("div",{class:"clock"}, h("b",{},w.time), h("small",{},w.day)),
+    h("div",{class:"route"}, h("b",{}, r.from, " → ", r.to), h("small",{}, r.nick, "・", r.split || "車資平分", r.note ? `・${r.note}` : "")),
+    h("div",{class:"side",style:"display:flex;flex-direction:column;align-items:flex-end;gap:4px"},
+      h("span",{class:"seats","aria-label":`${taken}/${total} 人`}, Array.from({length:total},(_,i)=>h("i",{class:i<taken?"on":""}))),
+      h("small",{class:"muted mono"}, left ? `剩 ${left} 位` : "已滿")),
+    h("div",{class:"ride-acts"},
+      mine ? h("span",{class:"status ok"},"你開的團") :
+        joined ? h("button",{class:"ghost",onclick:()=>leaveRide(r)},"退出") :
+        h("button",{class:"primary",disabled:!canPost()||!left,onclick:()=>joinRide(r)}, left ? "加入" : "已額滿"),
+      riders.length ? h("span",{class:"muted"}, "已加入：", riders.join("、")) : null,
+      h("span",{class:"spacer"}),
+      h("button",{class:"linkbtn",onclick:()=>isOpen?closeThread():openThread("ride:"+r.id)}, isOpen ? "收起討論" : "討論集合點"),
+      mine || S.isOwner ? h("button",{class:"linkbtn",onclick:()=>openModal({k:"delride",id:r.id})},"取消這團") : null));
+  if (isOpen){ const th = thread("rides/"+r.id+"/comments"); th.style.gridColumn = "1/-1"; card.append(th); }
+  return card;
+}
+async function joinRide(r){ try { await S.db.doc(`riders/${r.id}__${S.uid}`).set({ ride:r.id, uid:S.uid, nick:S.nick, ts:Date.now() }); toast("已加入，記得到討論區約集合點"); } catch(e){ toast(writeErr(e)); } }
+async function leaveRide(r){ try { await S.db.doc(`riders/${r.id}__${S.uid}`).delete(); toast("已退出"); } catch(e){ toast(writeErr(e)); } }
+
+/* ---------- HOUSING ---------- */
+function housingPage(){
+  const seg = S.housingSeg;
+  const segBar = h("div",{class:"seg"},
+    [["off","校外租屋"],["dorm","校內宿舍"],["boards","租屋看板"]].map(([k,l]) => h("button",{"aria-pressed":seg===k?"true":"false",onclick:()=>{ S.housingSeg=k; LS.set("pc.hseg",k); const cur = S.space.housing; const ok = cur && ((k==="off"&&cur.startsWith("h"))||(k==="dorm"&&cur.startsWith("d:"))||(k==="boards"&&cur.startsWith("hb:"))); if(!ok){ S.space.housing = k==="boards"?"hb:review":null; saveSpace(); } closeThread(); presence(); render(); }},l)));
+  let sel = S.space.housing;
+  const inSeg = sel && ((seg==="off"&&(sel.startsWith("h:")||sel.startsWith("hz:")))||(seg==="dorm"&&sel.startsWith("d:"))||(seg==="boards"&&sel.startsWith("hb:")));
+  if (!inSeg) sel = seg==="boards" ? "hb:review" : null;
+  const out = h("div",{class:"stack"}, segBar);
+  if (seg==="boards"){
+    out.append(h("div",{class:"chips"}, ["hb:review","hb:list","hb:mate"].map(id => h("button",{class:"chip","aria-pressed":sel===id?"true":"false",onclick:()=>{S.space.housing=id;saveSpace();S.filter="";closeThread();presence();render();}}, SPACES[id].name))));
+    out.append(spaceView(sel));
+    return out;
+  }
+  const dir = h("div",{class:"dir"});
+  if (seg==="off"){
+    ZONES.forEach(z => {
+      const locs = allLocs().filter(l => l.zone===z.id);
+      dir.append(h("details",{open: sel ? spaceById(sel)?.zone===z.id : ["back","232","216"].includes(z.id)},
+        h("summary",{}, z.name, h("small",{}, `${locs.length} 處`)),
+        h("div",{class:"opts"},
+          spBtn(`hz:${z.id}`, "全區廣播", sel),
+          locs.map(l => spBtn("h:"+l.id, l.name, sel, l.lane)))));
+    });
+    dir.append(h("div",{class:"bar"}, h("button",{class:"ghost",onclick:()=>openModal({k:"loc"})},"＋ 找不到你的租屋處？新增")));
+  } else {
+    dir.append(h("div",{class:"opts",style:"display:flex;flex-wrap:wrap;gap:8px"}, spBtn("d:all","宿舍綜合",sel)));
+    DORMS.forEach(([area, list]) => dir.append(h("details",{open: sel ? spaceById(sel)?.area===area : true},
+      h("summary",{}, area, h("small",{}, `${list.length} 棟`)),
+      h("div",{class:"opts"}, list.map(([id,name,tag]) => spBtn("d:"+id, name, sel, tag))))));
+  }
+  out.append(dir);
+  if (sel) out.append(spaceView(sel));
+  else out.append(h("div",{class:"info"}, seg==="off" ? "選一棟租屋處進入它的大廳，或選「全區廣播」看整條路的公告。" : "選一棟宿舍進入它的大廳。"));
+  return out;
+}
+function spBtn(id, label, sel, extra){
+  const n = postsIn(id).length;
+  return h("button",{class:"spbtn","aria-current":sel===id?"true":"false",onclick:()=>{ S.space[S.tab]=id; saveSpace(); S.filter=""; closeThread(); presence(); render(); }},
+    label, extra ? h("span",{class:"lane"},extra) : null, n ? h("span",{class:"n"},n) : null);
+}
+
+/* ---------- CAMPUS ---------- */
+function campusPage(){
+  const sel = S.space.campus || S.dept || "g:chat";
+  const dir = h("div",{class:"dir"},
+    h("div",{class:"chips"}, Object.values(SPACES).filter(s => s.group==="綜合").map(s => h("button",{class:"chip","aria-pressed":sel===s.id?"true":"false",onclick:()=>{S.space.campus=s.id;saveSpace();S.filter="";closeThread();presence();render();}}, s.name))),
+    h("details",{open: sel.startsWith("dept:")},
+      h("summary",{}, "系所看板", h("small",{}, sel.startsWith("dept:") ? spaceById(sel)?.name : "依學院分")),
+      h("div",{class:"stack",style:"padding:0 14px 14px;gap:10px"}, DEPTS.map(([college, list]) =>
+        h("div",{class:"stack",style:"gap:6px"}, h("p",{class:"eyebrow"},college),
+          h("div",{style:"display:flex;flex-wrap:wrap;gap:8px"}, list.map((d,i) => spBtn(`dept:${college}:${i}`, d, sel))))))));
+  return h("div",{class:"stack"}, dir, spaceView(sel));
+}
+
+/* ---------- SPACE VIEW (feed) ---------- */
+function onlineIn(id){
+  const seen = new Map();
+  for (const p of S.peers){ if (p.kind!=="viewer" || p.isMe || !p.by) continue; if (p.presence?.where === id && !seen.has(p.by)) seen.set(p.by, String(p.presence.nick||"匿名").slice(0,16)); }
+  return [...seen.entries()];
+}
+function spaceView(id){
+  const sp = spaceById(id);
+  if (!sp) return h("div",{class:"info"},"找不到這個版，可能已被移除。");
+  const out = h("section",{class:"stack"});
+  const badge = sp.loc ? plate([ZONES.find(z=>z.id===sp.zone)?.name, sp.lane].filter(Boolean).join(" ")) :
+                sp.dorm ? plate(`${sp.area}・${sp.tag}`) : sp.college ? h("span",{class:"where"},sp.college) : null;
+  out.append(h("div",{class:"sphead"}, badge ? h("div",{},badge) : null, h("h1",{}, sp.name + (sp.hub ? " 大廳" : "")), h("p",{}, sp.desc)));
+  if (sp.tab==="housing" || sp.tab==="market"){
+    const on = onlineIn(id);
+    out.append(h("div",{class:"online-row"},
+      h("span",{class:"muted"}, S.room ? (on.length ? `目前在線 ${on.length} 人：` : "目前沒有其他人在這裡") : "在線狀態無法使用"),
+      on.map(([uid,nick]) => h("button",{class:"person",title:"提出私訊請求",onclick:()=>openModal({k:"dmreq",to:uid,toNick:nick,from:id})}, h("i",{},initial(nick)), nick))));
+  }
+  const st = statusBanner(); if (st) out.append(st);
+  if (sp.review) out.append(h("div",{class:"notice"}, h("b",{},"免責聲明　"), DISCLAIMER));
+  const list = postsIn(id);
+  const bar = h("div",{class:"bar"},
+    h("div",{class:"chips"},
+      h("button",{class:"chip","aria-pressed":S.filter===""?"true":"false",onclick:()=>{S.filter="";render();}},"全部"),
+      sp.cats.map(c => h("button",{class:"chip","aria-pressed":S.filter===c?"true":"false",onclick:()=>{S.filter=c;render();}},c))),
+    h("span",{class:"spacer"}),
+    h("select",{id:"sort-sel","aria-label":"排序",style:"width:auto",onchange:e=>{S.sort=e.target.value;render();}},
+      h("option",{value:"new",selected:S.sort==="new"},"最新"), h("option",{value:"hot",selected:S.sort==="hot"},"熱門")),
+    sp.hub && S.home !== id ? h("button",{class:"ghost",onclick:()=>{ S.home=id; LS.set("pc.home",id); saveProfile(); toast("已設為我住的地方"); render(); }},"我住這裡") : null,
+    sp.college && S.dept !== id ? h("button",{class:"ghost",onclick:()=>{ S.dept=id; LS.set("pc.dept",id); saveProfile(); toast("已設為我的系"); render(); }},"這是我的系") : null,
+    h("button",{class:"primary",disabled:!canPost(),onclick:()=>openModal({k:"post",space:id})},"發文"));
+  out.append(bar);
+  if (S.dbState==="loading"){ out.append(h("div",{class:"info"},"正在載入貼文…")); return out; }
+  let shown = list.filter(p => !S.filter || p.cat===S.filter);
+  if (S.sort==="hot") shown = [...shown].sort((a,b) => likeCount(b.id)-likeCount(a.id) || b.ts-a.ts);
+  if (!shown.length){
+    const ideas = IDEAS[id] || (sp.hub ? IDEAS.hub : IDEAS.default);
+    out.append(h("div",{class:"empty"}, h("h3",{}, list.length ? `「${S.filter}」分類還沒有貼文` : "這裡還沒有人發文"),
+      h("p",{},"當第一個開口的人。點一個開頭直接開始寫："),
+      h("div",{class:"ideas"}, ideas.map(t => h("button",{disabled:!canPost(),onclick:()=>openModal({k:"post",space:id,prefill:t})},t)))));
+    return out;
+  }
+  out.append(h("div",{class:"feed"}, shown.map(postCard)));
+  return out;
+}
+function dots(n){ return h("span",{class:"dots","aria-label":n+" / 5"}, [1,2,3,4,5].map(i => h("i",{class:i<=n?"on":""}))); }
+function postCard(p){
+  const hidden = isHidden(p);
+  const card = h("article",{class:"card post"+(hidden?" hidden-post":"")});
+  const locName = p.about && spaceById(p.about)?.name;
+  card.append(h("div",{class:"meta"},
+    h("span",{class:"cat"+(p.cat==="避雷"?" warn":"")},p.cat),
+    locName ? plate(locName) : null,
+    h("span",{}, p.nick, p.oneTime ? "（一次性）" : ""),
+    h("time",{class:"mono",datetime:new Date(p.ts).toISOString()}, ago(p.ts))));
+  if (hidden && !S.isOwner && p.uid!==S.uid){ card.append(h("p",{class:"body muted"},"這篇貼文已被 3 位以上使用者檢舉，暫時隱藏，等待管理員審核。")); return card; }
+  if (hidden) card.append(h("div",{class:"info"}, `已被檢舉 ${reportCount(p.id)} 次，其他人目前看不到這篇。`, S.isOwner ? [" ", h("button",{class:"linkbtn",onclick:()=>clearReports(p.id)},"審核通過，恢復顯示")] : null));
+  card.append(h("h3",{},p.title));
+  if (p.price) card.append(h("div",{class:"price"}, p.price));
+  if (p.rent) card.append(h("div",{class:"price"}, p.rent, p.htype ? h("span",{class:"muted small",style:"font-family:var(--f-body);font-weight:400"},"　"+p.htype) : null));
+  if (p.ratings) card.append(h("div",{class:"scores"}, [["隔音",p.ratings.sound],["房東態度",p.ratings.landlord],["CP 值",p.ratings.cp]].map(([k,n]) => h("div",{class:"score"},k,dots(n)))));
+  card.append(h("p",{class:"body"},p.body));
+  const isOpen = S.open===p.id, mine = p.uid && p.uid===S.uid;
+  const liked = S.uid && S.likes[p.id]?.has(S.uid);
+  const reported = S.uid && S.reports[p.id]?.has(S.uid);
+  const sp = spaceById(p.space);
+  card.append(h("div",{class:"acts"},
+    h("button",{class:liked?"liked":"",disabled:!canPost(),onclick:()=>toggleLike(p),"aria-pressed":liked?"true":"false"}, icon("heart"), h("span",{class:"mono"}, likeCount(p.id))),
+    h("button",{onclick:()=>isOpen?closeThread():openThread(p.id),"aria-expanded":isOpen?"true":"false"}, icon("reply"), isOpen?"收起":"留言"),
+    !mine && p.uid && canPost() && sp && (sp.tab==="housing"||sp.tab==="market") ? h("button",{onclick:()=>openModal({k:"dmreq",to:p.uid,toNick:p.nick,from:p.space})}, icon("lock"),"私訊") : null,
+    !mine && canPost() ? h("button",{disabled:reported,onclick:()=>openModal({k:"report",pid:p.id})}, icon("flag"), reported?"已檢舉":"檢舉") : null,
+    mine || S.isOwner ? h("button",{onclick:()=>openModal({k:"del",pid:p.id})}, icon("trash"),"刪除") : null));
+  if (isOpen) card.append(thread("posts/"+p.id+"/comments"));
+  return card;
+}
+async function toggleLike(p){
+  const ref = S.db.doc(`likes/${p.id}__${S.uid}`);
+  try { if (S.likes[p.id]?.has(S.uid)) await ref.delete(); else await ref.set({ post:p.id, uid:S.uid }); } catch(e){ toast(writeErr(e)); }
+}
+function thread(path){
+  const box = h("div",{class:"thread"});
+  if (!S.comments.length) box.append(h("p",{class:"muted small",style:"margin:0"},"還沒有留言。"));
+  for (const c of S.comments) box.append(h("div",{class:"cmt"}, h("span",{class:"who"}, c.nick, " · ", h("span",{class:"mono"},ago(c.ts))), h("span",{style:"white-space:pre-wrap;overflow-wrap:anywhere"},c.body)));
+  if (canPost()){
+    const inp = h("input",{type:"text",id:"cmt-in",maxlength:"500",placeholder:`以「${S.nick}」留言…`,"aria-label":"留言內容"});
+    const send = async () => { const body = inp.value.trim(); if (!body) return; inp.disabled = true;
+      try { await S.db.collection(path).add({ body, nick:S.nick, uid:S.uid||"", ts:Date.now() }); inp.value=""; } catch(e){ toast(writeErr(e)); }
+      inp.disabled = false; inp.focus(); };
+    inp.addEventListener("keydown", e => { if (e.key==="Enter" && !e.isComposing) send(); });
+    box.append(h("div",{class:"cform"}, inp, h("button",{class:"ghost",onclick:send},"送出")));
+  }
+  return box;
+}
+function openThread(key){
+  closeThread(); S.open = key; S.comments = [];
+  const path = key.startsWith("ride:") ? "rides/"+key.slice(5)+"/comments" : key.startsWith("food:") ? "food/"+key.slice(5)+"/comments" : "posts/"+key+"/comments";
+  if (S.db) S.unsubComments = S.db.collection(path).orderBy("ts","asc").limit(300).onSnapshot(s => { S.comments = s.docs.map(d=>d.data()); renderKeep(); }, ()=>{});
+  render();
+}
+function closeThread(){ if (S.unsubComments){ S.unsubComments(); S.unsubComments=null; } S.open=null; S.comments=[]; }
+
+/* ---------- INBOX & ENCRYPTED DM ---------- */
+const tidOf = (a,b) => [a,b].sort().join("__");
+function inboxPage(){
+  if (S.chat) return chatView();
+  const st = statusBanner();
+  const incoming = S.reqIn.filter(r => r.status==="pending");
+  const threads = [...S.reqIn, ...S.reqOut].filter(r => r.status==="accepted")
+    .map(r => r.from===S.uid ? { peer:r.to, nick:r.toNick, ts:r.ts } : { peer:r.from, nick:r.fromNick, ts:r.ts });
+  const uniq = [...new Map(threads.map(t => [t.peer, t])).values()];
+  const out = S.reqOut.filter(r => r.status!=="accepted");
+  return h("div",{class:"stack"},
+    h("div",{class:"sphead"}, h("h1",{},"私訊"), h("p",{},"在住宿、市集看到在線的人或貼文作者，可以提出私訊請求。對方同意後才會開啟對話，訊息在你的瀏覽器裡加密，只有你們兩個人看得到內容。")),
+    st,
+    h("section",{class:"stack"}, h("div",{class:"section-title"}, h("h2",{},"收到的請求")),
+      incoming.length ? h("div",{class:"stack"}, incoming.map(r => h("div",{class:"card req"},
+        h("div",{class:"t"}, h("b",{}, r.fromNick), " 想跟你私訊", h("small",{}, `來自 ${spaceLabel(r.space)}・${ago(r.ts)}`), r.note ? h("div",{style:"margin-top:4px"},"「",r.note,"」") : null),
+        h("button",{class:"ghost",onclick:()=>answerReq(r,"declined")},"拒絕"), h("button",{class:"primary",onclick:()=>answerReq(r,"accepted")},"同意")))) :
+        h("p",{class:"muted small",style:"margin:0"},"目前沒有待回覆的請求。")),
+    h("section",{class:"stack"}, h("div",{class:"section-title"}, h("h2",{},"對話")),
+      uniq.length ? h("div",{class:"card list"}, uniq.map(t => h("button",{class:"li",onclick:()=>openChat(t.peer,t.nick)}, h("span",{class:"t"}, t.nick), h("small",{class:"lock"}, icon("lock"),"加密對話")))) :
+        h("div",{class:"empty"}, h("h3",{},"還沒有對話"), h("p",{},"到住宿的大廳看看誰在線，點他的暱稱就能提出私訊請求。"), h("button",{class:"ghost",onclick:()=>go("housing")},"去住宿大廳"))),
+    out.length ? h("section",{class:"stack"}, h("div",{class:"section-title"}, h("h2",{},"我送出的請求")),
+      h("div",{class:"card list"}, out.map(r => h("div",{class:"li"}, h("span",{class:"t"}, r.toNick), h("span",{class:"status"+(r.status==="declined"?" no":"")}, r.status==="declined"?"對方婉拒":"等待回覆"))))) : null);
+}
+async function answerReq(r, status){ try { await S.db.doc(`dmreq/${r.id}`).update({ status, answeredAt:Date.now() }); toast(status==="accepted"?"已同意，可以開始對話":"已拒絕"); if (status==="accepted") openChat(r.from, r.fromNick); } catch(e){ toast(writeErr(e)); } }
+
+let myKeys = null; const sharedKeys = {};
+const b64 = buf => btoa(String.fromCharCode(...new Uint8Array(buf)));
+const unb64 = s => Uint8Array.from(atob(s), c => c.charCodeAt(0));
+async function ensureKeys(){
+  if (myKeys || !S.db || !S.uid || !crypto?.subtle) return myKeys;
+  const ref = S.db.doc(`data/users/${S.uid}/keys`);
+  const snap = await ref.get();
+  let priv, pub;
+  if (snap.exists){ ({ priv, pub } = snap.data()); }
+  else {
+    const kp = await crypto.subtle.generateKey({ name:"ECDH", namedCurve:"P-256" }, true, ["deriveKey"]);
+    priv = await crypto.subtle.exportKey("jwk", kp.privateKey); pub = await crypto.subtle.exportKey("jwk", kp.publicKey);
+    await ref.set({ priv, pub });
+  }
+  const pubDoc = await S.db.doc(`keys/${S.uid}`).get();
+  if (!pubDoc.exists || pubDoc.data().pub?.x !== pub.x) await S.db.doc(`keys/${S.uid}`).set({ pub });
+  myKeys = { priv: await crypto.subtle.importKey("jwk", priv, { name:"ECDH", namedCurve:"P-256" }, false, ["deriveKey"]) };
+  return myKeys;
+}
+async function keyWith(peer){
+  if (sharedKeys[peer]) return sharedKeys[peer];
+  await ensureKeys(); if (!myKeys) throw new Error("nokey");
+  const d = await S.db.doc(`keys/${peer}`).get(); if (!d.exists) throw new Error("peerkey");
+  const pub = await crypto.subtle.importKey("jwk", d.data().pub, { name:"ECDH", namedCurve:"P-256" }, false, []);
+  sharedKeys[peer] = await crypto.subtle.deriveKey({ name:"ECDH", public:pub }, myKeys.priv, { name:"AES-GCM", length:256 }, false, ["encrypt","decrypt"]);
+  return sharedKeys[peer];
+}
+function openChat(peer, nick){
+  closeChat(); S.chat = { peer, nick, err:"" }; S.chatMsgs = []; S.tab = "inbox"; LS.set("pc.tab","inbox");
+  const tid = tidOf(S.uid, peer);
+  S.unsubChat = S.db.collection(`dms/${tid}/msgs`).orderBy("ts","asc").limit(500).onSnapshot(async snap => {
+    let key; try { key = await keyWith(peer); } catch { S.chat && (S.chat.err = "對方還沒開啟過松果的私訊功能，請等對方上線後再試。"); renderKeep(); return; }
+    const out = [];
+    for (const d of snap.docs){ const m = d.data();
+      try { const pt = await crypto.subtle.decrypt({ name:"AES-GCM", iv:unb64(m.iv) }, key, unb64(m.ct)); out.push({ mine:m.from===S.uid, text:new TextDecoder().decode(pt), ts:m.ts }); }
+      catch { out.push({ mine:m.from===S.uid, text:"（無法解密這則訊息）", ts:m.ts }); } }
+    S.chatMsgs = out; renderKeep();
+  }, () => {});
+  render();
+}
+function closeChat(){ if (S.unsubChat){ S.unsubChat(); S.unsubChat=null; } S.chat=null; S.chatMsgs=[]; }
+function chatView(){
+  const c = S.chat;
+  const inp = h("input",{type:"text",id:"dm-in",maxlength:"1000",placeholder:"輸入訊息…","aria-label":"訊息"});
+  const send = async () => { const text = inp.value.trim(); if (!text) return; inp.disabled = true;
+    try { const key = await keyWith(c.peer); const iv = crypto.getRandomValues(new Uint8Array(12));
+      const ct = await crypto.subtle.encrypt({ name:"AES-GCM", iv }, key, new TextEncoder().encode(text));
+      await S.db.collection(`dms/${tidOf(S.uid,c.peer)}/msgs`).add({ from:S.uid, iv:b64(iv), ct:b64(ct), ts:Date.now() }); inp.value=""; }
+    catch(e){ toast(e && e.code ? writeErr(e) : "對方還沒開啟過私訊功能，暫時無法傳送。"); }
+    inp.disabled=false; inp.focus(); };
+  inp.addEventListener("keydown", e => { if (e.key==="Enter" && !e.isComposing) send(); });
+  return h("div",{class:"stack"},
+    h("div",{class:"bar"}, h("button",{class:"ghost",onclick:()=>{closeChat();render();}},"← 返回"), h("h1",{style:"margin:0;font-family:var(--f-display);font-size:22px"}, c.nick), h("span",{class:"lock"}, icon("lock"),"端對端加密")),
+    c.err ? h("div",{class:"info"}, c.err) : null,
+    h("div",{class:"card chat"}, S.chatMsgs.length ? S.chatMsgs.map(m => h("div",{class:"msg"+(m.mine?" mine":"")}, m.text, h("small",{}, fmtWhen(m.ts).time))) :
+      h("p",{class:"muted small",style:"margin:0"},"打聲招呼吧。要不要交換 LINE 或其他聯絡方式，由你們自己決定。")),
+    h("div",{class:"cform"}, inp, h("button",{class:"primary",onclick:send},"傳送")));
+}
+
+/* =====================================================================
+   FOOD MAP — self-drawn, pannable map (live map tiles can't load inside this page)
+   ===================================================================== */
+const ORIGIN = { lat:24.96879, lng:121.19552 };          // 中央大學正門警衛室 (bus stop coordinate)
+const MLAT = 110574, MLNG = 111320*Math.cos(ORIGIN.lat*Math.PI/180);
+const toXY = (lat,lng) => ({ x:(lng-ORIGIN.lng)*MLNG, y:-(lat-ORIGIN.lat)*MLAT });
+const toLL = (x,y) => ({ lat: ORIGIN.lat - y/MLAT, lng: ORIGIN.lng + x/MLNG });
+const LANDMARKS_DEFAULT = [
+  { name:"中大正門", lat:24.96879, lng:121.19552 },
+  { name:"中壢火車站（約略）", lat:24.9537, lng:121.2257 },
+  { name:"高鐵桃園站（約略）", lat:25.0130, lng:121.2152 },
+];
+const FOOD_CATS = [
+  ["正餐","--fc1"],["小吃","--fc2"],["早餐","--fc3"],["飲料咖啡","--fc4"],["宵夜","--fc5"],["甜點","--fc6"],
+];
+const FOOD_WALK = 80; // meters per minute walking
+const catVar = c => (FOOD_CATS.find(x => x[0]===c) || FOOD_CATS[0])[1];
+const distM = f => Math.hypot(toXY(f.lat,f.lng).x, toXY(f.lat,f.lng).y);
+const fmtDist = m => m < 1000 ? `${Math.round(m/10)*10} m` : `${(m/1000).toFixed(1)} km`;
+const gmapsLink = f => `https://www.google.com/maps/search/?api=1&query=${f.lat.toFixed(6)},${f.lng.toFixed(6)}`;
+const gmapsName = f => `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(f.name+" 中壢")}`;
+function parseCoords(s){
+  if (!s) return null; s = decodeURIComponent(s);
+  let m = s.match(/!3d(-?\d+\.\d+)!4d(-?\d+\.\d+)/) || s.match(/@(-?\d+\.\d+),\s*(-?\d+\.\d+)/) || s.match(/[?&](?:q|query|ll)=(-?\d+\.\d+),\s*(-?\d+\.\d+)/) || s.match(/(-?\d{1,2}\.\d{3,})\s*[,，\s]\s*(-?\d{2,3}\.\d{3,})/);
+  if (!m) return null; const lat = +m[1], lng = +m[2];
+  if (lat < 24.5 || lat > 25.4 || lng < 120.8 || lng > 121.6) return null;
+  return { lat, lng };
+}
+const foodRating = id => { const r = S.foodRates[id]; if (!r || !r.size) return null; let t = 0; r.forEach(v => t += v); return { avg: t/r.size, n: r.size }; };
+const landmarks = () => S.landmarks || LANDMARKS_DEFAULT;
+
+
+/* Restaurant guide: researched list (name, area, type, address). Not positioned on the map until someone pins it. */
+const FOOD_GUIDE_SRC = "「中央大學123家餐廳」全蒐錄（jfsblog）";
+const FOOD_GUIDE = [
+  ["校內", [["小木屋鬆餅","甜點","志希館"],["麵屋喜多","正餐","女14舍"],["賈董的麵","正餐","女14舍"],["拉亞漢堡","早餐","女14舍"],
+    ["MOS摩斯漢堡","正餐","松苑餐廳"],["麥味登","早餐","松苑餐廳"],["三顧茅廬","正餐","松苑餐廳"],["食上屋","正餐","松苑餐廳"],
+    ["松果自助餐","正餐","松果餐廳（男7舍）"],["胖老爹美式炸雞","小吃","松果餐廳（男7舍）"],["喬治奶奶","正餐","松果餐廳（男7舍）"],["等你下課Brunch","早餐","松果餐廳（男7舍）"],
+    ["品好自助餐","正餐","九舍餐廳"],["A華加湯滷味","小吃","九舍餐廳"],["四海遊龍","小吃","九舍餐廳"]]],
+  ["後門・中央路", [["秈春坊素食","正餐","平鎮區中央路185號"],["福泉豆花","甜點","平鎮區中央路177號"],["27°秀梅","正餐","平鎮區中央路171號"],
+    ["米豆簡餐","正餐","平鎮區中央路161號"],["津知園排骨","正餐","平鎮區中央路159號"],["廚窗食坊","正餐","平鎮區中央路157號"],["迷路義麵屋","正餐","平鎮區中央路151號"],
+    ["米樂義大利","正餐","平鎮區中央路147號"],["知味傳統小吃館","小吃","平鎮區中央路147號"],["麥克小姐早午餐","早餐","平鎮區中央路145號"],
+    ["福陞牛肉麵","正餐","平鎮區中央路137號"],["白胡子平價牛排","正餐","平鎮區中央路133號"],["HOLOthé 福祿茶","飲料咖啡","平鎮區中央路87號"],
+    ["阿米玲食堂","正餐","中壢區中央路212號"],["熟檸檬食肆","正餐","中壢區中央路210號"],["達啵廚房","正餐","中壢區中央路200號之2"],
+    ["馬爾波咖啡","飲料咖啡","中壢區中央路178號"],["Daddy's","正餐","中壢區中央路170號"]]],
+  ["中央路 216・232 巷", [["幸福時刻波蘭餐廳","正餐","中壢區中央路216巷8號"],["Backdoor Café 胡思胡作","飲料咖啡","中壢區中央路216巷9號"],
+    ["No.17 White House","正餐","中壢區中央路216巷17號"],["吉米熊新點子早午餐","早餐","中壢區中央路216巷35號"],["Sidewalk人行道蔬食","正餐","中壢區中央路216巷39號"],
+    ["哈堡堡輕食早午餐","早餐","中壢區中央路232巷2號"],["忠貞米干米線","正餐","中壢區中央路232巷41之3號"]]],
+  ["宵夜街・五興路", [["無敵蛋餅","宵夜","中壢區五興路347號"],["鬼島手作炭烤漢堡","宵夜","中壢區五興路345號"],["提齊熱壓吐司","宵夜","中壢區五興路329號"],
+    ["山頂丼人","正餐","中壢區五興路390號"],["咖哩老師","正餐","中壢區五興路392號"],["微笑轉角廚房","正餐","中壢區五興路388號"],
+    ["川．一品鍋","正餐","中壢區五興路416號"],["阿拉丁魔法咖哩","正餐","中壢區五興路416號2樓"],["香恬園","正餐","中壢區五興路412號"],
+    ["香城燒臘小館","正餐","中壢區五興路331巷2號"],["早安美芝城","早餐","中壢區五興路331巷9號"],["傻師傅湯包","小吃","中壢區五興路331巷28號"],
+    ["大溪豆花","甜點","中壢區五興路331巷36號"],["內卡小館","正餐","中壢區五興路331巷42號"],["雙寶爸涼麵","小吃","中壢區五興路331巷50號"],
+    ["㸆窯","正餐","中壢區五興路331巷56號"],["小紅牛平價牛排","正餐","中壢區五興路331巷58號"]]],
+  ["其他", [["友竹居茶藝館","飲料咖啡","中壢區中大路32號"]]],
+];
+const gSearch = (name, addr) => `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(name+" "+(/[路巷號]/.test(addr)?"桃園市"+addr:"中央大學 "+addr))}`;
+function foodGuide(){
+  const onMap = new Set(S.food.map(f => norm(f.name)));
+  const area = S.foodGuideArea || FOOD_GUIDE[0][0];
+  const cur = FOOD_GUIDE.find(g => g[0]===area) || FOOD_GUIDE[0];
+  const items = cur[1].filter(([n,c]) => (!S.foodFilter || c===S.foodFilter) && !onMap.has(norm(n)));
+  return h("section",{class:"stack"},
+    h("div",{class:"section-title"}, h("h2",{},"附近店家指南"), h("span",{class:"muted small"}, "還沒標上地圖的店")),
+    h("p",{class:"board-note"}, "整理自", FOOD_GUIDE_SRC, "，可能有店已歇業或搬家。吃過的話，按「標上地圖」幫大家定位。"),
+    h("div",{class:"chips"}, FOOD_GUIDE.map(([a,l]) => h("button",{class:"chip","aria-pressed":a===cur[0]?"true":"false",onclick:()=>{S.foodGuideArea=a;render();}}, a, " ", h("span",{class:"mono"},l.length)))),
+    items.length ? h("div",{class:"card list"}, items.map(([n,c,addr]) => h("div",{class:"li",style:"flex-wrap:wrap"},
+      h("span",{class:"t",style:"white-space:normal"}, h("i",{class:"cdot",style:`background:var(${catVar(c)})`}), n, h("span",{class:"muted small"},"　",c,"・",addr)),
+      h("span",{style:"display:flex;gap:12px;flex:none"},
+        h("a",{class:"linkbtn",href:gSearch(n,addr),target:"_blank",rel:"noopener"},"Google 地圖"),
+        h("button",{class:"linkbtn",disabled:!canPost(),onclick:()=>openModal({k:"food",st:{ cat:c, price:1, pos:null, name:n, note:"", hours:"", coord:"" }})},"標上地圖"))))) :
+      h("p",{class:"muted small",style:"margin:0"},"這一區的店都已經標上地圖了。"));
+}
+
+if (!S.map) S.map = LS.json("pc.map2", { lat:24.9668, lng:121.1925, z:16 });
+let mapPlacing = null;   // callback while picking a spot
+
+function foodPage(){
+  const f = S.foodFilter || "";
+  const list = S.food.filter(x => !f || x.cat===f).map(x => ({ ...x, d: distM(x) }))
+    .sort((a,b) => S.foodSort==="rate" ? ((foodRating(b.id)?.avg||0) - (foodRating(a.id)?.avg||0)) : a.d - b.d);
+  const sel = S.food.find(x => x.id === S.foodSel);
+  return h("div",{class:"stack"},
+    h("div",{class:"sphead"}, h("h1",{},"中大美食地圖"), h("p",{},"大家一起標的店。拖曳移動、滾輪或雙指縮放；點店家看評分與留言，一鍵用 Google 地圖導航。")),
+    statusBanner(),
+    h("div",{class:"bar"},
+      h("div",{class:"chips"},
+        h("button",{class:"chip","aria-pressed":f===""?"true":"false",onclick:()=>{S.foodFilter="";render();}},"全部"),
+        FOOD_CATS.map(([c,v]) => h("button",{class:"chip","aria-pressed":f===c?"true":"false",onclick:()=>{S.foodFilter=c;render();}}, h("i",{class:"cdot",style:`background:var(${v})`}), c))),
+      h("span",{class:"spacer"}),
+      h("button",{class:"primary",disabled:!canPost(),onclick:()=>openModal({k:"food"})},"＋ 標一間店")),
+    mapView(list),
+    h("p",{class:"board-note"},"虛線圓圈是從中大正門算起的步行距離。要導航請點店家，再用 Google 地圖開啟。", S.canEdit ? [" ", h("button",{class:"linkbtn",onclick:()=>openModal({k:"landmarks"})},"管理員：編輯地標")] : null),
+    sel ? foodDetail(sel) : null,
+    h("div",{class:"section-title"}, h("h2",{}, `${list.length} 間店`),
+      h("select",{id:"food-sort","aria-label":"排序",style:"width:auto",onchange:e=>{S.foodSort=e.target.value;render();}},
+        h("option",{value:"dist",selected:S.foodSort!=="rate"},"離正門最近"), h("option",{value:"rate",selected:S.foodSort==="rate"},"評分最高"))),
+    list.length ? h("div",{class:"card list"}, list.map(x => { const r = foodRating(x.id);
+      return h("button",{class:"li",onclick:()=>{ S.foodSel = x.id; centerOn(x); render(); window.scrollTo({top:0,behavior:"smooth"}); }},
+        h("span",{class:"t"}, h("i",{class:"cdot",style:`background:var(${catVar(x.cat)})`}), x.name, h("span",{class:"muted small"}, "　", x.cat, "・", "$".repeat(x.price||1))),
+        h("small",{class:"mono"}, r ? `★ ${r.avg.toFixed(1)}（${r.n}）・` : "", fmtDist(x.d), "・走路約 ", Math.max(1,Math.round(x.d/FOOD_WALK)), " 分")); })) :
+      h("div",{class:"empty"}, h("h3",{}, S.dbState==="loading" ? "載入中…" : "地圖上還沒有店"), h("p",{},"把你常吃的店標上去，附上必點和價位，學弟妹會感謝你。"),
+        h("button",{class:"primary",disabled:!canPost(),onclick:()=>openModal({k:"food"})},"標第一間店")),
+    foodGuide());
+}
+function centerOn(f){ if (LMAP) LMAP.setView([f.lat,f.lng], Math.max(LMAP.getZoom(), 17)); else { S.map = { lat:f.lat, lng:f.lng, z:17 }; LS.set("pc.map2", JSON.stringify(S.map)); } }
+const esc = s => String(s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+let LMAP = null, LEL = null, LLAYER = null;
+/* Real map: Leaflet + OpenStreetMap tiles. The map element is created once and re-attached on every render. */
+function mapView(list){
+  if (!window.L) return h("div",{class:"info"},"地圖載入失敗，請檢查網路後重新整理。");
+  if (!LEL){
+    LEL = h("div",{class:"map lmap","aria-label":"美食地圖"});
+    LMAP = L.map(LEL, { zoomControl:true }).setView([S.map.lat, S.map.lng], S.map.z);
+    L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom:19, attribution:'&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>' }).addTo(LMAP);
+    LLAYER = L.layerGroup().addTo(LMAP);
+    LMAP.on("movestart", () => { S.dragging = true; });
+    LMAP.on("moveend", () => { const c = LMAP.getCenter(); S.map = { lat:c.lat, lng:c.lng, z:LMAP.getZoom() }; LS.set("pc.map2", JSON.stringify(S.map));
+      S.dragging = false; if (S.dirty && !S.modal){ S.dirty = false; setTimeout(renderKeep); } });
+    LMAP.on("click", e => { if (!mapPlacing) return; const cb = mapPlacing; mapPlacing = null; cb({ lat:e.latlng.lat, lng:e.latlng.lng }); });
+  }
+  LEL.classList.toggle("placing", !!mapPlacing);
+  LLAYER.clearLayers();
+  const css = getComputedStyle(document.documentElement);
+  const pine = css.getPropertyValue("--pine").trim() || "#235c45";
+  [[400,"走路 5 分"],[800,"走路 10 分"],[1600,"走路 20 分"]].forEach(([r,l]) =>
+    L.circle([ORIGIN.lat, ORIGIN.lng], { radius:r, color:pine, weight:1.5, dashArray:"4 6", fill:false, interactive:false }).addTo(LLAYER)
+      .bindTooltip(l, { permanent:false, direction:"top" }));
+  landmarks().forEach(m => L.marker([m.lat, m.lng], { interactive:false, icon:L.divIcon({ className:"lm-icon", html:`<span>${esc(m.name)}</span>`, iconSize:null }) }).addTo(LLAYER));
+  for (const f of list){
+    const sel = f.id === S.foodSel;
+    const mk = L.circleMarker([f.lat, f.lng], { radius: sel ? 11 : 8, color:"#ffffff", weight:2, fillColor: css.getPropertyValue(catVar(f.cat)).trim() || pine, fillOpacity:1 }).addTo(LLAYER);
+    mk.bindTooltip(f.name, { direction:"top", offset:[0,-8], permanent: sel });
+    mk.on("click", ev => { L.DomEvent.stopPropagation(ev); if (mapPlacing) return; S.foodSel = f.id; render(); });
+  }
+  const wrap = h("div",{class:"map-wrap"},
+    LEL,
+    h("div",{class:"map-hint",hidden:!mapPlacing}, "點地圖選店家位置", h("button",{class:"ghost",onclick:e=>{ e.stopPropagation(); const cb = mapPlacing; mapPlacing = null; cb && cb(null); }},"取消")),
+    h("button",{class:"ghost map-home",title:"回到中大",onclick:()=>LMAP.setView([ORIGIN.lat, ORIGIN.lng], 16)},"回到中大"));
+  requestAnimationFrame(() => LMAP && LMAP.invalidateSize());
+  return wrap;
+}
+
+function foodDetail(f){
+  const r = foodRating(f.id); const mine = S.uid && S.foodRates[f.id]?.get(S.uid);
+  const isOpen = S.open === "food:"+f.id;
+  const stars = h("div",{class:"stars-row"}, [1,2,3,4,5].map(n => h("button",{class:"star"+(mine && n<=mine?" on":""),disabled:!canPost(),"aria-label":`給 ${n} 顆星`,onclick:()=>rateFood(f,n)},"★")));
+  const card = h("article",{class:"card stack food-card"},
+    h("div",{class:"bar"}, h("i",{class:"cdot lg",style:`background:var(${catVar(f.cat)})`}), h("h2",{style:"margin:0;font-family:var(--f-display);font-size:22px"}, f.name),
+      h("span",{class:"muted small"}, f.cat, "・", "$".repeat(f.price||1)), h("span",{class:"spacer"}), h("button",{class:"ghost","aria-label":"關閉",onclick:()=>{S.foodSel=null;closeThread();render();}},"✕")),
+    h("div",{class:"bar small"}, h("span",{class:"mono"}, r ? `★ ${r.avg.toFixed(1)}・${r.n} 人評分` : "還沒有評分"), h("span",{class:"muted"}, `離正門 ${fmtDist(distM(f))}`), f.hours ? h("span",{class:"muted"}, f.hours) : null),
+    f.note ? h("p",{style:"margin:0;white-space:pre-wrap"}, f.note) : null,
+    h("div",{class:"bar"}, h("span",{class:"small muted"}, mine ? "你的評分" : "給個評分"), stars),
+    h("div",{class:"bar"},
+      h("a",{class:"primary",href:gmapsLink(f),target:"_blank",rel:"noopener",style:"text-decoration:none"},"在 Google 地圖開啟"),
+      h("a",{class:"ghost",href:gmapsName(f),target:"_blank",rel:"noopener",style:"text-decoration:none;color:var(--ink)"},"搜尋店名"),
+      h("span",{class:"spacer"}),
+      h("button",{class:"linkbtn",onclick:()=>isOpen?closeThread():openThread("food:"+f.id)}, isOpen ? "收起留言" : "看留言・必點"),
+      (f.uid && f.uid===S.uid) || S.isOwner ? h("button",{class:"linkbtn",onclick:()=>openModal({k:"delfood",id:f.id})},"刪除") : null),
+    h("p",{class:"muted small",style:"margin:0"}, "由 ", f.nick, " 標記・", ago(f.ts)));
+  if (isOpen) card.append(thread("food/"+f.id+"/comments"));
+  return card;
+}
+async function rateFood(f, n){ try { await S.db.doc(`foodrate/${f.id}__${S.uid}`).set({ food:f.id, uid:S.uid, stars:n, ts:Date.now() }); toast(`已評 ${n} 顆星`); } catch(e){ toast(writeErr(e)); } }
+
+function foodSheet(){
+  const m = S.modal; const st = m.st || (m.st = { cat:"正餐", price:1, pos:null, name:"", note:"", hours:"", coord:"" });
+  const err = h("p",{class:"err",hidden:true});
+  const name = h("input",{type:"text",id:"fd-name",maxlength:"30",value:st.name,placeholder:"店名",oninput:e=>st.name=e.target.value});
+  const coord = h("input",{type:"text",id:"fd-coord",value:st.coord,placeholder:"貼上 Google 地圖連結或座標，例：24.9705, 121.1928",oninput:e=>{ st.coord=e.target.value; const p = parseCoords(st.coord); if (p){ st.pos = p; posLine.textContent = posText(); } }});
+  const posText = () => st.pos ? `已定位：${st.pos.lat.toFixed(5)}, ${st.pos.lng.toFixed(5)}（離正門 ${fmtDist(distM(st.pos))}）` : "尚未定位";
+  const posLine = h("span",{class:"small mono"}, posText());
+  const note = h("textarea",{id:"fd-note",maxlength:"600",style:"min-height:80px",placeholder:"必點、份量、適合幾個人、要不要排隊",oninput:e=>st.note=e.target.value}, st.note);
+  const hours = h("input",{type:"text",id:"fd-hours",maxlength:"40",value:st.hours,placeholder:"例：17:00–02:00，週一休",oninput:e=>st.hours=e.target.value});
+  const btn = h("button",{class:"primary",onclick:async()=>{
+    if (st.name.trim().length < 1) return fail(err,"請填店名。");
+    if (!st.pos) return fail(err,"請貼上座標，或在地圖上點選位置。");
+    if (distM(st.pos) > 15000) return fail(err,"這個位置離中大超過 15 公里，請確認座標。");
+    btn.disabled = true;
+    try { await S.db.collection("food").add({ name:st.name.trim(), cat:st.cat, price:st.price, lat:st.pos.lat, lng:st.pos.lng, note:st.note.trim(), hours:st.hours.trim(), nick:S.nick, uid:S.uid||"", ts:Date.now() });
+      closeModal(); toast("已加到地圖"); } catch(e){ fail(err, writeErr(e)); btn.disabled=false; } }},"加到地圖");
+  return sheet("標一間店",
+    h("label",{class:"f",for:"fd-name"},"店名",name),
+    h("div",{class:"f"},"類型", h("div",{class:"radios",role:"radiogroup"}, FOOD_CATS.map(([c]) => h("label",{}, h("input",{type:"radio",name:"fdcat",checked:st.cat===c,onchange:()=>st.cat=c}),c)))),
+    h("div",{class:"f"},"價位", h("div",{class:"radios",role:"radiogroup"}, [[1,"$ 百元內"],[2,"$$ 100–250"],[3,"$$$ 250 以上"]].map(([v,l]) => h("label",{}, h("input",{type:"radio",name:"fdp",checked:st.price===v,onchange:()=>st.price=v}),l)))),
+    h("label",{class:"f",for:"fd-coord"},"位置", h("small",{},"在 Google 地圖長按（手機）或右鍵（電腦）店家位置，複製座標貼上最準。"), coord),
+    h("div",{class:"bar"}, posLine, h("span",{class:"spacer"}), h("button",{class:"ghost",onclick:()=>{ S.modal = null; mapPlacing = p => { if (p){ st.pos = p; st.coord = ""; } S.modal = m; render(); }; S.tab="food"; render(); toast("在地圖上點店家的位置"); }},"在地圖上點選")),
+    h("label",{class:"f",for:"fd-hours"},"營業時間（選填）",hours),
+    h("label",{class:"f",for:"fd-note"},"推薦說明（選填）",note),
+    err, foot(btn));
+}
+function delFoodSheet(){
+  const id = S.modal.id;
+  return sheet("從地圖移除這間店？", h("p",{class:"muted",style:"margin:0"},"評分與留言也會看不到。"),
+    foot(h("button",{class:"primary",onclick:async()=>{ try { await S.db.doc("food/"+id).delete(); S.foodSel=null; closeModal(); toast("已移除"); } catch(e){ toast(writeErr(e)); } }},"移除")));
+}
+function landmarkSheet(){
+  const items = JSON.parse(JSON.stringify(landmarks())); const err = h("p",{class:"err",hidden:true});
+  const ta = h("textarea",{id:"lm-ta",style:"min-height:140px"}, items.map(l => `${l.name}, ${l.lat}, ${l.lng}`).join("\n"));
+  return sheet("編輯地圖地標",
+    h("p",{class:"muted small",style:"margin:0"},"一行一個：名稱, 緯度, 經度。座標可從 Google 地圖複製。"), ta, err,
+    foot(h("button",{class:"primary",onclick:async()=>{
+      const out = []; for (const line of ta.value.split("\n").map(s=>s.trim()).filter(Boolean)){
+        const m = line.match(/^(.+?)[,，]\s*(-?\d+\.\d+)\s*[,，]\s*(-?\d+\.\d+)$/); if (!m) return fail(err, "格式不對：" + line);
+        out.push({ name:m[1].trim(), lat:+m[2], lng:+m[3] }); }
+      try { await S.db.doc("config/landmarks").set({ items: out }); closeModal(); toast("地標已更新"); } catch(e){ fail(err, writeErr(e)); } }},"儲存")));
+}
+
+/* =====================================================================
+   MODALS
+   ===================================================================== */
+let overlayEl = null;
+function openModal(m){ S.modal = m; render(); const f = document.querySelector(".sheet input:not([type=radio]):not([type=checkbox]), .sheet textarea, .sheet select"); if (f) f.focus(); }
+function closeModal(){ S.modal = null; S.dirty = false; render(); }
+function renderOverlay(){
+  if (!S.modal) return;
+  const B = { profile:profileSheet, loc:locSheet, post:postSheet, report:reportSheet, del:delSheet, ride:rideSheet, delride:delRideSheet, dmreq:dmReqSheet, install:installSheet, bus:busSheet, food:foodSheet, delfood:delFoodSheet, landmarks:landmarkSheet };
+  overlayEl = h("div",{class:"scrim",onclick:e=>{ if (e.target===overlayEl) closeModal(); }}, B[S.modal.k]());
+  overlayEl.addEventListener("keydown", e => { if (e.key==="Escape") closeModal(); });
+  app.append(overlayEl);
+}
+const foot = (...b) => h("div",{class:"foot"}, h("button",{class:"ghost",onclick:closeModal},"取消"), b);
+const sheet = (title, ...kids) => h("div",{class:"sheet",role:"dialog","aria-modal":"true","aria-label":title}, h("h2",{},title), kids);
+const fail = (el, msg) => { el.textContent = msg; el.hidden = false; };
+
+function profileSheet(){
+  const nick = h("input",{type:"text",id:"pf-nick",maxlength:"16",value:S.nick});
+  const dept = h("select",{id:"pf-dept"}, h("option",{value:""},"（不設定）"), DEPTS.map(([c,l]) => h("optgroup",{label:c}, l.map((d,i) => h("option",{value:`dept:${c}:${i}`,selected:S.dept===`dept:${c}:${i}`},d)))));
+  const home = h("select",{id:"pf-home"}, h("option",{value:""},"（不設定）"), homeOptions().map(g => h("optgroup",{label:g.group}, g.items.map(it => h("option",{value:it.id,selected:S.home===it.id},it.name)))));
+  const err = h("p",{class:"err",hidden:true});
+  return sheet("我的設定",
+    h("p",{class:"muted small",style:"margin:0"},"這些設定會存在你的帳號裡，換裝置或關掉再開都還在。系所和住處只用來幫你把常用的版放在首頁，其他人看不到。"),
+    h("label",{class:"f",for:"pf-nick"},"匿名暱稱", h("div",{class:"nick-row"}, nick, h("button",{class:"ghost",onclick:()=>nick.value=randNick()},"隨機"))),
+    h("label",{class:"f",for:"pf-dept"},"我的系所",dept),
+    h("label",{class:"f",for:"pf-home"},"我住的地方",home),
+    h("button",{class:"linkbtn",style:"align-self:flex-start",onclick:()=>openModal({k:"loc"})},"清單裡沒有我的租屋處？新增"),
+    S.uid ? h("p",{class:"muted small",style:"margin:0;overflow-wrap:anywhere"},"使用者 ID（設定管理員時用）：", h("span",{class:"mono",style:"user-select:all"},S.uid)) : null,
+    err,
+    foot(h("button",{class:"primary",onclick:()=>{ const v = nick.value.trim(); if (v.length<2) return fail(err,"暱稱至少要 2 個字。");
+      S.nick=v; S.dept=dept.value; S.home=home.value; LS.set("pc.nick",v); dept.value?LS.set("pc.dept",dept.value):LS.del("pc.dept"); home.value?LS.set("pc.home",home.value):LS.del("pc.home");
+      saveProfile(); presence(); toast("已儲存"); closeModal(); }},"儲存")));
+}
+
+function installSheet(){
+  const ios = /iphone|ipad|ipod/i.test(navigator.userAgent);
+  const standalone = matchMedia("(display-mode: standalone)").matches || navigator.standalone;
+  return sheet("安裝到手機",
+    standalone ? h("div",{class:"info"},"你已經是用安裝版開啟的，不用再裝一次。") :
+      h("p",{class:"muted small",style:"margin:0"},"松果是免費的網頁 App，加到主畫面後點開就是全螢幕，跟一般 App 一樣使用，不用到 App Store 下載。"),
+    deferredInstall ? h("button",{class:"primary",onclick:async()=>{ deferredInstall.prompt(); try { await deferredInstall.userChoice; } catch {} deferredInstall = null; closeModal(); }},"一鍵安裝") : null,
+    h("div",{class:"card stack",style:"gap:8px"+(ios?";border-color:var(--pine)":"")}, h("b",{},"iPhone・iPad（Safari）"),
+      h("ol",{}, h("li",{},"用 Safari 打開松果網址。"), h("li",{},"點下方工具列的「分享」按鈕。"), h("li",{},"往下滑，選「加入主畫面」，再點「新增」。"))),
+    h("div",{class:"card stack",style:"gap:8px"+(!ios?";border-color:var(--pine)":"")}, h("b",{},"Android（Chrome）"),
+      h("ol",{}, h("li",{},"用 Chrome 打開松果網址。"), h("li",{},"點右上角「⋮」選單。"), h("li",{},"選「安裝應用程式」或「加到主畫面」。"))),
+    h("p",{class:"muted small",style:"margin:0"},"你的匿名身分存在這支手機的瀏覽器裡。換手機或清除瀏覽器資料會變成新的匿名身分。"),
+    h("div",{class:"foot"}, h("button",{class:"primary",onclick:closeModal},"知道了")));
+}
+function locSheet(){
+  const st = { type: HOUSE_TYPES[0] };
+  const err = h("p",{class:"err",hidden:true}), sug = h("div",{class:"suggest",hidden:true});
+  const name = h("input",{type:"text",id:"loc-name",maxlength:"30",placeholder:"例：中央路 XX 號透天"});
+  const lane = h("input",{type:"text",id:"loc-lane",maxlength:"20",placeholder:"例：232 巷"});
+  const zone = h("select",{id:"loc-zone"}, ZONES.map(z => h("option",{value:z.id},z.name)));
+  const type = h("div",{class:"radios",role:"radiogroup"}, HOUSE_TYPES.map((t,i) => h("label",{}, h("input",{type:"radio",name:"ltype",checked:i===0,onchange:()=>st.type=t}),t)));
+  const check = () => { const hits = similarLocs(name.value.trim(), lane.value.trim()); sug.replaceChildren();
+    if (hits.length){ sug.hidden=false; sug.append(h("span",{},"這些社區跟你輸入的很像，是同一個地方嗎？直接加入就能找到同棟鄰居："),
+      h("div",{class:"ideas"}, hits.slice(0,5).map(l => h("button",{onclick:()=>{ S.home="h:"+l.id; LS.set("pc.home",S.home); saveProfile(); S.modal=null; go("housing","h:"+l.id); toast("已加入 "+l.name); }}, l.name+(l.lane?`（${l.lane}）`:""))))); }
+    else sug.hidden = true; return hits; };
+  name.addEventListener("input", check); lane.addEventListener("input", check);
+  const btn = h("button",{class:"primary",onclick:async()=>{
+    const nm = name.value.trim(); const hits = check();
+    if (nm.length<2) return fail(err,"請輸入租屋處名稱（至少 2 個字）。");
+    if (hits.some(l => norm(l.name)===norm(nm))) return fail(err,"已經有同名的社區了，請直接加入上面的頻道。");
+    if (!canPost()) return fail(err,"目前無法寫入資料，所以不能新增社區。");
+    btn.disabled = true;
+    try { const ref = S.db.collection("locations").doc(); await ref.set({ name:nm, lane:lane.value.trim(), zone:zone.value, type:st.type, by:S.uid||"", ts:Date.now() });
+      const id = "h:c-"+ref.id; S.home = id; LS.set("pc.home",id); saveProfile(); S.modal=null; go("housing",id); toast("已建立「"+nm+"」大廳"); }
+    catch(e){ fail(err, writeErr(e)); btn.disabled=false; } }},"建立社區頻道");
+  return sheet("新增我的租屋處",
+    h("p",{class:"muted small",style:"margin:0"},"建立後會產生這棟的專屬大廳，之後輸入相同名稱的人會被引導加入同一個頻道。"),
+    h("label",{class:"f",for:"loc-name"},"租屋名稱",name),
+    h("div",{class:"frow"}, h("label",{class:"f",for:"loc-zone"},"區域",zone), h("label",{class:"f",for:"loc-lane"},"巷弄（選填）",lane)),
+    h("div",{class:"f"},"房屋類型",type), sug, err, foot(btn));
+}
+
+function postSheet(){
+  const sp = spaceById(S.modal.space); if (!sp) return sheet("找不到這個版", foot());
+  const st = { cat:sp.cats[0], oneTime:false, nick:S.nick, ratings:{sound:0,landlord:0,cp:0}, agree:false };
+  const err = h("p",{class:"err",hidden:true});
+  const title = h("input",{type:"text",id:"p-title",maxlength:"60",value:S.modal.prefill||"",placeholder:"標題"});
+  const body = h("textarea",{id:"p-body",maxlength:"3000",placeholder: sp.review ? "具體寫下你遇到的事實：時間、狀況、房東怎麼處理。避免人身攻擊與未經證實的猜測。" : sp.price ? "物品狀況、使用多久、面交地點與時間。" : "想說什麼？"});
+  const draftKey = "pc.draft."+sp.id; const draft = LS.json(draftKey, null);
+  if (draft && !S.modal.prefill){ title.value = draft.t||""; body.value = draft.b||""; }
+  const saveDraft = () => LS.set(draftKey, JSON.stringify({ t:title.value, b:body.value }));
+  title.addEventListener("input", saveDraft); body.addEventListener("input", saveDraft);
+  const price = sp.price ? h("input",{type:"text",id:"p-price",maxlength:"20",placeholder:"例：NT$300、免費"}) : null;
+  const rent = sp.rent ? h("input",{type:"text",id:"p-rent",maxlength:"24",placeholder:"例：月租 6,500（含水）"}) : null;
+  const htype = sp.rent ? h("select",{id:"p-htype"}, HOUSE_TYPES.map(t => h("option",{},t))) : null;
+  const about = sp.review || sp.rent ? h("select",{id:"p-about"}, h("option",{value:""},"（不指定）"), homeOptions().filter(g => g.group.startsWith("校外")).map(g => h("optgroup",{label:g.group.replace("校外・","")}, g.items.map(it => h("option",{value:it.id,selected:S.home===it.id},it.name))))) : null;
+  const nickLabel = h("span",{class:"mono"}, S.nick);
+  const ident = h("div",{class:"radios",role:"radiogroup","aria-label":"發文身分"},
+    h("label",{}, h("input",{type:"radio",name:"ident",checked:true,onchange:()=>{st.oneTime=false;st.nick=S.nick;nickLabel.textContent=S.nick;}}),"用我的暱稱"),
+    h("label",{}, h("input",{type:"radio",name:"ident",onchange:()=>{st.oneTime=true;st.nick=randNick();nickLabel.textContent=st.nick;}}),"一次性隨機暱稱"));
+  const rate = (key,label) => { const wrap = h("div",{class:"stars"});
+    const draw = () => wrap.replaceChildren(...[1,2,3,4,5].map(n => h("button",{type:"button",class:n<=st.ratings[key]?"on":"","aria-label":`${label} ${n} 分`,onclick:()=>{st.ratings[key]=n;draw();}},n)));
+    draw(); return h("div",{class:"rate"}, label, wrap); };
+  const agree = sp.review ? h("label",{class:"check"}, h("input",{type:"checkbox",id:"p-agree",onchange:e=>{st.agree=e.target.checked;btn.disabled=!st.agree;}}), h("span",{}, h("b",{},"我已閱讀並同意免責聲明："), DISCLAIMER)) : null;
+  const btn = h("button",{class:"primary",disabled:!!sp.review,onclick:async()=>{
+    const t = title.value.trim(), b = body.value.trim();
+    if (!t) return fail(err,"請填寫標題。");
+    if (b.length<4) return fail(err,"內容太短了，再多寫一點。");
+    if (sp.review && !st.agree) return fail(err,"發表避雷文前必須勾選同意免責聲明。");
+    if (sp.review && (!st.ratings.sound||!st.ratings.landlord||!st.ratings.cp)) return fail(err,"請完成三項評分。");
+    const doc = { space:sp.id, title:t, body:b, cat:st.cat, nick:st.nick, oneTime:st.oneTime, uid:S.uid||"", ts:Date.now() };
+    if (sp.review){ doc.ratings = {...st.ratings}; doc.agreedDisclaimer = true; }
+    if (about && about.value) doc.about = about.value;
+    if (price && price.value.trim()) doc.price = price.value.trim();
+    if (rent && rent.value.trim()) doc.rent = rent.value.trim();
+    if (htype) doc.htype = htype.value;
+    btn.disabled = true;
+    try { await S.db.collection("posts").add(doc); LS.del(draftKey); closeModal(); toast("已發布"); }
+    catch(e){ fail(err, writeErr(e)); btn.disabled = false; } }},"發布");
+  return sheet("發文到「"+sp.name+"」",
+    h("div",{class:"f"},"分類", h("div",{class:"radios",role:"radiogroup"}, sp.cats.map((c,i) => h("label",{}, h("input",{type:"radio",name:"pcat",checked:i===0,onchange:()=>st.cat=c}),c)))),
+    about ? h("label",{class:"f",for:"p-about"}, sp.review ? "評論的租屋處" : "房子在哪", about) : null,
+    h("label",{class:"f",for:"p-title"},"標題",title),
+    price ? h("label",{class:"f",for:"p-price"},"價格",price) : null,
+    rent ? h("div",{class:"frow"}, h("label",{class:"f",for:"p-rent"},"租金",rent), h("label",{class:"f",for:"p-htype"},"房型",htype)) : null,
+    h("label",{class:"f",for:"p-body"},"內容", h("small",{},"打到一半關掉也沒關係，草稿會自動保留。"), body),
+    sp.review ? h("div",{class:"frow"}, rate("sound","隔音"), rate("landlord","房東態度"), rate("cp","CP 值")) : null,
+    h("div",{class:"f"}, h("span",{},"發文身分　", nickLabel), ident),
+    agree, err, foot(btn));
+}
+
+function rideSheet(){
+  const m = S.modal; const err = h("p",{class:"err",hidden:true});
+  const d = new Date(Date.now()+60*60e3); d.setMinutes(Math.ceil(d.getMinutes()/15)*15,0,0);
+  const local = `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  const sel = (id, v) => h("select",{id}, RIDE_PLACES.map(p => h("option",{selected:p===v},p)));
+  const from = sel("r-from", m.from || "中央大學（後門）"), to = sel("r-to", m.to || "中壢火車站");
+  const when = h("input",{type:"datetime-local",id:"r-when",value:local});
+  const seats = h("select",{id:"r-seats"}, [2,3,4,5,6].map(n => h("option",{value:n,selected:n===4}, `${n} 人（含我）`)));
+  const split = h("select",{id:"r-split"}, ["車資平分","先到先付・現場再算","我出車・每人固定費用"].map(s => h("option",{},s)));
+  const note = h("input",{type:"text",id:"r-note",maxlength:"60",placeholder:"例：在後門 7-11 集合、有大行李"});
+  const btn = h("button",{class:"primary",onclick:async()=>{
+    const ts = new Date(when.value).getTime();
+    if (!ts || ts < Date.now()-5*60e3) return fail(err,"出發時間要在現在之後。");
+    if (from.value===to.value) return fail(err,"出發地和目的地不能一樣。");
+    btn.disabled = true;
+    try { await S.db.collection("rides").add({ from:from.value, to:to.value, when:ts, seats:+seats.value, split:split.value, note:note.value.trim(), nick:S.nick, uid:S.uid||"", ts:Date.now() }); closeModal(); toast("已開團"); }
+    catch(e){ fail(err, writeErr(e)); btn.disabled=false; } }},"開團");
+  return sheet("開一團拼車",
+    h("div",{class:"frow"}, h("label",{class:"f",for:"r-from"},"出發",from), h("label",{class:"f",for:"r-to"},"目的地",to)),
+    h("div",{class:"frow"}, h("label",{class:"f",for:"r-when"},"出發時間",when), h("label",{class:"f",for:"r-seats"},"總人數",seats)),
+    h("label",{class:"f",for:"r-split"},"車資",split),
+    h("label",{class:"f",for:"r-note"},"備註（選填）",note),
+    h("p",{class:"muted small",style:"margin:0"},"為了安全，請在校內或人多的地方集合；不要在公開留言區留下電話，需要時用私訊交換。"),
+    err, foot(btn));
+}
+function delRideSheet(){
+  const id = S.modal.id;
+  return sheet("取消這團？", h("p",{class:"muted",style:"margin:0"},"已加入的人會看到這團消失。"),
+    foot(h("button",{class:"primary",onclick:async()=>{ try { await S.db.doc("rides/"+id).delete(); closeModal(); toast("已取消"); } catch(e){ toast(writeErr(e)); } }},"取消這團")));
+}
+
+function dmReqSheet(){
+  const m = S.modal; const err = h("p",{class:"err",hidden:true});
+  const existing = [...S.reqOut].find(r => r.to===m.to);
+  const note = h("input",{type:"text",id:"dm-note",maxlength:"80",placeholder:"例：你好，我也住 3 樓，想問一下烘衣機的事"});
+  if (!S.uid) return sheet("無法私訊", h("p",{class:"muted",style:"margin:0"},"無法辨識你的身分，請重新整理後再試。"), foot());
+  if (m.to===S.uid) return sheet("這是你自己", foot());
+  if (existing && existing.status==="accepted") { setTimeout(()=>{ S.modal=null; openChat(m.to, m.toNick); }); return sheet("開啟對話中…"); }
+  return sheet("向「"+m.toNick+"」提出私訊請求",
+    h("p",{class:"muted small",style:"margin:0"},"對方同意後才會開啟對話。對話內容會加密，只有你們兩個看得到；要不要透露真實身分或聯絡方式由你們自己決定。"),
+    existing && existing.status==="pending" ? h("div",{class:"info"},"你已經送出請求，正在等對方回覆。") : null,
+    h("label",{class:"f",for:"dm-note"},"打個招呼（選填）",note), err,
+    foot(h("button",{class:"primary",disabled:!canPost(),onclick:async()=>{
+      try { await ensureKeys(); await S.db.doc(`dmreq/${S.uid}__${m.to}`).set({ from:S.uid, to:m.to, fromNick:S.nick, toNick:m.toNick, note:note.value.trim(), space:m.from||"", status:"pending", ts:Date.now() });
+        closeModal(); toast("已送出請求"); } catch(e){ fail(err, writeErr(e)); } }}, existing ? "重新送出" : "送出請求")));
+}
+
+function reportSheet(){
+  const pid = S.modal.pid; let reason = "人身攻擊或謾罵"; const err = h("p",{class:"err",hidden:true});
+  return sheet("檢舉這篇貼文",
+    h("div",{class:"radios",role:"radiogroup"}, ["人身攻擊或謾罵","捏造不實內容","洩漏個人資料","廣告或詐騙","其他"].map((r,i)=>h("label",{},h("input",{type:"radio",name:"rr",checked:i===0,onchange:()=>reason=r}),r))),
+    h("p",{class:"muted small",style:"margin:0"},"同一篇貼文被 3 位不同使用者檢舉後會自動暫時隱藏，等管理員審核。"), err,
+    foot(h("button",{class:"primary",onclick:async()=>{ if (!S.uid) return fail(err,"無法辨識你的身分，所以不能檢舉。");
+      try { await S.db.doc(`reports/${pid}__${S.uid}`).set({ post:pid, uid:S.uid, reason, ts:Date.now() }); closeModal(); toast("已檢舉，累積 3 次會自動隱藏"); } catch(e){ fail(err, writeErr(e)); } }},"送出檢舉")));
+}
+function delSheet(){
+  const pid = S.modal.pid;
+  return sheet("刪除這篇貼文？", h("p",{class:"muted",style:"margin:0"},"刪除後無法復原。"),
+    foot(h("button",{class:"primary",onclick:async()=>{ try { await S.db.doc("posts/"+pid).delete(); if (S.open===pid) closeThread(); closeModal(); toast("已刪除"); } catch(e){ toast(writeErr(e)); } }},"刪除")));
+}
+
+function writeErr(e){
+  const c = e && e.code;
+  if (c==="invalid_argument"){ S.canWrite = false; return "你目前沒有寫入權限，只能瀏覽。"; }
+  if (c==="quota_exceeded") return "資料庫空間已滿，請管理員清理舊資料。";
+  if (c==="resource_exhausted") return "操作太頻繁了，稍等幾秒再試。";
+  return "沒有送出成功，請檢查網路後再試一次。";
+}
+let toastEl = null, toastT = 0;
+function toast(msg){ if (!toastEl){ toastEl = h("div",{class:"toast",role:"status"}); document.body.append(toastEl); }
+  toastEl.textContent = msg; toastEl.hidden = false; clearTimeout(toastT); toastT = setTimeout(()=>toastEl.hidden=true, 2600); }
+
+/* ---------- PWA ---------- */
+let deferredInstall = null;
+window.addEventListener("beforeinstallprompt", e => { e.preventDefault(); deferredInstall = e; });
+if ("serviceWorker" in navigator) window.addEventListener("load", () => navigator.serviceWorker.register("/sw.js").catch(() => {}));
+
+/* ---------- profile persistence (per account, private) ---------- */
+let profSaving = Promise.resolve();
+function saveProfile(){
+  if (!S.db || !S.uid || S.canWrite===false) return;
+  profSaving = profSaving.then(() => S.db.doc(`data/users/${S.uid}/profile`).set({ nick:S.nick, dept:S.dept, home:S.home, ts:Date.now() })).catch(()=>{});
+}
+
+/* =====================================================================
+   BOOT
+   ===================================================================== */
+render();
+setInterval(() => { if (S.nick) renderKeep(); }, 30000);
+
+(async () => {
+  const cl = window.claude;
+  if (!cl || !cl.use){ S.dbState = "none"; render(); return; }
+  const [db, user, room] = await Promise.all([cl.use("db"), cl.use("user"), cl.use("room")]);
+  if (user){
+    try { S.uid = await user.id(); } catch {}
+    try { S.isOwner = !!user.isOwner(); } catch {}
+    try { S.canEdit = !!(await user.canEdit()); } catch {}
+    try { const w = await user.can("data.write"); if (w === false) S.canWrite = false; } catch {}
+  }
+  if (!db){ S.dbState = "none"; render(); return; }
+  S.db = db;
+  // restore profile from account (works across devices / after clearing the browser)
+  if (S.uid){
+    try { const p = await db.doc(`data/users/${S.uid}/profile`).get();
+      if (p.exists){ const d = p.data(); if (d.nick) { S.nick = d.nick; LS.set("pc.nick", d.nick); } if (d.dept != null){ S.dept = d.dept; LS.set("pc.dept", d.dept); } if (d.home != null){ S.home = d.home; LS.set("pc.home", d.home); } }
+      else if (S.nick) saveProfile();
+    } catch {}
+  }
+  const sub = (q, fn) => q.onSnapshot(s => { fn(s); renderKeep(); }, () => {});
+  sub(db.collection("posts").orderBy("ts","desc").limit(1000), s => { S.posts = s.docs.map(d => ({ id:d.id, ...d.data() })); if (S.dbState==="loading") S.dbState = "ok"; });
+  sub(db.collection("locations").limit(500), s => { S.customLocs = s.docs.map(d => { const x = d.data(); return { id:"c-"+d.id, name:x.name, zone:x.zone||"ot", lane:x.lane||"", custom:true }; }); });
+  sub(db.collection("likes").limit(1000), s => { const m = {}; for (const d of s.docs){ const x = d.data(); (m[x.post] ||= new Set()).add(x.uid); } S.likes = m; });
+  sub(db.collection("reports").limit(1000), s => { const m = {}; for (const d of s.docs){ const x = d.data(); (m[x.post] ||= new Set()).add(x.uid); } S.reports = m; });
+  sub(db.collection("rides").orderBy("when","desc").limit(200), s => { S.rides = s.docs.map(d => ({ id:d.id, ...d.data() })); });
+  sub(db.collection("food").limit(800), s => { S.food = s.docs.map(d => ({ id:d.id, ...d.data() })).filter(x => typeof x.lat==="number" && typeof x.lng==="number"); });
+  sub(db.collection("foodrate").limit(2000), s => { const m = {}; for (const d of s.docs){ const x = d.data(); (m[x.food] ||= new Map()).set(x.uid, x.stars); } S.foodRates = m; });
+  db.doc("config/landmarks").onSnapshot(s => { S.landmarks = s.exists && Array.isArray(s.data().items) ? s.data().items : null; renderKeep(); }, () => {});
+  sub(db.collection("riders").limit(1000), s => { const m = {}; for (const d of s.docs){ const x = d.data(); (m[x.ride] ||= new Map()).set(x.uid, x.nick); } S.riders = m; });
+  db.doc("config/bus").onSnapshot(s => { S.busCfg = s.exists && s.data().hsrMode ? s.data() : null; renderKeep(); }, () => {});
+  if (S.uid){
+    sub(db.collection("dmreq").where("to","==",S.uid), s => { S.reqIn = s.docs.map(d => ({ id:d.id, ...d.data() })); });
+    sub(db.collection("dmreq").where("from","==",S.uid), s => { S.reqOut = s.docs.map(d => ({ id:d.id, ...d.data() })); });
+    if (S.canWrite !== false) ensureKeys().catch(() => {});
+  }
+  if (room){
+    S.room = room;
+    room.onPeers(ch => { S.peers = ch.peers; renderKeep(); }, () => { S.room = null; renderKeep(); });
+    presence();
+  }
+  render();
+})();
+})();
+</script>
+
+</body>
+</html>
