@@ -2,17 +2,17 @@
 <html lang="zh-Hant">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="description" content="中央大學學生的匿名生活圈：公車時刻、拼車、二手市集、租屋與宿舍、系所看板、美食地圖。">
 <meta name="theme-color" content="#235c45">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="松果">
 <link rel="manifest" href="/manifest.webmanifest">
 <link rel="icon" type="image/png" href="/icons/icon-192.png">
 <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css">
-<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
+<style>body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
 <title>松果中大生活通</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=Noto+Serif+TC:wght@700;900&family=IBM+Plex+Mono:wght@500;600&display=swap">
@@ -56,7 +56,7 @@ button:disabled{cursor:not-allowed;opacity:.5}
 .small{font-size:13px}
 
 /* ---------- shell ---------- */
-header.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:10;background:color-mix(in srgb,var(--bg) 92%,transparent);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+header.top{position:sticky;top:0;z-index:10;background:color-mix(in srgb,var(--bg) 92%,transparent);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
 .top-in{max-width:1040px;margin:0 auto;padding:10px 16px;display:flex;gap:12px;align-items:center}
 .brand{display:flex;align-items:center;gap:10px;margin-right:auto;background:none;border:0;padding:0;text-align:left}
 .brand svg{width:30px;height:30px;flex:none}
@@ -271,6 +271,47 @@ label.f small,div.f small{color:var(--muted);font-weight:400}
 .nick-row{display:flex;gap:8px}
 .nick-row input{flex:1;min-width:0;font-size:17px;padding:10px 12px}
 
+/* ---------- nav: primary vs secondary tabs ---------- */
+.tab.mobile-only{display:none}
+@media (max-width:720px){ .tab.sec{display:none} .tab.mobile-only{display:flex} }
+button.online-pill{background:none;border:0;padding:4px 6px;border-radius:8px}
+button.online-pill:hover{background:var(--sunk)}
+.only-narrow{display:none}
+@media (max-width:640px){ .only-wide{display:none} .only-narrow{display:flex} }
+.linkish{background:none;border:0;padding:0;text-align:left;color:inherit;font:inherit;cursor:pointer}
+.status.warnish{background:var(--bus-soft);color:var(--bus)}
+/* ---------- timetable ---------- */
+.tt-wrap{overflow-x:auto}
+.tt-grid{display:grid;gap:4px;min-width:560px}
+.tt-dh{text-align:center;font-size:13px;font-weight:700;padding:4px 0;border-radius:6px;color:var(--muted)}
+.tt-dh.today{background:var(--pine);color:var(--pine-ink)}
+.tt-hours{position:relative}
+.tt-hours span{position:absolute;right:4px;transform:translateY(-6px);font:11px var(--f-data);color:var(--muted)}
+.tt-col{position:relative;border-radius:8px;background-color:var(--surface);background-image:linear-gradient(var(--line) 1px,transparent 1px);border:1px solid var(--line)}
+.tt-col.today{border-color:var(--pine)}
+.tt-c{position:absolute;left:3px;right:3px;border:0;border-radius:6px;color:#fff;padding:4px 6px;display:flex;flex-direction:column;align-items:flex-start;overflow:hidden;text-align:left;font-size:11px;line-height:1.3}
+.tt-c b{font-size:12px}
+.tt-item{display:flex;gap:14px;align-items:center;text-align:left;width:100%}
+.tt-time{font-size:13px;color:var(--muted);line-height:1.4}
+.tt-info{display:flex;flex-direction:column;min-width:0}
+.swatches{display:flex;gap:8px;flex-wrap:wrap}
+.sw{width:28px;height:28px;border-radius:50%;border:2px solid transparent;box-shadow:inset 0 0 0 2px var(--surface)}
+.sw.on{border-color:var(--ink)}
+/* ---------- lobby ---------- */
+.chat.lobby{min-height:300px}
+.lmsg{display:flex;flex-direction:column;gap:2px;max-width:85%;align-self:flex-start}
+.lmsg.mine{align-self:flex-end;align-items:flex-end}
+.lwho{display:flex;gap:8px;align-items:baseline;font-size:12px;color:var(--muted)}
+.lwho b{color:var(--ink)}
+.lbody{background:var(--sunk);border-radius:14px;padding:7px 12px;white-space:pre-wrap;overflow-wrap:anywhere;font-size:14px}
+.lmsg.mine .lbody{background:var(--pine);color:var(--pine-ink)}
+/* ---------- weather ---------- */
+.wx-mini{display:flex;gap:14px;align-items:center;text-align:left;width:100%}
+.wx-temp{font-size:34px;font-weight:600;line-height:1}
+.wx-hours{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px}
+.wx-h{display:flex;flex-direction:column;align-items:center;gap:2px;min-width:64px;padding:8px 6px;border:1px solid var(--line);border-radius:10px;background:var(--bg)}
+.news-li{color:inherit;text-decoration:none}
+.news-li:hover .t{color:var(--pine);text-decoration:underline}
 /* ---------- food map ---------- */
 .map-wrap{position:relative}
 .lmap{cursor:auto;touch-action:auto}
@@ -430,7 +471,7 @@ function addSpace(s){ SPACES[s.id] = s; }
  ["g:lost","失物招領","撿到或遺失東西都可以在這裡發。",["遺失","拾獲"]],
  ["g:food","美食","後門宵夜街、松苑、中壢市區哪間好吃。",["推薦","踩雷","揪吃"]],
  ["g:help","求助問答","行政流程、選課系統、校園生活的大小問題。",["問題","教學"]],
-].forEach(([id,name,desc,cats]) => addSpace({id,name,desc,cats,tab:"campus",group:"綜合"}));
+].forEach(([id,name,desc,cats]) => addSpace({id,name,desc,cats,tab:"forum",group:"看板"}));
 // departments
 DEPTS.forEach(([college, list]) => list.forEach((d,i) => addSpace({
   id:`dept:${college}:${i}`, name:d, college, desc:`${college}・${d} 的大小事：課程、考試、系上活動、學長姐經驗。`,
@@ -441,10 +482,6 @@ addSpace({ id:"m:all", name:"二手市集", desc:"買賣、交換、免費贈送
 addSpace({ id:"hb:review", name:"租屋避雷與心得", desc:"匿名點評房東、隔音、採光、壁癌、電費計算。請以親身經歷的事實描述。", cats:["避雷","心得","問題"], tab:"housing", group:"租屋看板", review:true });
 addSpace({ id:"hb:list", name:"招租・轉租", desc:"房間要轉租、房東招租都在這裡，請寫清楚租金、坪數、可入住日。", cats:["轉租","招租","短租"], tab:"housing", group:"租屋看板", rent:true });
 addSpace({ id:"hb:mate", name:"徵室友", desc:"找人分租、找室友一起租整層。", cats:["徵室友","找房一起租"], tab:"housing", group:"租屋看板" });
-addSpace({ id:"d:all", name:"宿舍綜合", desc:"抽籤、候補、退宿、換床位、宿舍規定。", cats:["抽籤候補","換床位","規定","閒聊"], tab:"housing", group:"校內宿舍" });
-DORMS.forEach(([area, list]) => list.forEach(([id,name,tag]) => addSpace({
-  id:`d:${id}`, name, area, tag, desc:`${area}・${name}（${tag}）的大廳：洗衣機、交誼廳、門禁、包裹、揪宵夜。`,
-  cats:["閒聊交友","居住溝通","公用設施"], tab:"housing", group:"校內宿舍", hub:true, dorm:true })));
 ZONES.forEach(z => addSpace({ id:`hz:${z.id}`, name:`${z.name} 全區廣播`, short:"全區廣播", zone:z.id,
   desc:`發給整個「${z.name}」的公告：停水停電、垃圾車時間、可疑人士、巷口施工。`, cats:["公告","詢問","閒聊"], tab:"housing", group:"校外租屋" }));
 function locSpace(l){
@@ -503,6 +540,12 @@ const ICONS = {
   lock:"M6 11h12v10H6zM8 11V8a4 4 0 0 1 8 0v3",
   car:"M5 16l1.5-5A2 2 0 0 1 8.4 9.5h7.2a2 2 0 0 1 1.9 1.5L19 16M4 16h16v3H4zM7 19v2M17 19v2",
   pin:"M12 21s-7-6.2-7-11.5a7 7 0 0 1 14 0C19 14.8 12 21 12 21zM12 12a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5z",
+  calendar:"M4 6h16v14H4zM4 10h16M9 3v4M15 3v4",
+  map:"M9 4 3 6v14l6-2 6 2 6-2V4l-6 2-6-2zM9 4v14M15 6v14",
+  cloud:"M7 18h10a4 4 0 0 0 .5-8 6 6 0 0 0-11.5 1.5A3.5 3.5 0 0 0 7 18z",
+  users:"M9 11a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7zM3 20c0-3.3 2.7-6 6-6s6 2.7 6 6M16 4.5a3.5 3.5 0 0 1 0 6.5M18 14c2 .7 3 2.8 3 5",
+  grid:"M4 4h7v7H4zM13 4h7v7h-7zM4 13h7v7H4zM13 13h7v7h-7z",
+  mega:"M3 10v4h3l6 4V6L6 10zM16 8.5a5 5 0 0 1 0 7M18.5 6a8.5 8.5 0 0 1 0 12",
   phone:"M8 2h8a1 1 0 0 1 1 1v18a1 1 0 0 1-1 1H8a1 1 0 0 1-1-1V3a1 1 0 0 1 1-1zM11 19h2",
 };
 function icon(name){
@@ -540,6 +583,7 @@ const S = {
   open:null, comments:[], unsubComments:null,
   chat:null, chatMsgs:[], unsubChat:null,
   modal:null, dirty:false,
+  timetable: LS.json("pc.tt", null), lobby:[], spots:[], forumSeg: LS.get("pc.fseg") || "lobby",
   busCfg:null, busDest:LS.get("pc.busDest")||"zl", busDir:LS.get("pc.busDir")||"out", dayMode:LS.get("pc.dayMode")||"auto", homeDir:LS.get("pc.hdir")||"out",
   food:[], foodRates:{}, foodSel:null, foodFilter:"", foodSort:"dist", landmarks:null, map:null,
 };
@@ -554,7 +598,6 @@ function spaceById(id){
 }
 function homeOptions(){
   const opts = [];
-  DORMS.forEach(([area, list]) => opts.push({ group:"校內宿舍・"+area, items:list.map(([id,name]) => ({ id:"d:"+id, name })) }));
   ZONES.forEach(z => { const items = allLocs().filter(l => l.zone===z.id).map(l => ({ id:"h:"+l.id, name:l.name + (l.lane?`（${l.lane}）`:"") })); if (items.length) opts.push({ group:"校外・"+z.name, items }); });
   return opts;
 }
@@ -702,22 +745,35 @@ function gate(){
       h("div",{}, h("button",{class:"primary",onclick:go},"進入松果"))));
 }
 
-const TABS = [["home","首頁","home"],["transit","交通","bus"],["market","市集","bag"],["housing","住宿","house"],["food","美食","pin"],["campus","系所","campus"],["inbox","私訊","chat"]];
+// [id, label, icon, primaryOnMobile, _, subtitle]
+const TABS = [
+  ["home","首頁","home",1],["transit","交通","bus",1,,"公車時刻・拼車"],["schedule","課表","calendar",1,,"我的課表與提醒"],["forum","論壇","chat",1,,"即時大廳・看板"],
+  ["food","美食","pin",0,,"共同編輯的美食地圖"],["nav","導航","map",0,,"校內建築・步行導航"],["market","市集","bag",0,,"二手・免費送・徵求"],
+  ["housing","租屋","house",0,,"租屋大廳・避雷"],["campus","系所","campus",0,,"各系看板"],["news","活動","mega",0,,"中央大學最新消息"],
+  ["weather","天氣","cloud",0,,"中壢天氣預報"],["online","在線","users",0,,"現在誰在線上"],["inbox","私訊","lock",0,,"加密私訊"],
+  ["more","更多","grid",1,"mobile"],
+];
 function topbar(){
   const pending = S.reqIn.filter(r => r.status==="pending").length;
-  const online = new Set(S.peers.filter(p=>p.kind==="viewer").map(p => p.by || p.peer)).size;
+  const online = onlinePeople().length;
+  const curPrimary = (TABS.find(t => t[0]===S.tab)||[])[3];
   return h("header",{class:"top"},
     h("div",{class:"top-in"},
       h("button",{class:"brand",onclick:()=>go("home")}, brandMark(), h("div",{}, h("b",{},"松果"), h("small",{},"NCU LIFE"))),
-      S.room ? h("span",{class:"online-pill",title:"目前開著松果的人數"}, h("i",{}), h("b",{},"在線 "), h("span",{class:"mono"},online||1)) : null,
+      S.room ? h("button",{class:"online-pill",title:"看看誰在線上",onclick:()=>go("online")}, h("i",{}), h("b",{},"在線 "), h("span",{class:"mono"},online||1)) : null,
+      pending ? h("button",{class:"ghost",style:"padding:4px 10px",onclick:()=>go("inbox")}, "私訊 ", h("span",{class:"badge"},pending)) : null,
       h("button",{class:"me-btn",onclick:()=>openModal({k:"profile"}),"aria-label":"我的設定"}, h("i",{class:"av",style:"font-style:normal"},initial(S.nick)), h("span",{},S.nick))),
-    h("nav",{class:"tabs","aria-label":"主選單"}, TABS.map(([id,label,ic]) =>
-      h("button",{class:"tab","aria-current":S.tab===id?"page":null,onclick:()=>go(id)}, icon(ic), label, id==="inbox" && pending ? h("span",{class:"badge"},pending) : null))));
+    h("nav",{class:"tabs","aria-label":"主選單"}, TABS.map(([id,label,ic,prim,only]) =>
+      h("button",{class:"tab"+(prim?" prim":" sec")+(only==="mobile"?" mobile-only":""),"aria-current":(S.tab===id || (id==="more" && !curPrimary && S.tab!=="more")) ? "page" : null,onclick:()=>go(id)},
+        icon(ic), label, (id==="inbox"||id==="more") && pending ? h("span",{class:"badge"},pending) : null))));
 }
 function go(tab, space){
   S.tab = tab; LS.set("pc.tab", tab); S.filter = ""; closeThread();
-  if (space){ S.space[tab] = space; saveSpace(); if (tab==="housing"){ S.housingSeg = space.startsWith("d:") ? "dorm" : space.startsWith("hb:") ? "boards" : "off"; LS.set("pc.hseg",S.housingSeg); } }
+  if (space){ S.space[tab] = space; saveSpace();
+    if (tab==="housing"){ S.housingSeg = space.startsWith("hb:") ? "boards" : "off"; LS.set("pc.hseg",S.housingSeg); }
+    if (tab==="forum"){ S.forumSeg = "boards"; LS.set("pc.fseg","boards"); } }
   if (tab !== "inbox") closeChat();
+  ensureLobby(tab==="forum");
   presence(); render(); window.scrollTo({top:0});
 }
 function presence(){ if (S.room) S.room.presence({ nick:S.nick, where: currentSpaceId() || S.tab }).catch(()=>{}); }
@@ -728,13 +784,9 @@ function currentSpaceId(){
 }
 
 function page(){
-  if (S.tab==="transit") return transitPage();
-  if (S.tab==="market") return spaceView("m:all");
-  if (S.tab==="housing") return housingPage();
-  if (S.tab==="campus") return campusPage();
-  if (S.tab==="inbox") return inboxPage();
-  if (S.tab==="food") return foodPage();
-  return homePage();
+  const P = { transit:transitPage, market:()=>spaceView("m:all"), housing:housingPage, campus:campusPage, inbox:inboxPage, food:foodPage,
+    schedule:schedulePage, forum:forumPage, news:newsPage, weather:weatherPage, online:onlinePage, nav:navPage, more:morePage };
+  return (P[S.tab] || homePage)();
 }
 function statusBanner(){
   if (S.dbState==="none") return h("div",{class:"info"},"目前連不上伺服器，所以看不到也無法發布內容。請檢查網路後重新整理。");
@@ -752,12 +804,15 @@ function homePage(){
     h("section",{class:"hero"}, scene(), h("div",{class:"hero-in"},
       h("p",{class:"eyebrow",style:"color:rgba(255,255,255,.8)"}, fmtWhen(Date.now()).day),
       h("h1",{},`${S.nick}，今天要去哪？`),
-      h("p",{},"公車、拼車、二手、租屋、宿舍、系上的事，都在這裡。"))),
+      h("p",{},"公車、拼車、課表、美食、二手、論壇，都在這裡。"))),
     statusBanner(),
+    h("div",{class:"grid2"}, nextClassCard(), weatherMini()),
     h("div",{class:"quick"},
       qbtn("car","揪拼車","火車站、高鐵、機場",()=>{ go("transit"); openModal({k:"ride"}); }),
       qbtn("bag","賣東西","二手、免費送、徵求",()=>go("market")),
-      homeSp ? qbtn("house",homeSp.name,"我住的地方大廳",()=>go("housing",homeSp.id)) : qbtn("house","設定住處","宿舍或校外租屋",()=>openModal({k:"profile"})),
+      qbtn("chat","即時大廳","下課無聊進來聊",()=>go("forum")),
+      qbtn("map","校內導航","找教室、找建築",()=>go("nav")),
+      homeSp ? qbtn("house",homeSp.name,"我住的地方大廳",()=>go("housing",homeSp.id)) : qbtn("house","租屋大廳","設定你住的地方",()=>openModal({k:"profile"})),
       S.dept ? qbtn("campus",spaceById(S.dept)?.name||"我的系","系上大小事",()=>go("campus",S.dept)) : qbtn("campus","選我的系","進入系所看板",()=>openModal({k:"profile"})),
       qbtn("pin","美食地圖","後門、宵夜街、市區",()=>go("food")),
       qbtn("phone","安裝到手機","iOS・Android",()=>openModal({k:"install"}))),
@@ -769,11 +824,14 @@ function homePage(){
           h("div",{class:"empty"}, h("h3",{},"還沒有人揪車"), h("p",{},"不用再在 LINE 群組裡洗訊息，開一團讓同路的人直接加入。"),
             h("button",{class:"primary",disabled:!canPost(),onclick:()=>{ go("transit"); openModal({k:"ride"}); }},"開一團")))),
     h("section",{class:"stack"},
+      h("div",{class:"section-title"}, h("h2",{},"校園活動"), h("button",{class:"linkbtn",onclick:()=>go("news")},"更多消息")),
+      h("div",{class:"card"}, newsList("activity", 4))),
+    h("section",{class:"stack"},
       h("div",{class:"section-title"}, h("h2",{},"這週熱門")),
       hot.length ? h("div",{class:"card list"}, hot.map(p => h("button",{class:"li",onclick:()=>jumpToPost(p)},
           h("span",{class:"t"}, h("span",{class:"where"}, spaceLabel(p.space)), "　", p.title),
           h("small",{class:"mono"}, "♥ ", likeCount(p.id), "・", ago(p.ts))))) :
-        h("div",{class:"info"}, S.dbState==="loading" ? "正在載入…" : "這週還沒有貼文。到系所、市集或住宿發第一篇吧。")));
+        h("div",{class:"info"}, S.dbState==="loading" ? "正在載入…" : "這週還沒有貼文。到論壇、系所或市集發第一篇吧。")));
 }
 function qbtn(ic, title, sub, onclick){ return h("button",{class:"qbtn",onclick}, icon(ic), h("b",{},title), h("span",{},sub)); }
 function spaceLabel(id){ const s = spaceById(id); return s ? (s.short && s.zone ? ZONES.find(z=>z.id===s.zone).name : s.name) : "已移除的版"; }
@@ -911,9 +969,9 @@ async function leaveRide(r){ try { await S.db.doc(`riders/${r.id}__${S.uid}`).de
 
 /* ---------- HOUSING ---------- */
 function housingPage(){
-  const seg = S.housingSeg;
+  const seg = S.housingSeg === "boards" ? "boards" : "off";
   const segBar = h("div",{class:"seg"},
-    [["off","校外租屋"],["dorm","校內宿舍"],["boards","租屋看板"]].map(([k,l]) => h("button",{"aria-pressed":seg===k?"true":"false",onclick:()=>{ S.housingSeg=k; LS.set("pc.hseg",k); const cur = S.space.housing; const ok = cur && ((k==="off"&&cur.startsWith("h"))||(k==="dorm"&&cur.startsWith("d:"))||(k==="boards"&&cur.startsWith("hb:"))); if(!ok){ S.space.housing = k==="boards"?"hb:review":null; saveSpace(); } closeThread(); presence(); render(); }},l)));
+    [["off","校外租屋"],["boards","租屋看板"]].map(([k,l]) => h("button",{"aria-pressed":seg===k?"true":"false",onclick:()=>{ S.housingSeg=k; LS.set("pc.hseg",k); const cur = S.space.housing; const ok = cur && ((k==="off"&&cur.startsWith("h"))||(k==="boards"&&cur.startsWith("hb:"))); if(!ok){ S.space.housing = k==="boards"?"hb:review":null; saveSpace(); } closeThread(); presence(); render(); }},l)));
   let sel = S.space.housing;
   const inSeg = sel && ((seg==="off"&&(sel.startsWith("h:")||sel.startsWith("hz:")))||(seg==="dorm"&&sel.startsWith("d:"))||(seg==="boards"&&sel.startsWith("hb:")));
   if (!inSeg) sel = seg==="boards" ? "hb:review" : null;
@@ -955,7 +1013,6 @@ function spBtn(id, label, sel, extra){
 function campusPage(){
   const sel = S.space.campus || S.dept || "g:chat";
   const dir = h("div",{class:"dir"},
-    h("div",{class:"chips"}, Object.values(SPACES).filter(s => s.group==="綜合").map(s => h("button",{class:"chip","aria-pressed":sel===s.id?"true":"false",onclick:()=>{S.space.campus=s.id;saveSpace();S.filter="";closeThread();presence();render();}}, s.name))),
     h("details",{open: sel.startsWith("dept:")},
       h("summary",{}, "系所看板", h("small",{}, sel.startsWith("dept:") ? spaceById(sel)?.name : "依學院分")),
       h("div",{class:"stack",style:"padding:0 14px 14px;gap:10px"}, DEPTS.map(([college, list]) =>
@@ -1077,7 +1134,7 @@ function inboxPage(){
   const uniq = [...new Map(threads.map(t => [t.peer, t])).values()];
   const out = S.reqOut.filter(r => r.status!=="accepted");
   return h("div",{class:"stack"},
-    h("div",{class:"sphead"}, h("h1",{},"私訊"), h("p",{},"在住宿、市集看到在線的人或貼文作者，可以提出私訊請求。對方同意後才會開啟對話，訊息在你的瀏覽器裡加密，只有你們兩個人看得到內容。")),
+    h("div",{class:"sphead"}, h("h1",{},"私訊"), h("p",{},"在「在線」頁面、租屋大廳或市集看到的人和貼文作者，都可以提出私訊請求。對方同意後才會開啟對話，訊息在你的瀏覽器裡加密，只有你們兩個人看得到內容。")),
     st,
     h("section",{class:"stack"}, h("div",{class:"section-title"}, h("h2",{},"收到的請求")),
       incoming.length ? h("div",{class:"stack"}, incoming.map(r => h("div",{class:"card req"},
@@ -1086,7 +1143,7 @@ function inboxPage(){
         h("p",{class:"muted small",style:"margin:0"},"目前沒有待回覆的請求。")),
     h("section",{class:"stack"}, h("div",{class:"section-title"}, h("h2",{},"對話")),
       uniq.length ? h("div",{class:"card list"}, uniq.map(t => h("button",{class:"li",onclick:()=>openChat(t.peer,t.nick)}, h("span",{class:"t"}, t.nick), h("small",{class:"lock"}, icon("lock"),"加密對話")))) :
-        h("div",{class:"empty"}, h("h3",{},"還沒有對話"), h("p",{},"到住宿的大廳看看誰在線，點他的暱稱就能提出私訊請求。"), h("button",{class:"ghost",onclick:()=>go("housing")},"去住宿大廳"))),
+        h("div",{class:"empty"}, h("h3",{},"還沒有對話"), h("p",{},"到「在線」看看現在誰在，點他的暱稱就能提出私訊請求。"), h("button",{class:"ghost",onclick:()=>go("online")},"看誰在線"))),
     out.length ? h("section",{class:"stack"}, h("div",{class:"section-title"}, h("h2",{},"我送出的請求")),
       h("div",{class:"card list"}, out.map(r => h("div",{class:"li"}, h("span",{class:"t"}, r.toNick), h("span",{class:"status"+(r.status==="declined"?" no":"")}, r.status==="declined"?"對方婉拒":"等待回覆"))))) : null);
 }
@@ -1225,16 +1282,19 @@ function foodGuide(){
       h("p",{class:"muted small",style:"margin:0"},"這一區的店都已經標上地圖了。"));
 }
 
-if (!S.map) S.map = LS.json("pc.map2", { lat:24.9668, lng:121.1925, z:16 });
-let mapPlacing = null;   // callback while picking a spot
+let mapPlacing = null;   // callback while picking a spot on any map
+const FOOD_STATUS = ["營業中","暫停營業","寒暑假暫停","已歇業"];
+const stClass = s => s==="已歇業" ? "status no" : s && s!=="營業中" ? "status warnish" : "status ok";
 
 function foodPage(){
   const f = S.foodFilter || "";
-  const list = S.food.filter(x => !f || x.cat===f).map(x => ({ ...x, d: distM(x) }))
+  const showClosed = !!S.foodShowClosed;
+  const list = S.food.filter(x => (!f || x.cat===f) && (showClosed || x.status!=="已歇業")).map(x => ({ ...x, d: distM(x) }))
     .sort((a,b) => S.foodSort==="rate" ? ((foodRating(b.id)?.avg||0) - (foodRating(a.id)?.avg||0)) : a.d - b.d);
   const sel = S.food.find(x => x.id === S.foodSel);
+  const closedN = S.food.filter(x => x.status==="已歇業").length;
   return h("div",{class:"stack"},
-    h("div",{class:"sphead"}, h("h1",{},"中大美食地圖"), h("p",{},"大家一起標的店。拖曳移動、滾輪或雙指縮放；點店家看評分與留言，一鍵用 Google 地圖導航。")),
+    h("div",{class:"sphead"}, h("h1",{},"中大美食地圖"), h("p",{},"大家一起編輯的地圖：任何人都能新增店家、修正位置、更新營業狀態（例如校內餐廳暫停營業、寒暑假休息）。點店家看評分與留言，一鍵用 Google 地圖導航。")),
     statusBanner(),
     h("div",{class:"bar"},
       h("div",{class:"chips"},
@@ -1242,56 +1302,24 @@ function foodPage(){
         FOOD_CATS.map(([c,v]) => h("button",{class:"chip","aria-pressed":f===c?"true":"false",onclick:()=>{S.foodFilter=c;render();}}, h("i",{class:"cdot",style:`background:var(${v})`}), c))),
       h("span",{class:"spacer"}),
       h("button",{class:"primary",disabled:!canPost(),onclick:()=>openModal({k:"food"})},"＋ 標一間店")),
-    mapView(list),
-    h("p",{class:"board-note"},"虛線圓圈是從中大正門算起的步行距離。要導航請點店家，再用 Google 地圖開啟。", S.canEdit ? [" ", h("button",{class:"linkbtn",onclick:()=>openModal({k:"landmarks"})},"管理員：編輯地標")] : null),
+    leafletMap("food", { rings:true, labels: landmarks(), center:[24.9668,121.1925], zoom:16,
+      markers: list.map(x => ({ id:x.id, lat:x.lat, lng:x.lng, label:x.name + (x.status && x.status!=="營業中" ? `（${x.status}）` : ""), color:catVar(x.cat), sel:x.id===S.foodSel,
+        dim: x.status==="已歇業", hollow: x.status==="暫停營業" || x.status==="寒暑假暫停", dash: x.status==="暫停營業" || x.status==="寒暑假暫停", onClick:()=>{ S.foodSel = x.id; render(); } })) }),
+    h("p",{class:"board-note"},"實心圓點＝營業中；半透明虛線＝暫停營業或寒暑假休息；灰色＝已歇業。虛線圓圈是從中大正門算起的步行距離。",
+      closedN ? [" ", h("button",{class:"linkbtn",onclick:()=>{S.foodShowClosed=!showClosed;render();}}, showClosed ? "隱藏已歇業" : `顯示已歇業（${closedN}）`)] : null,
+      S.canEdit ? [" ", h("button",{class:"linkbtn",onclick:()=>openModal({k:"landmarks"})},"管理員：編輯地標")] : null),
     sel ? foodDetail(sel) : null,
     h("div",{class:"section-title"}, h("h2",{}, `${list.length} 間店`),
       h("select",{id:"food-sort","aria-label":"排序",style:"width:auto",onchange:e=>{S.foodSort=e.target.value;render();}},
         h("option",{value:"dist",selected:S.foodSort!=="rate"},"離正門最近"), h("option",{value:"rate",selected:S.foodSort==="rate"},"評分最高"))),
     list.length ? h("div",{class:"card list"}, list.map(x => { const r = foodRating(x.id);
-      return h("button",{class:"li",onclick:()=>{ S.foodSel = x.id; centerOn(x); render(); window.scrollTo({top:0,behavior:"smooth"}); }},
-        h("span",{class:"t"}, h("i",{class:"cdot",style:`background:var(${catVar(x.cat)})`}), x.name, h("span",{class:"muted small"}, "　", x.cat, "・", "$".repeat(x.price||1))),
+      return h("button",{class:"li",onclick:()=>{ S.foodSel = x.id; centerMap("food", x); render(); window.scrollTo({top:0,behavior:"smooth"}); }},
+        h("span",{class:"t"}, h("i",{class:"cdot",style:`background:var(${catVar(x.cat)})`}), x.name, h("span",{class:"muted small"}, "　", x.cat, "・", "$".repeat(x.price||1)),
+          x.status && x.status!=="營業中" ? h("span",{class:stClass(x.status),style:"margin-left:6px"}, x.status) : null),
         h("small",{class:"mono"}, r ? `★ ${r.avg.toFixed(1)}（${r.n}）・` : "", fmtDist(x.d), "・走路約 ", Math.max(1,Math.round(x.d/FOOD_WALK)), " 分")); })) :
-      h("div",{class:"empty"}, h("h3",{}, S.dbState==="loading" ? "載入中…" : "地圖上還沒有店"), h("p",{},"把你常吃的店標上去，附上必點和價位，學弟妹會感謝你。"),
+      h("div",{class:"empty"}, h("h3",{}, S.dbState==="loading" ? "載入中…" : "地圖上還沒有店"), h("p",{},"從下面的「附近店家指南」挑一間你知道位置的店，按「標上地圖」就好。"),
         h("button",{class:"primary",disabled:!canPost(),onclick:()=>openModal({k:"food"})},"標第一間店")),
     foodGuide());
-}
-function centerOn(f){ if (LMAP) LMAP.setView([f.lat,f.lng], Math.max(LMAP.getZoom(), 17)); else { S.map = { lat:f.lat, lng:f.lng, z:17 }; LS.set("pc.map2", JSON.stringify(S.map)); } }
-const esc = s => String(s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
-let LMAP = null, LEL = null, LLAYER = null;
-/* Real map: Leaflet + OpenStreetMap tiles. The map element is created once and re-attached on every render. */
-function mapView(list){
-  if (!window.L) return h("div",{class:"info"},"地圖載入失敗，請檢查網路後重新整理。");
-  if (!LEL){
-    LEL = h("div",{class:"map lmap","aria-label":"美食地圖"});
-    LMAP = L.map(LEL, { zoomControl:true }).setView([S.map.lat, S.map.lng], S.map.z);
-    L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom:19, attribution:'&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>' }).addTo(LMAP);
-    LLAYER = L.layerGroup().addTo(LMAP);
-    LMAP.on("movestart", () => { S.dragging = true; });
-    LMAP.on("moveend", () => { const c = LMAP.getCenter(); S.map = { lat:c.lat, lng:c.lng, z:LMAP.getZoom() }; LS.set("pc.map2", JSON.stringify(S.map));
-      S.dragging = false; if (S.dirty && !S.modal){ S.dirty = false; setTimeout(renderKeep); } });
-    LMAP.on("click", e => { if (!mapPlacing) return; const cb = mapPlacing; mapPlacing = null; cb({ lat:e.latlng.lat, lng:e.latlng.lng }); });
-  }
-  LEL.classList.toggle("placing", !!mapPlacing);
-  LLAYER.clearLayers();
-  const css = getComputedStyle(document.documentElement);
-  const pine = css.getPropertyValue("--pine").trim() || "#235c45";
-  [[400,"走路 5 分"],[800,"走路 10 分"],[1600,"走路 20 分"]].forEach(([r,l]) =>
-    L.circle([ORIGIN.lat, ORIGIN.lng], { radius:r, color:pine, weight:1.5, dashArray:"4 6", fill:false, interactive:false }).addTo(LLAYER)
-      .bindTooltip(l, { permanent:false, direction:"top" }));
-  landmarks().forEach(m => L.marker([m.lat, m.lng], { interactive:false, icon:L.divIcon({ className:"lm-icon", html:`<span>${esc(m.name)}</span>`, iconSize:null }) }).addTo(LLAYER));
-  for (const f of list){
-    const sel = f.id === S.foodSel;
-    const mk = L.circleMarker([f.lat, f.lng], { radius: sel ? 11 : 8, color:"#ffffff", weight:2, fillColor: css.getPropertyValue(catVar(f.cat)).trim() || pine, fillOpacity:1 }).addTo(LLAYER);
-    mk.bindTooltip(f.name, { direction:"top", offset:[0,-8], permanent: sel });
-    mk.on("click", ev => { L.DomEvent.stopPropagation(ev); if (mapPlacing) return; S.foodSel = f.id; render(); });
-  }
-  const wrap = h("div",{class:"map-wrap"},
-    LEL,
-    h("div",{class:"map-hint",hidden:!mapPlacing}, "點地圖選店家位置", h("button",{class:"ghost",onclick:e=>{ e.stopPropagation(); const cb = mapPlacing; mapPlacing = null; cb && cb(null); }},"取消")),
-    h("button",{class:"ghost map-home",title:"回到中大",onclick:()=>LMAP.setView([ORIGIN.lat, ORIGIN.lng], 16)},"回到中大"));
-  requestAnimationFrame(() => LMAP && LMAP.invalidateSize());
-  return wrap;
 }
 
 function foodDetail(f){
@@ -1300,48 +1328,60 @@ function foodDetail(f){
   const stars = h("div",{class:"stars-row"}, [1,2,3,4,5].map(n => h("button",{class:"star"+(mine && n<=mine?" on":""),disabled:!canPost(),"aria-label":`給 ${n} 顆星`,onclick:()=>rateFood(f,n)},"★")));
   const card = h("article",{class:"card stack food-card"},
     h("div",{class:"bar"}, h("i",{class:"cdot lg",style:`background:var(${catVar(f.cat)})`}), h("h2",{style:"margin:0;font-family:var(--f-display);font-size:22px"}, f.name),
+      h("span",{class:stClass(f.status)}, f.status || "營業中"),
       h("span",{class:"muted small"}, f.cat, "・", "$".repeat(f.price||1)), h("span",{class:"spacer"}), h("button",{class:"ghost","aria-label":"關閉",onclick:()=>{S.foodSel=null;closeThread();render();}},"✕")),
     h("div",{class:"bar small"}, h("span",{class:"mono"}, r ? `★ ${r.avg.toFixed(1)}・${r.n} 人評分` : "還沒有評分"), h("span",{class:"muted"}, `離正門 ${fmtDist(distM(f))}`), f.hours ? h("span",{class:"muted"}, f.hours) : null),
     f.note ? h("p",{style:"margin:0;white-space:pre-wrap"}, f.note) : null,
     h("div",{class:"bar"}, h("span",{class:"small muted"}, mine ? "你的評分" : "給個評分"), stars),
     h("div",{class:"bar"},
       h("a",{class:"primary",href:gmapsLink(f),target:"_blank",rel:"noopener",style:"text-decoration:none"},"在 Google 地圖開啟"),
-      h("a",{class:"ghost",href:gmapsName(f),target:"_blank",rel:"noopener",style:"text-decoration:none;color:var(--ink)"},"搜尋店名"),
+      h("button",{class:"ghost",disabled:!canPost(),onclick:()=>openModal({k:"food",edit:f})},"編輯資訊・狀態"),
       h("span",{class:"spacer"}),
       h("button",{class:"linkbtn",onclick:()=>isOpen?closeThread():openThread("food:"+f.id)}, isOpen ? "收起留言" : "看留言・必點"),
       (f.uid && f.uid===S.uid) || S.isOwner ? h("button",{class:"linkbtn",onclick:()=>openModal({k:"delfood",id:f.id})},"刪除") : null),
-    h("p",{class:"muted small",style:"margin:0"}, "由 ", f.nick, " 標記・", ago(f.ts)));
+    h("p",{class:"muted small",style:"margin:0"}, "由 ", f.nick, " 標記・", ago(f.ts), f.editedBy ? `・最後由 ${f.editedBy} 編輯（${ago(f.editedAt)}）` : ""));
   if (isOpen) card.append(thread("food/"+f.id+"/comments"));
   return card;
 }
-async function rateFood(f, n){ try { await S.db.doc(`foodrate/${f.id}__${S.uid}`).set({ food:f.id, uid:S.uid, stars:n, ts:Date.now() }); toast(`已評 ${n} 顆星`); } catch(e){ toast(writeErr(e)); } }
 
 function foodSheet(){
-  const m = S.modal; const st = m.st || (m.st = { cat:"正餐", price:1, pos:null, name:"", note:"", hours:"", coord:"" });
+  const m = S.modal; const ed = m.edit;
+  const st = m.st || (m.st = ed ? { cat:ed.cat, price:ed.price||1, pos:{ lat:ed.lat, lng:ed.lng }, name:ed.name, note:ed.note||"", hours:ed.hours||"", coord:"", status:ed.status||"營業中" }
+                                : { cat:"正餐", price:1, pos:null, name:"", note:"", hours:"", coord:"", status:"營業中" });
+  if (!st.status) st.status = "營業中";
   const err = h("p",{class:"err",hidden:true});
   const name = h("input",{type:"text",id:"fd-name",maxlength:"30",value:st.name,placeholder:"店名",oninput:e=>st.name=e.target.value});
-  const coord = h("input",{type:"text",id:"fd-coord",value:st.coord,placeholder:"貼上 Google 地圖連結或座標，例：24.9705, 121.1928",oninput:e=>{ st.coord=e.target.value; const p = parseCoords(st.coord); if (p){ st.pos = p; posLine.textContent = posText(); } }});
   const posText = () => st.pos ? `已定位：${st.pos.lat.toFixed(5)}, ${st.pos.lng.toFixed(5)}（離正門 ${fmtDist(distM(st.pos))}）` : "尚未定位";
   const posLine = h("span",{class:"small mono"}, posText());
+  const coord = h("input",{type:"text",id:"fd-coord",value:st.coord,placeholder:"貼上 Google 地圖連結或座標，例：24.9705, 121.1928",oninput:e=>{ st.coord=e.target.value; const p = parseCoords(st.coord); if (p){ st.pos = p; posLine.textContent = posText(); } }});
   const note = h("textarea",{id:"fd-note",maxlength:"600",style:"min-height:80px",placeholder:"必點、份量、適合幾個人、要不要排隊",oninput:e=>st.note=e.target.value}, st.note);
   const hours = h("input",{type:"text",id:"fd-hours",maxlength:"40",value:st.hours,placeholder:"例：17:00–02:00，週一休",oninput:e=>st.hours=e.target.value});
   const btn = h("button",{class:"primary",onclick:async()=>{
     if (st.name.trim().length < 1) return fail(err,"請填店名。");
     if (!st.pos) return fail(err,"請貼上座標，或在地圖上點選位置。");
     if (distM(st.pos) > 15000) return fail(err,"這個位置離中大超過 15 公里，請確認座標。");
+    const fields = { name:st.name.trim(), cat:st.cat, price:st.price, lat:st.pos.lat, lng:st.pos.lng, note:st.note.trim(), hours:st.hours.trim(), status:st.status };
     btn.disabled = true;
-    try { await S.db.collection("food").add({ name:st.name.trim(), cat:st.cat, price:st.price, lat:st.pos.lat, lng:st.pos.lng, note:st.note.trim(), hours:st.hours.trim(), nick:S.nick, uid:S.uid||"", ts:Date.now() });
-      closeModal(); toast("已加到地圖"); } catch(e){ fail(err, writeErr(e)); btn.disabled=false; } }},"加到地圖");
-  return sheet("標一間店",
+    try {
+      if (ed){ await S.db.doc("food/"+ed.id).update({ ...fields, editedBy:S.nick, editedAt:Date.now() }); S.foodSel = ed.id; }
+      else { const ref = await S.db.collection("food").add({ ...fields, nick:S.nick, uid:S.uid||"", ts:Date.now() }); S.foodSel = ref.id; }
+      closeModal(); toast(ed ? "已更新，謝謝你" : "已加到地圖"); } catch(e){ fail(err, writeErr(e)); btn.disabled=false; } }}, ed ? "儲存變更" : "加到地圖");
+  return sheet(ed ? "編輯店家" : "標一間店",
     h("label",{class:"f",for:"fd-name"},"店名",name),
+    h("div",{class:"f"},"營業狀態", h("div",{class:"radios",role:"radiogroup"}, FOOD_STATUS.map(s => h("label",{}, h("input",{type:"radio",name:"fdst",checked:st.status===s,onchange:()=>st.status=s}),s)))),
     h("div",{class:"f"},"類型", h("div",{class:"radios",role:"radiogroup"}, FOOD_CATS.map(([c]) => h("label",{}, h("input",{type:"radio",name:"fdcat",checked:st.cat===c,onchange:()=>st.cat=c}),c)))),
     h("div",{class:"f"},"價位", h("div",{class:"radios",role:"radiogroup"}, [[1,"$ 百元內"],[2,"$$ 100–250"],[3,"$$$ 250 以上"]].map(([v,l]) => h("label",{}, h("input",{type:"radio",name:"fdp",checked:st.price===v,onchange:()=>st.price=v}),l)))),
     h("label",{class:"f",for:"fd-coord"},"位置", h("small",{},"在 Google 地圖長按（手機）或右鍵（電腦）店家位置，複製座標貼上最準。"), coord),
     h("div",{class:"bar"}, posLine, h("span",{class:"spacer"}), h("button",{class:"ghost",onclick:()=>{ S.modal = null; mapPlacing = p => { if (p){ st.pos = p; st.coord = ""; } S.modal = m; render(); }; S.tab="food"; render(); toast("在地圖上點店家的位置"); }},"在地圖上點選")),
     h("label",{class:"f",for:"fd-hours"},"營業時間（選填）",hours),
     h("label",{class:"f",for:"fd-note"},"推薦說明（選填）",note),
+    ed ? h("p",{class:"muted small",style:"margin:0"},"這是大家一起編輯的地圖，你的修改會記錄暱稱。店家關了請改成「已歇業」，不要刪除。") : null,
     err, foot(btn));
 }
+
+const esc = s => String(s).replace(/[&<>"\']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","\'":"&#39;"}[c]));
+async function rateFood(f, n){ try { await S.db.doc(`foodrate/${f.id}__${S.uid}`).set({ food:f.id, uid:S.uid, stars:n, ts:Date.now() }); toast(`已評 ${n} 顆星`); } catch(e){ toast(writeErr(e)); } }
+
 function delFoodSheet(){
   const id = S.modal.id;
   return sheet("從地圖移除這間店？", h("p",{class:"muted",style:"margin:0"},"評分與留言也會看不到。"),
@@ -1360,6 +1400,436 @@ function landmarkSheet(){
 }
 
 /* =====================================================================
+   MORE PAGE / ONLINE
+   ===================================================================== */
+function morePage(){
+  const pending = S.reqIn.filter(r => r.status==="pending").length;
+  return h("div",{class:"stack"},
+    h("div",{class:"sphead"}, h("h1",{},"所有功能")),
+    h("div",{class:"quick"}, TABS.filter(t => !t[3] && t[0]!=="more").map(([id,label,ic,,, sub]) =>
+      h("button",{class:"qbtn",onclick:()=>go(id)}, icon(ic), h("b",{}, label, id==="inbox" && pending ? h("span",{class:"badge",style:"margin-left:6px"},pending) : null), h("span",{}, sub||"")))));
+}
+function whereLabel(w){
+  if (!w) return "松果";
+  const t = TABS.find(x => x[0]===w); if (t) return t[1];
+  const sp = spaceById(w); if (sp) return spaceLabel(w);
+  return "松果";
+}
+function onlinePeople(){
+  const m = new Map();
+  for (const p of S.peers){ if (p.kind!=="viewer" || !p.by) continue;
+    const cur = m.get(p.by); if (!cur || (p.updatedAt||0) > (cur.updatedAt||0)) m.set(p.by, p); }
+  return [...m.values()];
+}
+function onlinePage(){
+  const ppl = onlinePeople();
+  const groups = new Map();
+  for (const p of ppl){ const w = whereLabel(p.presence?.where); if (!groups.has(w)) groups.set(w, []); groups.get(w).push(p); }
+  return h("div",{class:"stack"},
+    h("div",{class:"sphead"}, h("h1",{}, "現在在線"), h("p",{}, S.room ? `目前有 ${Math.max(ppl.length,1)} 個人開著松果。點對方的暱稱可以提出私訊請求，對方同意後才會開始聊天。` : "在線狀態暫時無法使用，請重新整理。")),
+    S.room ? h("div",{class:"stack"}, [...groups.entries()].sort((a,b) => b[1].length-a[1].length).map(([w, list]) =>
+      h("section",{class:"card stack",style:"gap:10px"},
+        h("div",{class:"section-title"}, h("h2",{style:"font-size:16px"}, w), h("span",{class:"muted small mono"}, `${list.length} 人`)),
+        h("div",{class:"online-row"}, list.map(p => { const nick = String(p.presence?.nick || "匿名").slice(0,16);
+          return p.by === S.uid ? h("span",{class:"person"}, h("i",{}, initial(nick)), nick, h("span",{class:"muted small"},"（你）")) :
+            h("button",{class:"person",title:"提出私訊請求",onclick:()=>openModal({k:"dmreq",to:p.by,toNick:nick,from:p.presence?.where||"online"})}, h("i",{}, initial(nick)), nick); }))))) : null);
+}
+
+/* =====================================================================
+   FORUM — live lobby + general boards
+   ===================================================================== */
+let lobbyUnsub = null;
+function ensureLobby(on){
+  if (on && !lobbyUnsub && S.db){
+    lobbyUnsub = S.db.collection("lobby").orderBy("ts","desc").limit(150).onSnapshot(s => { S.lobby = s.docs.map(d => ({ id:d.id, ...d.data() })).reverse(); renderKeep(); }, () => {});
+  } else if (!on && lobbyUnsub){ lobbyUnsub(); lobbyUnsub = null; }
+}
+function forumPage(){
+  const seg = S.forumSeg || "lobby";
+  const segBar = h("div",{class:"seg"},
+    h("button",{"aria-pressed":seg==="lobby"?"true":"false",onclick:()=>{S.forumSeg="lobby";LS.set("pc.fseg","lobby");render();}},"即時大廳"),
+    h("button",{"aria-pressed":seg==="boards"?"true":"false",onclick:()=>{S.forumSeg="boards";LS.set("pc.fseg","boards");render();}},"看板"));
+  if (seg === "boards"){
+    const sel = S.space.forum && SPACES[S.space.forum] ? S.space.forum : "g:chat";
+    return h("div",{class:"stack"}, segBar,
+      h("div",{class:"chips"}, Object.values(SPACES).filter(s => s.tab==="forum").map(s => h("button",{class:"chip","aria-pressed":sel===s.id?"true":"false",onclick:()=>{S.space.forum=s.id;saveSpace();S.filter="";closeThread();presence();render();}}, s.name))),
+      spaceView(sel));
+  }
+  const here = onlinePeople().filter(p => p.presence?.where === "forum").length;
+  const inp = h("input",{type:"text",id:"lobby-in",maxlength:"300",placeholder: canPost() ? `以「${S.nick}」發言…` : "目前無法發言","aria-label":"大廳訊息",disabled:!canPost()});
+  const send = async () => { const body = inp.value.trim(); if (!body) return; inp.disabled = true;
+    try { await S.db.collection("lobby").add({ body, nick:S.nick, uid:S.uid||"", ts:Date.now() }); inp.value = ""; } catch(e){ toast(writeErr(e)); }
+    inp.disabled = false; inp.focus(); };
+  inp.addEventListener("keydown", e => { if (e.key==="Enter" && !e.isComposing) send(); });
+  const msgs = S.lobby || [];
+  return h("div",{class:"stack"}, segBar,
+    h("div",{class:"sphead"}, h("h1",{},"即時大廳"), h("p",{}, "全校共用的聊天大廳，下課無聊就進來聊。", S.room ? `現在有 ${Math.max(here,1)} 人在大廳。` : "")),
+    statusBanner(),
+    h("div",{class:"card chat lobby"}, msgs.length ? msgs.map(m => {
+        const mine = m.uid && m.uid === S.uid;
+        return h("div",{class:"lmsg"+(mine?" mine":"")},
+          h("div",{class:"lwho"}, h("b",{}, m.nick), h("span",{class:"mono"}, fmtWhen(m.ts).time),
+            mine || S.isOwner ? h("button",{class:"linkbtn",onclick:async()=>{ try { await S.db.doc("lobby/"+m.id).delete(); } catch(e){ toast(writeErr(e)); } }},"刪除") : null),
+          h("div",{class:"lbody"}, m.body)); }) :
+      h("p",{class:"muted small",style:"margin:0"}, S.dbState==="loading" ? "載入中…" : "大廳還很安靜，說聲嗨吧。")),
+    h("div",{class:"cform"}, inp, h("button",{class:"primary",disabled:!canPost(),onclick:send},"送出")),
+    h("p",{class:"board-note"},"請友善發言。不當內容管理員會刪除；每人每小時最多 120 則。"));
+}
+
+/* =====================================================================
+   SCHEDULE — personal timetable with reminders and calendar export
+   ===================================================================== */
+const DAYN = ["","一","二","三","四","五","六","日"];
+const CCOLORS = ["#235c45","#1d4f9e","#c2552b","#7a3fa0","#c98a00","#c23a6e","#2a7a8a","#5a677a"];
+function tt(){ return S.timetable || { courses:[], remind:10, until:"2027-01-15" }; }
+async function saveTimetable(next){
+  S.timetable = next; LS.set("pc.tt", JSON.stringify(next)); scheduleReminders(); render();
+  if (S.db && S.uid && S.canWrite !== false){ try { await S.db.doc(`data/users/${S.uid}/timetable`).set(next); } catch(e){ toast("課表已存在這台裝置，但同步失敗：" + writeErr(e)); } }
+}
+const todayDow = () => { const d = new Date().getDay(); return d===0 ? 7 : d; };
+function nextClass(){
+  const now = new Date(); const dow = todayDow(); const cur = now.getHours()*60+now.getMinutes();
+  const cs = tt().courses; if (!cs.length) return null;
+  for (let k=0;k<=7;k++){ const d = ((dow-1+k)%7)+1;
+    const list = cs.filter(c => +c.day===d && (k>0 || toMin(c.end) > cur)).sort((a,b) => toMin(a.start)-toMin(b.start));
+    if (list.length) return { c:list[0], inDays:k, ongoing: k===0 && toMin(list[0].start) <= cur }; }
+  return null;
+}
+function nextClassCard(){
+  const n = nextClass();
+  if (!n) return h("section",{class:"card stack",style:"gap:6px"}, h("b",{},"課表"), h("p",{class:"muted small",style:"margin:0"},"還沒有課表。輸入一次，之後首頁就會顯示下一堂課，也能設定上課提醒。"), h("div",{}, h("button",{class:"ghost",onclick:()=>go("schedule")},"建立課表")));
+  const c = n.c;
+  const when = n.ongoing ? "上課中" : n.inDays===0 ? `今天 ${c.start}・${minsUntil(toMin(c.start))}` : n.inDays===1 ? `明天 ${c.start}` : n.inDays===7 ? `下週${DAYN[c.day]} ${c.start}` : `週${DAYN[c.day]} ${c.start}`;
+  return h("section",{class:"card stack course-next",style:`gap:4px;border-left:4px solid ${c.color||CCOLORS[0]}`},
+    h("span",{class:"eyebrow"}, n.ongoing ? "現在這堂" : "下一堂課"),
+    h("b",{style:"font-size:18px"}, c.name),
+    h("span",{class:"small muted"}, when, c.room ? `・${c.room}` : ""),
+    c.room ? h("div",{}, h("button",{class:"linkbtn",onclick:()=>{ S.navQ = roomBuilding(c.room); go("nav"); }},"找教室")) : null);
+}
+const roomBuilding = r => (r||"").replace(/[A-Za-z]?\d[\d\-]*.*$/,"").trim() || r;
+function schedulePage(){
+  const T = tt(); const cs = T.courses;
+  const days = [1,2,3,4,5].concat(cs.some(c => +c.day===6) ? [6] : []).concat(cs.some(c => +c.day===7) ? [7] : []);
+  const minH = Math.min(8, ...cs.map(c => Math.floor(toMin(c.start)/60))), maxH = Math.max(18, ...cs.map(c => Math.ceil(toMin(c.end)/60)));
+  const PX = 52; // px per hour
+  const today = todayDow();
+  const grid = h("div",{class:"tt-grid",style:`grid-template-columns:44px repeat(${days.length},minmax(0,1fr))`},
+    h("div",{}), days.map(d => h("div",{class:"tt-dh"+(d===today?" today":"")}, "週"+DAYN[d])),
+    h("div",{class:"tt-hours",style:`height:${(maxH-minH)*PX}px`}, Array.from({length:maxH-minH},(_,i) => h("span",{style:`top:${i*PX}px`}, `${minH+i}:00`))),
+    days.map(d => h("div",{class:"tt-col"+(d===today?" today":""),style:`height:${(maxH-minH)*PX}px;background-size:100% ${PX}px`},
+      cs.filter(c => +c.day===d).map(c => { const top = (toMin(c.start)-minH*60)/60*PX, ht = Math.max(22,(toMin(c.end)-toMin(c.start))/60*PX-2);
+        return h("button",{class:"tt-c",style:`top:${top}px;height:${ht}px;background:${c.color||CCOLORS[0]}`,onclick:()=>openModal({k:"course",c})}, h("b",{},c.name), h("span",{}, c.room||""), h("span",{class:"mono"}, `${c.start}–${c.end}`)); }))));
+  const dsel = S.ttDay || today;
+  const dayList = cs.filter(c => +c.day===+dsel).sort((a,b) => toMin(a.start)-toMin(b.start));
+  const notifOk = "Notification" in window;
+  return h("div",{class:"stack"},
+    h("div",{class:"sphead"}, h("h1",{},"我的課表"), h("p",{}, "只有你自己看得到。上課前會提醒你；想在沒開松果時也收到提醒，就把課表匯入手機行事曆。")),
+    nextClassCard(),
+    h("div",{class:"bar"},
+      h("button",{class:"primary",onclick:()=>openModal({k:"course",c:null})},"＋ 新增課程"),
+      h("span",{class:"spacer"}),
+      h("button",{class:"ghost",disabled:!cs.length,onclick:()=>downloadIcs()},"匯入手機行事曆"),
+      h("button",{class:"ghost",onclick:()=>openModal({k:"ttset"})},"提醒設定")),
+    cs.length ? [
+      h("div",{class:"tt-wrap only-wide"}, grid),
+      h("div",{class:"only-narrow stack"},
+        h("div",{class:"seg"}, days.map(d => h("button",{"aria-pressed":+dsel===d?"true":"false",onclick:()=>{S.ttDay=d;render();}}, DAYN[d]))),
+        dayList.length ? h("div",{class:"stack"}, dayList.map(c => h("button",{class:"card tt-item",style:`border-left:4px solid ${c.color||CCOLORS[0]}`,onclick:()=>openModal({k:"course",c})},
+          h("span",{class:"mono tt-time"}, c.start, h("br",{}), c.end), h("span",{class:"tt-info"}, h("b",{},c.name), h("span",{class:"small muted"}, [c.room, c.teacher].filter(Boolean).join("・")))))) :
+          h("p",{class:"muted small"},"這天沒有課。"))] :
+      h("div",{class:"empty"}, h("h3",{},"還沒有課程"), h("p",{},"按「新增課程」輸入課名、星期、時間和教室。"), h("button",{class:"primary",onclick:()=>openModal({k:"course",c:null})},"新增第一堂課")),
+    h("p",{class:"board-note"}, notifOk ? (T.remindOn && Notification.permission==="granted" ? `網頁提醒已開啟：上課前 ${T.remind} 分鐘通知（需要松果開著）。` : "網頁提醒尚未開啟，可在「提醒設定」打開。") : "這個瀏覽器不支援網頁通知，請用「匯入手機行事曆」設定提醒。"));
+}
+function courseSheet(){
+  const m = S.modal; const c = m.c ? { ...m.c } : { id:Math.random().toString(36).slice(2,10), name:"", day:todayDow()>5?1:todayDow(), start:"09:00", end:"10:50", room:"", teacher:"", color:CCOLORS[tt().courses.length % CCOLORS.length] };
+  const err = h("p",{class:"err",hidden:true});
+  const name = h("input",{type:"text",id:"c-name",maxlength:"40",value:c.name,placeholder:"例：電子學（一）"});
+  const day = h("select",{id:"c-day"}, [1,2,3,4,5,6,7].map(d => h("option",{value:d,selected:+c.day===d}, "星期"+DAYN[d])));
+  const st = h("input",{type:"time",id:"c-start",value:c.start,step:"300"}), en = h("input",{type:"time",id:"c-end",value:c.end,step:"300"});
+  const room = h("input",{type:"text",id:"c-room",maxlength:"30",value:c.room,placeholder:"例：工程五館 E1-101"});
+  const teacher = h("input",{type:"text",id:"c-teacher",maxlength:"20",value:c.teacher,placeholder:"選填"});
+  let color = c.color;
+  const sw = h("div",{class:"swatches"}, CCOLORS.map(col => h("button",{type:"button",class:"sw"+(col===color?" on":""),style:`background:${col}`,"aria-label":"顏色",onclick:e=>{ color = col; sw.querySelectorAll(".sw").forEach(b=>b.classList.remove("on")); e.currentTarget.classList.add("on"); }})));
+  const save = () => {
+    if (!name.value.trim()) return fail(err,"請填課名。");
+    if (toMin(en.value) <= toMin(st.value)) return fail(err,"下課時間要比上課時間晚。");
+    const nc = { ...c, name:name.value.trim(), day:+day.value, start:st.value, end:en.value, room:room.value.trim(), teacher:teacher.value.trim(), color };
+    const T = tt(); const list = T.courses.filter(x => x.id !== nc.id).concat(nc);
+    closeModal(); saveTimetable({ ...T, courses:list }); toast("已儲存");
+  };
+  return sheet(m.c ? "編輯課程" : "新增課程",
+    h("label",{class:"f",for:"c-name"},"課名",name),
+    h("div",{class:"frow"}, h("label",{class:"f",for:"c-day"},"星期",day), h("label",{class:"f",for:"c-start"},"上課",st), h("label",{class:"f",for:"c-end"},"下課",en)),
+    h("div",{class:"frow"}, h("label",{class:"f",for:"c-room"},"教室",room), h("label",{class:"f",for:"c-teacher"},"老師",teacher)),
+    h("div",{class:"f"},"顏色",sw), err,
+    h("div",{class:"foot"},
+      m.c ? h("button",{class:"ghost",style:"margin-right:auto;color:var(--warn)",onclick:()=>{ const T = tt(); closeModal(); saveTimetable({ ...T, courses:T.courses.filter(x => x.id!==c.id) }); toast("已刪除"); }},"刪除") : null,
+      h("button",{class:"ghost",onclick:closeModal},"取消"), h("button",{class:"primary",onclick:save},"儲存")));
+}
+function ttSettingsSheet(){
+  const T = tt(); const err = h("p",{class:"err",hidden:true});
+  const mins = h("select",{id:"tt-mins"}, [5,10,15,20,30].map(n => h("option",{value:n,selected:+T.remind===n}, `上課前 ${n} 分鐘`)));
+  const until = h("input",{type:"date",id:"tt-until",value:T.until||"2027-01-15"});
+  const on = h("input",{type:"checkbox",id:"tt-on",checked:!!T.remindOn});
+  return sheet("提醒設定",
+    h("label",{class:"check",for:"tt-on",style:"font-size:14px"}, on, h("span",{}, h("b",{},"開啟網頁提醒"), h("br",{}), h("span",{class:"muted small"},"松果開著時（含加到主畫面的 App），上課前跳出通知。"))),
+    h("label",{class:"f",for:"tt-mins"},"提醒時間",mins),
+    h("label",{class:"f",for:"tt-until"},"學期結束日", h("small",{},"匯入行事曆時，課程會每週重複到這一天。"), until),
+    err, foot(h("button",{class:"primary",onclick:async()=>{
+      let remindOn = on.checked;
+      if (remindOn && "Notification" in window && Notification.permission !== "granted"){
+        try { const p = await Notification.requestPermission(); if (p !== "granted"){ remindOn = false; toast("瀏覽器沒有允許通知，改用行事曆提醒吧"); } } catch { remindOn = false; } }
+      closeModal(); saveTimetable({ ...T, remind:+mins.value, until:until.value, remindOn }); }},"儲存")));
+}
+let remindTimers = [];
+function scheduleReminders(){
+  remindTimers.forEach(clearTimeout); remindTimers = [];
+  const T = tt(); if (!T.remindOn) return;
+  const now = new Date(); const dow = todayDow(); const cur = now.getHours()*60 + now.getMinutes() + now.getSeconds()/60;
+  for (const c of T.courses){ if (+c.day !== dow) continue;
+    const at = toMin(c.start) - (+T.remind||10); if (at <= cur) continue;
+    remindTimers.push(setTimeout(() => {
+      const msg = `${c.name} ${c.start} 開始${c.room ? "・" + c.room : ""}`;
+      toast("上課提醒：" + msg);
+      try { if ("Notification" in window && Notification.permission==="granted"){
+        if (navigator.serviceWorker && navigator.serviceWorker.controller) navigator.serviceWorker.ready.then(r => r.showNotification("松果上課提醒", { body:msg, icon:"/icons/icon-192.png", tag:"class-"+c.id }));
+        else new Notification("松果上課提醒", { body:msg, icon:"/icons/icon-192.png" }); } } catch {}
+    }, (at - cur) * 60000)); }
+  // re-plan after midnight
+  remindTimers.push(setTimeout(scheduleReminders, ((24*60 - cur) + 1) * 60000));
+}
+function downloadIcs(){
+  const T = tt(); const pad2 = n => String(n).padStart(2,"0");
+  const stamp = d => `${d.getFullYear()}${pad2(d.getMonth()+1)}${pad2(d.getDate())}T${pad2(d.getHours())}${pad2(d.getMinutes())}00`;
+  const until = (T.until || "2027-01-15").replace(/-/g,"") + "T235959";
+  const escI = s => String(s||"").replace(/[\\;,]/g, m => "\\"+m).replace(/\n/g,"\\n");
+  const lines = ["BEGIN:VCALENDAR","VERSION:2.0","PRODID:-//songguo//timetable//ZH","CALSCALE:GREGORIAN","X-WR-CALNAME:松果課表","X-WR-TIMEZONE:Asia/Taipei"];
+  const base = new Date(); base.setHours(0,0,0,0);
+  for (const c of T.courses){
+    const d = new Date(base); const diff = ((+c.day % 7) - d.getDay() + 7) % 7; d.setDate(d.getDate() + diff);
+    const s = new Date(d), e = new Date(d); s.setHours(...c.start.split(":").map(Number)); e.setHours(...c.end.split(":").map(Number));
+    lines.push("BEGIN:VEVENT", `UID:${c.id}@songguo`, `DTSTAMP:${stamp(new Date())}`, `DTSTART;TZID=Asia/Taipei:${stamp(s)}`, `DTEND;TZID=Asia/Taipei:${stamp(e)}`,
+      `RRULE:FREQ=WEEKLY;UNTIL=${until}`, `SUMMARY:${escI(c.name)}`, c.room ? `LOCATION:${escI(c.room)}` : null, c.teacher ? `DESCRIPTION:${escI(c.teacher)}` : null,
+      "BEGIN:VALARM","ACTION:DISPLAY",`DESCRIPTION:${escI(c.name)}`,`TRIGGER:-PT${+T.remind||10}M`,"END:VALARM","END:VEVENT");
+  }
+  lines.push("END:VCALENDAR");
+  const blob = new Blob([lines.filter(Boolean).join("\r\n")], { type:"text/calendar" });
+  const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = "松果課表.ics"; document.body.append(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+  toast("已下載課表檔，打開它就能加入手機行事曆");
+}
+
+/* =====================================================================
+   CAMPUS NEWS (via /api/news, cached on Vercel's CDN)
+   ===================================================================== */
+const NEWS_CATS = [["activity","校園活動"],["announce","校園公告"],["news","中大新聞"]];
+const NEWS_SRC = { activity:"https://www.ncu.edu.tw/p/403-1000-28.php?Lang=zh-tw", announce:"https://www.ncu.edu.tw/p/403-1000-15.php?Lang=zh-tw", news:"https://ncusec.ncu.edu.tw/news/index.php" };
+const newsCache = {};
+function loadNews(cat){
+  const c = newsCache[cat];
+  if (c && (c.loading || Date.now()-c.at < 10*60e3)) return c;
+  newsCache[cat] = { loading:true, items:c?.items||[], at:0 };
+  fetch(`/api/news?cat=${cat}`).then(r => r.ok ? r.json() : Promise.reject(r.status)).then(j => { newsCache[cat] = { items:j.items||[], at:Date.now() }; renderKeep(); })
+    .catch(() => { newsCache[cat] = { items:[], err:true, at:Date.now() }; renderKeep(); });
+  return newsCache[cat];
+}
+function newsList(cat, n){
+  const c = loadNews(cat);
+  if (c.loading && !c.items.length) return h("p",{class:"muted small",style:"margin:0"},"載入中…");
+  if (!c.items.length) return h("p",{class:"muted small",style:"margin:0"}, c.err ? "暫時抓不到學校網站的資料，" : "目前沒有資料，", h("a",{href:NEWS_SRC[cat],target:"_blank",rel:"noopener"},"到學校網站看"), "。");
+  return h("div",{class:"list"}, c.items.slice(0, n||40).map(it => h("a",{class:"li news-li",href:it.url,target:"_blank",rel:"noopener"},
+    h("span",{class:"t",style:"white-space:normal"}, it.title), it.date ? h("small",{class:"mono"}, it.date.slice(5)) : null)));
+}
+function newsPage(){
+  const cat = S.newsCat || "activity";
+  return h("div",{class:"stack"},
+    h("div",{class:"sphead"}, h("h1",{},"校園活動與消息"), h("p",{}, "自動同步中央大學官網，每 15 分鐘更新一次。點標題會開啟學校的原始公告。")),
+    h("div",{class:"seg"}, NEWS_CATS.map(([k,l]) => h("button",{"aria-pressed":cat===k?"true":"false",onclick:()=>{S.newsCat=k;render();}}, l))),
+    h("section",{class:"card"}, newsList(cat)),
+    h("p",{class:"board-note"}, "資料來源：", h("a",{href:NEWS_SRC[cat],target:"_blank",rel:"noopener"},"國立中央大學官網")));
+}
+
+/* =====================================================================
+   WEATHER — 中央氣象署 via /api/weather; Open-Meteo as fallback
+   ===================================================================== */
+const WMO = {0:"晴",1:"晴時多雲",2:"多雲",3:"陰",45:"霧",48:"霧",51:"毛毛雨",53:"毛毛雨",55:"毛毛雨",56:"凍雨",57:"凍雨",61:"小雨",63:"中雨",65:"大雨",66:"凍雨",67:"凍雨",71:"小雪",73:"雪",75:"大雪",77:"雪",80:"陣雨",81:"陣雨",82:"大陣雨",85:"陣雪",86:"陣雪",95:"雷雨",96:"雷雨冰雹",99:"雷雨冰雹"};
+let WX = null;
+function loadWeather(){
+  if (WX && (WX.loading || Date.now()-WX.at < 20*60e3)) return WX;
+  WX = { loading:true, at:0, data:WX?.data };
+  const openMeteo = () => fetch("https://api.open-meteo.com/v1/forecast?latitude=24.9688&longitude=121.1955&hourly=temperature_2m,precipitation_probability,weather_code&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max&timezone=Asia%2FTaipei&forecast_days=7")
+    .then(r => r.json()).then(j => ({ source:"Open-Meteo（備援）",
+      hours: j.hourly.time.map((t,i) => ({ t, temp:j.hourly.temperature_2m[i], pop:j.hourly.precipitation_probability[i], wx:WMO[j.hourly.weather_code[i]]||"" })).filter((x,i) => i%3===0),
+      days: j.daily.time.map((t,i) => ({ t, max:j.daily.temperature_2m_max[i], min:j.daily.temperature_2m_min[i], pop:j.daily.precipitation_probability_max[i], wx:WMO[j.daily.weather_code[i]]||"" })) }));
+  fetch("/api/weather").then(r => r.ok ? r.json() : Promise.reject()).then(j => j && j.hours && j.hours.length ? j : openMeteo())
+    .catch(openMeteo).then(d => { WX = { data:d, at:Date.now() }; renderKeep(); }).catch(() => { WX = { err:true, at:Date.now() }; renderKeep(); });
+  return WX;
+}
+function upcomingHours(d){ const now = Date.now() - 90*60e3; return (d.hours||[]).filter(x => new Date(x.t).getTime() >= now); }
+function weatherMini(){
+  const w = loadWeather(); const d = w.data;
+  if (!d) return h("section",{class:"card wx-mini"}, h("span",{class:"muted small"}, w.err ? "天氣暫時抓不到" : "天氣載入中…"));
+  const hs = upcomingHours(d); const now = hs[0]; const rainy = hs.slice(0,4).some(x => (x.pop||0) >= 50);
+  return h("button",{class:"card wx-mini",onclick:()=>go("weather")},
+    h("span",{class:"wx-temp mono"}, now ? `${Math.round(now.temp)}°` : "—"),
+    h("span",{class:"stack",style:"gap:0;align-items:flex-start"}, h("b",{}, "中壢・", now?.wx || ""), h("span",{class:"small muted"}, rainy ? "接下來可能下雨，記得帶傘" : `降雨機率 ${now?.pop ?? "—"}%`)));
+}
+function weatherPage(){
+  const w = loadWeather(); const d = w.data;
+  return h("div",{class:"stack"},
+    h("div",{class:"sphead"}, h("h1",{},"中壢天氣"), h("p",{}, "中央大學所在的桃園市中壢區。")),
+    !d ? h("div",{class:"info"}, w.err ? "天氣資料暫時抓不到，稍後再試。" : "載入中…") : [
+      h("section",{class:"card stack",style:"gap:10px"}, h("b",{},"接下來 36 小時"),
+        h("div",{class:"wx-hours"}, upcomingHours(d).slice(0,12).map(x => { const t = new Date(x.t);
+          return h("div",{class:"wx-h"}, h("span",{class:"mono small muted"}, `${pad(t.getHours())}:00`), h("b",{class:"mono"}, `${Math.round(x.temp)}°`), h("span",{class:"small"}, x.wx||""), h("span",{class:"small mono",style:(x.pop||0)>=50?"color:var(--plate);font-weight:700":""}, `☂ ${x.pop ?? "—"}%`)); }))),
+      d.days && d.days.length ? h("section",{class:"card list"}, d.days.map(x => { const t = new Date(x.t);
+        return h("div",{class:"li"}, h("span",{class:"t"}, `${t.getMonth()+1}/${t.getDate()}（${WK[t.getDay()]}）`, h("span",{class:"muted small"}, "　", x.wx||"")),
+          h("small",{class:"mono"}, `${Math.round(x.min)}–${Math.round(x.max)}°・☂ ${x.pop ?? "—"}%`)); })) : null,
+      h("p",{class:"board-note"}, "資料來源：", d.source || "中央氣象署")]);
+}
+
+/* =====================================================================
+   CAMPUS NAVIGATION — collaborative pins for campus buildings
+   ===================================================================== */
+const SPOT_CATS = [["教學","--fc4"],["圖書館","--fc6"],["宿舍","--fc5"],["餐廳","--fc3"],["運動","--fc2"],["地標","--fc1"],["行政服務","--fc1"]];
+const spotVar = c => (SPOT_CATS.find(x => x[0]===c) || SPOT_CATS[0])[1];
+const CAMPUS_SPOTS = [
+  ["教學",["綜合教學大樓","科學一館","科學二館","科學三館","科學四館","科學五館","志希館","工程一館","工程二館","工程三館","工程四館","工程五館","文學院","鴻經館","據德樓","客家學院大樓","人文社會科學大樓","國鼎光電大樓","研究中心大樓","太空遙測研究中心","創新育成中心"]],
+  ["圖書館",["總圖書館","中正圖書館","國鼎圖書資料館","校史館"]],
+  ["宿舍",["國際學舍","男研舍","女14舍","女1～4舍","男3舍","男5舍","男6舍","男7舍","男9舍","男11舍","男12舍","男13舍","曦望居","中大會館"]],
+  ["餐廳",["松苑餐廳","松果餐廳","九舍餐廳","女14舍地下商場","小木屋鬆餅"]],
+  ["運動",["依仁堂","操場","室內游泳池","籃球場","網球場","排球場","羽球館","棒壘球場","溜冰場","攀岩場"]],
+  ["地標",["中大湖","國泰樹","太極銅雕","百花川","中大正門","後門","觀景台"]],
+  ["行政服務",["行政大樓","志道樓","游藝館"]],
+];
+const FIXED_SPOTS = { "中大正門": { lat:24.96879, lng:121.19552, note:"前門警衛室公車站" } };   // coordinate from the bus stop record
+const spotId = name => "s-" + Array.from(name).reduce((h,c) => (h*31 + c.codePointAt(0)) >>> 0, 7).toString(36);
+function allSpots(){
+  const byId = new Map(S.spots.map(s => [s.id, s]));
+  const out = [];
+  for (const [cat, names] of CAMPUS_SPOTS) for (const n of names){ const id = spotId(n); const pinned = byId.get(id); byId.delete(id);
+    const fx = FIXED_SPOTS[n];
+    out.push(pinned ? { ...pinned, cat:pinned.cat||cat } : fx ? { id, name:n, cat, lat:fx.lat, lng:fx.lng, note:fx.note, fixed:true } : { id, name:n, cat }); }
+  for (const s of byId.values()) out.push(s);
+  return out;
+}
+const walkLink = s => `https://www.google.com/maps/dir/?api=1&destination=${s.lat.toFixed(6)},${s.lng.toFixed(6)}&travelmode=walking`;
+const campusSearch = n => `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent("國立中央大學 " + n)}`;
+function navPage(){
+  const q = (S.navQ || "").trim(); const cat = S.navCat || "";
+  const spots = allSpots();
+  const shown = spots.filter(s => (!cat || s.cat===cat) && (!q || s.name.includes(q) || (s.note||"").includes(q)));
+  const pinned = spots.filter(s => typeof s.lat==="number");
+  const sel = spots.find(s => s.id === S.navSel);
+  const search = h("input",{type:"search",id:"nav-q",value:q,placeholder:"搜尋建築、教室、餐廳…","aria-label":"搜尋地點",oninput:e=>{ S.navQ = e.target.value; clearTimeout(navT); navT = setTimeout(renderKeep, 200); }});
+  return h("div",{class:"stack"},
+    h("div",{class:"sphead"}, h("h1",{},"校內導航"), h("p",{}, "找教室、宿舍、餐廳。已標位置的地點可以直接開 Google 步行導航；還沒標的，可以先用 Google 搜尋，順手幫大家標上。")),
+    h("div",{class:"bar"}, h("div",{style:"flex:1;min-width:200px"}, search), h("button",{class:"ghost",onclick:()=>locateMe("nav")},"我的位置")),
+    h("div",{class:"chips"}, h("button",{class:"chip","aria-pressed":cat===""?"true":"false",onclick:()=>{S.navCat="";render();}},"全部"),
+      SPOT_CATS.map(([c,v]) => h("button",{class:"chip","aria-pressed":cat===c?"true":"false",onclick:()=>{S.navCat=c;render();}}, h("i",{class:"cdot",style:`background:var(${v})`}), c))),
+    leafletMap("nav", { markers: pinned.filter(s => !cat || s.cat===cat).map(s => ({ id:s.id, lat:s.lat, lng:s.lng, label:s.name, color:spotVar(s.cat), sel:s.id===S.navSel, onClick:()=>{ S.navSel = s.id; render(); } })), center:[24.9683,121.1935], zoom:16 }),
+    sel ? spotDetail(sel) : null,
+    h("div",{class:"section-title"}, h("h2",{}, `${shown.length} 個地點`), h("span",{class:"muted small"}, `已標位置 ${pinned.length} / ${spots.length}`)),
+    h("div",{class:"card list"}, shown.map(s => h("div",{class:"li",style:"flex-wrap:wrap"},
+      h("button",{class:"t linkish",onclick:()=>{ S.navSel = s.id; if (typeof s.lat==="number") centerMap("nav", s); render(); window.scrollTo({top:0,behavior:"smooth"}); }},
+        h("i",{class:"cdot",style:`background:var(${spotVar(s.cat)})`}), s.name, h("span",{class:"muted small"}, "　", s.cat, typeof s.lat==="number" ? "" : "・尚未標位置")),
+      h("span",{style:"display:flex;gap:12px;flex:none"},
+        typeof s.lat==="number" ? h("a",{class:"linkbtn",href:walkLink(s),target:"_blank",rel:"noopener"},"步行導航") : h("a",{class:"linkbtn",href:campusSearch(s.name),target:"_blank",rel:"noopener"},"Google 搜尋"),
+        typeof s.lat==="number" ? null : h("button",{class:"linkbtn",disabled:!canPost(),onclick:()=>openModal({k:"spot",s})},"標位置"))))),
+    h("div",{class:"bar"}, h("span",{class:"muted small"},"清單裡沒有？"), h("button",{class:"ghost",disabled:!canPost(),onclick:()=>openModal({k:"spot",s:null})},"＋ 新增地點")));
+}
+let navT = 0;
+function spotDetail(s){
+  const has = typeof s.lat==="number";
+  return h("article",{class:"card stack",style:"gap:8px"},
+    h("div",{class:"bar"}, h("i",{class:"cdot lg",style:`background:var(${spotVar(s.cat)})`}), h("h2",{style:"margin:0;font-family:var(--f-display);font-size:22px"}, s.name), h("span",{class:"muted small"}, s.cat),
+      h("span",{class:"spacer"}), h("button",{class:"ghost","aria-label":"關閉",onclick:()=>{S.navSel=null;render();}},"✕")),
+    s.note ? h("p",{style:"margin:0;white-space:pre-wrap"}, s.note) : null,
+    has && !s.fixed ? h("p",{class:"small muted",style:"margin:0"}, `離正門約 ${fmtDist(distM(s))}・走路約 ${Math.max(1,Math.round(distM(s)/FOOD_WALK))} 分`) : null,
+    h("div",{class:"bar"},
+      has ? h("a",{class:"primary",href:walkLink(s),target:"_blank",rel:"noopener",style:"text-decoration:none"},"Google 步行導航") : h("a",{class:"primary",href:campusSearch(s.name),target:"_blank",rel:"noopener",style:"text-decoration:none"},"用 Google 搜尋"),
+      s.fixed ? null : h("button",{class:"ghost",disabled:!canPost(),onclick:()=>openModal({k:"spot",s})}, has ? "修正位置或說明" : "幫忙標位置")),
+    s.editedBy || s.nick ? h("p",{class:"muted small",style:"margin:0"}, s.editedBy ? `最後由 ${s.editedBy} 編輯・${ago(s.editedAt||s.ts)}` : `由 ${s.nick} 標記・${ago(s.ts)}`) : null);
+}
+function spotSheet(){
+  const m = S.modal; const base = m.s;
+  const st = m.st || (m.st = { name: base?.name || "", cat: base?.cat || "教學", note: base?.note || "", pos: base && typeof base.lat==="number" ? { lat:base.lat, lng:base.lng } : null, coord:"" });
+  const err = h("p",{class:"err",hidden:true});
+  const name = h("input",{type:"text",id:"sp-name",maxlength:"30",value:st.name,disabled:!!(base && !base.custom && CAMPUS_SPOTS.some(([,l]) => l.includes(base.name))),oninput:e=>st.name=e.target.value});
+  const posText = () => st.pos ? `已定位：${st.pos.lat.toFixed(5)}, ${st.pos.lng.toFixed(5)}` : "尚未定位";
+  const posLine = h("span",{class:"small mono"}, posText());
+  const coord = h("input",{type:"text",id:"sp-coord",value:st.coord,placeholder:"貼上 Google 地圖連結或座標",oninput:e=>{ st.coord=e.target.value; const p = parseCoords(st.coord); if (p){ st.pos = p; posLine.textContent = posText(); } }});
+  const note = h("textarea",{id:"sp-note",maxlength:"300",style:"min-height:70px",placeholder:"例：入口在大樓東側、二樓有飲水機",oninput:e=>st.note=e.target.value}, st.note);
+  const btn = h("button",{class:"primary",onclick:async()=>{
+    const nm = (st.name||"").trim(); if (!nm) return fail(err,"請填地點名稱。");
+    if (!st.pos) return fail(err,"請貼上座標，或在地圖上點選位置。");
+    if (distM(st.pos) > 3000) return fail(err,"這個位置離校園太遠了，請確認座標。");
+    const id = base?.id || spotId(nm); btn.disabled = true;
+    const existing = S.spots.find(x => x.id===id);
+    const data = existing ? { ...existing, name:nm, cat:st.cat, note:st.note.trim(), lat:st.pos.lat, lng:st.pos.lng, editedBy:S.nick, editedAt:Date.now() }
+                          : { name:nm, cat:st.cat, note:st.note.trim(), lat:st.pos.lat, lng:st.pos.lng, nick:S.nick, uid:S.uid||"", ts:Date.now(), custom: !CAMPUS_SPOTS.some(([,l]) => l.includes(nm)) };
+    delete data.id;
+    try { await S.db.doc("spots/"+id).set(data); S.navSel = id; closeModal(); toast("已更新地圖，謝謝你"); } catch(e){ fail(err, writeErr(e)); btn.disabled = false; } }},"儲存");
+  return sheet(base && typeof base.lat==="number" ? "修正地點" : "標上地點",
+    h("label",{class:"f",for:"sp-name"},"名稱",name),
+    h("div",{class:"f"},"類別", h("div",{class:"radios",role:"radiogroup"}, SPOT_CATS.map(([c]) => h("label",{}, h("input",{type:"radio",name:"spcat",checked:st.cat===c,onchange:()=>st.cat=c}),c)))),
+    h("label",{class:"f",for:"sp-coord"},"位置", h("small",{},"最快：在 Google 地圖長按該地點，複製座標貼上。或按下方按鈕直接在地圖上點。"), coord),
+    h("div",{class:"bar"}, posLine, h("span",{class:"spacer"}), h("button",{class:"ghost",onclick:()=>{ S.modal = null; mapPlacing = p => { if (p){ st.pos = p; st.coord = ""; } S.modal = m; render(); }; S.tab = "nav"; render(); toast("在地圖上點這個地點的位置"); }},"在地圖上點選")),
+    h("label",{class:"f",for:"sp-note"},"說明（選填）",note),
+    h("p",{class:"muted small",style:"margin:0"},"地圖是大家一起編輯的。標錯了沒關係，其他人可以再修正。"),
+    err, foot(btn));
+}
+
+/* =====================================================================
+   SHARED LEAFLET MAPS (food + nav). Each map element is created once and re-attached on render.
+   ===================================================================== */
+const MAPS = {};
+function leafletMap(key, opts){
+  if (!window.L) return h("div",{class:"info"},"地圖載入失敗，請檢查網路後重新整理。");
+  let M = MAPS[key];
+  if (!M){
+    const saved = LS.json("pc.map."+key, null);
+    const el = h("div",{class:"map lmap","aria-label":"地圖"});
+    const map = L.map(el, { zoomControl:true }).setView(saved ? [saved.lat, saved.lng] : opts.center, saved ? saved.z : opts.zoom);
+    L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom:19, attribution:'&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>' }).addTo(map);
+    const layer = L.layerGroup().addTo(map);
+    map.on("movestart", () => { S.dragging = true; });
+    map.on("moveend", () => { const c = map.getCenter(); LS.set("pc.map."+key, JSON.stringify({ lat:c.lat, lng:c.lng, z:map.getZoom() }));
+      S.dragging = false; if (S.dirty && !S.modal){ S.dirty = false; setTimeout(renderKeep); } });
+    map.on("click", e => { if (!mapPlacing) return; const cb = mapPlacing; mapPlacing = null; cb({ lat:e.latlng.lat, lng:e.latlng.lng }); });
+    M = MAPS[key] = { el, map, layer, me:null };
+  }
+  M.el.classList.toggle("placing", !!mapPlacing);
+  M.layer.clearLayers();
+  const css = getComputedStyle(document.documentElement);
+  const pine = css.getPropertyValue("--pine").trim() || "#235c45";
+  if (opts.rings) [[400,"走路 5 分"],[800,"走路 10 分"],[1600,"走路 20 分"]].forEach(([r,l]) =>
+    L.circle([ORIGIN.lat, ORIGIN.lng], { radius:r, color:pine, weight:1.5, dashArray:"4 6", fill:false, interactive:false }).addTo(M.layer).bindTooltip(l, { direction:"top" }));
+  (opts.labels||[]).forEach(m => L.marker([m.lat, m.lng], { interactive:false, icon:L.divIcon({ className:"lm-icon", html:`<span>${esc(m.name)}</span>`, iconSize:null }) }).addTo(M.layer));
+  for (const k of opts.markers){
+    const mk = L.circleMarker([k.lat, k.lng], { radius: k.sel ? 11 : 8, color: k.dim ? (css.getPropertyValue("--muted").trim()||"#888") : "#ffffff", weight:2, dashArray: k.dash ? "3 3" : null,
+      fillColor: k.dim ? "#9aa49e" : (css.getPropertyValue(k.color).trim() || pine), fillOpacity: k.hollow ? 0.35 : 1 }).addTo(M.layer);
+    mk.bindTooltip(k.label, { direction:"top", offset:[0,-8], permanent: !!k.sel });
+    mk.on("click", ev => { L.DomEvent.stopPropagation(ev); if (mapPlacing) return; k.onClick(); });
+  }
+  const wrap = h("div",{class:"map-wrap"}, M.el,
+    h("div",{class:"map-hint",hidden:!mapPlacing}, "點地圖選位置", h("button",{class:"ghost",onclick:e=>{ e.stopPropagation(); const cb = mapPlacing; mapPlacing = null; cb && cb(null); }},"取消")),
+    h("button",{class:"ghost map-home",onclick:()=>M.map.setView(opts.center, opts.zoom)},"回到中大"));
+  requestAnimationFrame(() => M.map.invalidateSize());
+  return wrap;
+}
+function centerMap(key, p){ const M = MAPS[key]; if (M) M.map.setView([p.lat, p.lng], Math.max(M.map.getZoom(), 17)); else LS.set("pc.map."+key, JSON.stringify({ lat:p.lat, lng:p.lng, z:17 })); }
+function locateMe(key){
+  const M = MAPS[key]; if (!M || !navigator.geolocation) return toast("這個裝置無法取得位置");
+  navigator.geolocation.getCurrentPosition(pos => {
+    const ll = [pos.coords.latitude, pos.coords.longitude];
+    if (M.me) M.me.remove();
+    M.me = L.circleMarker(ll, { radius:8, color:"#fff", weight:3, fillColor:"#2b7cff", fillOpacity:1 }).addTo(M.map).bindTooltip("你在這裡", { permanent:true, direction:"top", offset:[0,-8] });
+    M.map.setView(ll, 17);
+  }, () => toast("沒有取得位置權限"), { enableHighAccuracy:true, timeout:10000 });
+}
+
+/* =====================================================================
    MODALS
    ===================================================================== */
 let overlayEl = null;
@@ -1367,7 +1837,7 @@ function openModal(m){ S.modal = m; render(); const f = document.querySelector("
 function closeModal(){ S.modal = null; S.dirty = false; render(); }
 function renderOverlay(){
   if (!S.modal) return;
-  const B = { profile:profileSheet, loc:locSheet, post:postSheet, report:reportSheet, del:delSheet, ride:rideSheet, delride:delRideSheet, dmreq:dmReqSheet, install:installSheet, bus:busSheet, food:foodSheet, delfood:delFoodSheet, landmarks:landmarkSheet };
+  const B = { profile:profileSheet, loc:locSheet, post:postSheet, report:reportSheet, del:delSheet, ride:rideSheet, delride:delRideSheet, dmreq:dmReqSheet, install:installSheet, bus:busSheet, food:foodSheet, delfood:delFoodSheet, landmarks:landmarkSheet, course:courseSheet, ttset:ttSettingsSheet, spot:spotSheet };
   overlayEl = h("div",{class:"scrim",onclick:e=>{ if (e.target===overlayEl) closeModal(); }}, B[S.modal.k]());
   overlayEl.addEventListener("keydown", e => { if (e.key==="Escape") closeModal(); });
   app.append(overlayEl);
@@ -1557,6 +2027,7 @@ let toastEl = null, toastT = 0;
 function toast(msg){ if (!toastEl){ toastEl = h("div",{class:"toast",role:"status"}); document.body.append(toastEl); }
   toastEl.textContent = msg; toastEl.hidden = false; clearTimeout(toastT); toastT = setTimeout(()=>toastEl.hidden=true, 2600); }
 
+scheduleReminders();
 /* ---------- PWA ---------- */
 let deferredInstall = null;
 window.addEventListener("beforeinstallprompt", e => { e.preventDefault(); deferredInstall = e; });
@@ -1600,6 +2071,10 @@ setInterval(() => { if (S.nick) renderKeep(); }, 30000);
   sub(db.collection("likes").limit(1000), s => { const m = {}; for (const d of s.docs){ const x = d.data(); (m[x.post] ||= new Set()).add(x.uid); } S.likes = m; });
   sub(db.collection("reports").limit(1000), s => { const m = {}; for (const d of s.docs){ const x = d.data(); (m[x.post] ||= new Set()).add(x.uid); } S.reports = m; });
   sub(db.collection("rides").orderBy("when","desc").limit(200), s => { S.rides = s.docs.map(d => ({ id:d.id, ...d.data() })); });
+  sub(db.collection("spots").limit(800), s => { S.spots = s.docs.map(d => ({ id:d.id, ...d.data() })).filter(x => typeof x.lat==="number" && typeof x.lng==="number"); });
+  if (S.uid){ db.doc(`data/users/${S.uid}/timetable`).get().then(d => { if (d.exists){ const t = d.data(); if (t && Array.isArray(t.courses)){ S.timetable = t; LS.set("pc.tt", JSON.stringify(t)); scheduleReminders(); renderKeep(); } }
+      else if (S.timetable && S.timetable.courses.length && S.canWrite !== false) db.doc(`data/users/${S.uid}/timetable`).set(S.timetable).catch(()=>{}); }).catch(()=>{}); }
+  ensureLobby(S.tab==="forum");
   sub(db.collection("food").limit(800), s => { S.food = s.docs.map(d => ({ id:d.id, ...d.data() })).filter(x => typeof x.lat==="number" && typeof x.lng==="number"); });
   sub(db.collection("foodrate").limit(2000), s => { const m = {}; for (const d of s.docs){ const x = d.data(); (m[x.food] ||= new Map()).set(x.uid, x.stars); } S.foodRates = m; });
   db.doc("config/landmarks").onSnapshot(s => { S.landmarks = s.exists && Array.isArray(s.data().items) ? s.data().items : null; renderKeep(); }, () => {});

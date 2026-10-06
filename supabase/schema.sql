@@ -31,7 +31,14 @@ $$;
 
 -- updated_at 自動更新
 create or replace function public.docs_touch() returns trigger language plpgsql as $$
-begin new.updated_at = now(); new.owner = old.owner; new.path = old.path; return new; end $$;
+begin
+  new.updated_at = now(); new.owner = old.owner; new.path = old.path;
+  -- 共同編輯的地圖（美食、校內地點）：保留原建立者的資料，避免被改掉
+  if new.collection in ('food', 'spots') then
+    new.data = new.data || jsonb_build_object('uid', old.data->'uid', 'nick', old.data->'nick', 'ts', old.data->'ts');
+  end if;
+  return new;
+end $$;
 drop trigger if exists docs_touch on public.docs;
 create trigger docs_touch before update on public.docs for each row execute function public.docs_touch();
 
@@ -45,6 +52,8 @@ begin
   elsif new.collection like '%/comments'   then lim := 60;  pat := '%/comments';
   elsif new.collection = 'rides'           then lim := 6;   pat := 'rides';
   elsif new.collection = 'food'            then lim := 15;  pat := 'food';
+  elsif new.collection = 'spots'           then lim := 30;  pat := 'spots';
+  elsif new.collection = 'lobby'           then lim := 120; pat := 'lobby';
   elsif new.collection = 'locations'       then lim := 3;   pat := 'locations';
   elsif new.collection = 'dmreq'           then lim := 20;  pat := 'dmreq';
   elsif new.collection like 'dms/%'        then lim := 300; pat := 'dms/%';
@@ -99,14 +108,18 @@ create policy docs_insert on public.docs for insert to authenticated with check 
   owner = auth.uid() and public.docs_write_ok(collection, path, data)
 );
 
--- 修改：本人、管理員，或私訊請求的收件人（回覆同意／拒絕）
+-- 修改：本人、管理員、私訊請求的收件人（回覆同意／拒絕），
+-- 以及任何人都能編輯共同地圖（美食地圖 food、校內地點 spots）
 drop policy if exists docs_update on public.docs;
 create policy docs_update on public.docs for update to authenticated
-  using (owner = auth.uid() or public.is_admin() or (collection = 'dmreq' and data->>'to' = auth.uid()::text))
+  using (owner = auth.uid() or public.is_admin()
+         or (collection = 'dmreq' and data->>'to' = auth.uid()::text)
+         or collection in ('food', 'spots'))
   with check (
     (owner = auth.uid() and public.docs_write_ok(collection, path, data))
     or public.is_admin()
     or (collection = 'dmreq' and data->>'to' = auth.uid()::text)
+    or collection in ('food', 'spots')
   );
 
 -- 刪除：本人或管理員
