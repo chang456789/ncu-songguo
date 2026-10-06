@@ -8,6 +8,15 @@ const SOURCES = {
 };
 const decode = s => s.replace(/<[^>]+>/g, "").replace(/&nbsp;/g, " ").replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">")
   .replace(/&quot;/g, '"').replace(/&#0?39;/g, "'").replace(/&#(\d+);/g, (_, n) => String.fromCharCode(+n)).replace(/\s+/g, " ").trim();
+// rpage puts screen-reader hints like 「另開新視窗」 in title attributes and hidden spans — never a real title.
+const HINT = /(另開新視窗|原頁面開啟|開啟新視窗|新視窗開啟|open in new window|另開視窗)/gi;
+const cleanTitle = s => decode(s || "").replace(HINT, "").replace(/[\(（]\s*[\)）]/g, "").replace(/^[\s:：\-–|]+|[\s:：\-–|]+$/g, "").trim();
+function bestTitle(anchorHtml, inner) {
+  const fromInner = cleanTitle(inner);
+  const t = (anchorHtml.match(/title="([^"]*)"/) || [])[1];
+  const fromAttr = cleanTitle(t);
+  return fromInner.length >= 4 ? fromInner : fromAttr.length >= 4 ? fromAttr : fromInner || fromAttr;
+}
 const abs = (href, base) => { try { return new URL(href.replace(/&amp;/g, "&"), base).href; } catch { return null; } };
 const DATE = /(20\d{2})[-\/.](\d{1,2})[-\/.](\d{1,2})/;
 const fmtDate = m => m ? `${m[1]}-${m[2].padStart(2, "0")}-${m[3].padStart(2, "0")}` : "";
@@ -19,8 +28,7 @@ function parseRpage(html, base) {
   for (const part of parts) {
     const seg = part.slice(0, 2500);
     const a = seg.match(/<a\b[^>]*href="([^"]+)"[^>]*>([\s\S]*?)<\/a>/i); if (!a) continue;
-    const titleAttr = (a[0].match(/title="([^"]*)"/) || [])[1];
-    const title = decode(titleAttr || a[2]); const url = abs(a[1], base);
+    const title = bestTitle(a[0], a[2]); const url = abs(a[1], base);
     if (!title || !url || seen.has(url)) continue; seen.add(url);
     items.push({ title, url, date: fmtDate(seg.match(DATE)) });
   }
@@ -28,7 +36,7 @@ function parseRpage(html, base) {
   // fallback: any article link on the page
   const re = /<a\b[^>]*href="([^"]*406-1000-[^"]+)"[^>]*>([\s\S]*?)<\/a>/gi; let m;
   while ((m = re.exec(html))) {
-    const url = abs(m[1], base); const title = decode(m[2]); if (!title || !url || seen.has(url)) continue; seen.add(url);
+    const url = abs(m[1], base); const title = bestTitle(m[0], m[2]); if (!title || !url || seen.has(url)) continue; seen.add(url);
     const near = html.slice(Math.max(0, m.index - 300), m.index + m[0].length + 300);
     items.push({ title, url, date: fmtDate(near.match(DATE)) });
   }
@@ -38,7 +46,7 @@ function parseSec(html, base) {
   const items = []; const seen = new Set();
   const re = /<a\b[^>]*href="([^"]*headlines_content\.php\?H_ID=\d+[^"]*)"[^>]*>([\s\S]*?)<\/a>/gi; let m;
   while ((m = re.exec(html))) {
-    const url = abs(m[1], base); const title = decode(m[2]);
+    const url = abs(m[1], base); const title = bestTitle(m[0], m[2]);
     if (!title || title.length < 4 || !url || seen.has(url)) continue; seen.add(url);
     const near = html.slice(Math.max(0, m.index - 400), m.index + m[0].length + 400);
     items.push({ title, url, date: fmtDate(near.match(DATE)) });
