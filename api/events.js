@@ -75,7 +75,7 @@ function resolveYear(o, posted) {
   return validYMD(y, o.m, o.d) ? iso(y, o.m, o.d) : null;
 }
 const TIME = /(?<![\d.\/])([01]?\d|2[0-3])\s*[:：]\s*([0-5]\d)(?:\s*(?:[-–—~～至到]|\s)\s*([01]?\d|2[0-3])\s*[:：]\s*([0-5]\d))?/;
-const PLACE_KEYS = /(活動地點|講座地點|演出地點|展覽地點|展出地點|上課地點|地點|地址|場地|地點\/Venue|Venue|Location)\s*[:：]\s*([^\n，。；;]{2,40})/i;
+const PLACE_KEYS = /(活動地點|講座地點|演出地點|展覽地點|展出地點|上課地點|地點|場地|地點\/Venue|Venue|Location)\s*[:：]\s*([^\n，。；;]{2,40})/i;
 const PLACES = ["大禮堂", "羅家倫國際會議廳", "羅家倫講堂", "羅家倫", "教研大樓", "國鼎光電大樓", "國鼎圖書資料館", "文三館", "文二館", "文學院", "總圖書館", "圖書館", "藝文中心", "藝文展場", "藝文走廊", "依仁堂", "中大會館", "綜教館", "綜合教學大樓", "工程一館", "工程二館", "工程三館", "工程四館", "工程五館", "科學一館", "科學二館", "科學三館", "科學四館", "科學五館", "管二館", "管理二館", "鴻經館", "志希館", "客家學院", "人文社會科學大樓", "研究中心大樓", "太空遙測", "游藝館", "松苑", "中大湖", "操場", "線上", "視訊", "Google Meet", "Teams", "Webex"];
 
 function tagsOf(s) {
@@ -110,8 +110,10 @@ function extract(title, text, posted) {
   if (end && (new Date(end) - new Date(date)) > 200 * 864e5) end = null;
   const tm = (line && line[2].match(TIME)) || title.match(TIME) || text.slice(0, 1500).match(TIME);
   if (tm) time = `${pad(tm[1])}:${tm[2]}` + (tm[3] ? `–${pad(tm[3])}:${tm[4]}` : "");
-  const pm = text.match(PLACE_KEYS);
-  if (pm) place = pm[2].replace(/\s+/g, " ").trim();
+  // skip the office address that sites print in their footer (郵遞區號／中大路300號)
+  const FOOTER = /^\(?\d{3,6}\)?\s*桃園|中大路\s*300\s*號|^桃園市中壢區/;
+  const pm = [...text.matchAll(new RegExp(PLACE_KEYS.source, "gi"))].map(m => m[2].replace(/\s+/g, " ").trim()).find(p => !FOOTER.test(p));
+  if (pm) place = pm;
   else { const hit = PLACES.find(p => both.includes(p)); if (hit) place = hit; }
   return { date, end, dates, time, place: place.slice(0, 40), tags: tagsOf(both) };
 }

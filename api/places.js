@@ -8,7 +8,14 @@ const QUERY = `[out:json][timeout:20];
   nwr["shop"~"^(bakery|beverages|coffee|tea|confectionery|deli|pastry)$"](around:${RADIUS},${CENTER[0]},${CENTER[1]});
 );
 out center tags;`;
-const MIRRORS = ["https://overpass-api.de/api/interpreter", "https://overpass.kumi.systems/api/interpreter", "https://overpass.private.coffee/api/interpreter"];
+const MIRRORS = [
+  "https://overpass-api.de/api/interpreter",
+  "https://lz4.overpass-api.de/api/interpreter",
+  "https://z.overpass-api.de/api/interpreter",
+  "https://overpass.kumi.systems/api/interpreter",
+  "https://maps.mail.ru/osm/tools/overpass/api/interpreter",
+  "https://overpass.private.coffee/api/interpreter",
+];
 
 function toPlace(el) {
   const t = el.tags || {};
@@ -27,20 +34,23 @@ function toPlace(el) {
 }
 
 module.exports = async (req, res) => {
-  let lastErr = "";
+  const started = Date.now(); const errors = [];
   for (const url of MIRRORS) {
+    const left = 26000 - (Date.now() - started); if (left < 3000) break;
     try {
-      const r = await fetch(url, { method: "POST", body: "data=" + encodeURIComponent(QUERY),
-        headers: { "content-type": "application/x-www-form-urlencoded", "user-agent": "songguo campus app (https://ncu-songguo.vercel.app)" }, signal: AbortSignal.timeout(9000) });
-      if (!r.ok) throw new Error("overpass " + r.status);
+      // GET works on every mirror (some reject POST bodies); a browser-like Accept avoids HTML error pages
+      const r = await fetch(url + "?data=" + encodeURIComponent(QUERY), {
+        headers: { "accept": "application/json", "user-agent": "songguo-ncu-campus-app/1.0 (+https://ncu-songguo.vercel.app)" }, signal: AbortSignal.timeout(Math.min(12000, left)) });
+      if (!r.ok) throw new Error(r.status + " " + (await r.text()).slice(0, 120).replace(/\s+/g, " "));
       const j = await r.json();
       const seen = new Set();
       const items = (j.elements || []).map(toPlace).filter(p => p && !seen.has(p.name + p.lat.toFixed(4)) && seen.add(p.name + p.lat.toFixed(4)));
-      res.setHeader("Cache-Control", "public, s-maxage=86400, stale-while-revalidate=604800");
-      return res.status(200).json({ source: "© OpenStreetMap contributors", items, fetchedAt: new Date().toISOString() });
-    } catch (e) { lastErr = String(e.message || e); }
+      res.setHeader("Cache-Control", items.length ? "public, s-maxage=86400, stale-while-revalidate=604800" : "public, s-maxage=600");
+      return res.status(200).json({ source: "© OpenStreetMap contributors", mirror: url, items, fetchedAt: new Date().toISOString() });
+    } catch (e) { errors.push(url.split("/")[2] + ": " + String(e.message || e).slice(0, 160)); }
   }
-  res.setHeader("Cache-Control", "public, s-maxage=300");
-  res.status(502).json({ items: [], error: lastErr });
+  // 200 with an empty list so the browser falls back to asking OpenStreetMap itself
+  res.setHeader("Cache-Control", "public, s-maxage=120");
+  res.status(200).json({ items: [], errors });
 };
 module.exports.toPlace = toPlace; module.exports.QUERY = QUERY;
