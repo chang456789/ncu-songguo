@@ -158,6 +158,8 @@ nav.bottom{display:none}
   .wrap>.stack:has(>.stories:first-child){padding-top:0}
   .sphead,.wrap>.stack>.bar,.wrap>.stack>.chips,.wrap>.stack>.seg,.wrap>.stack>.section-title,.wrap>.stack>.board-note,.wrap>.stack>.dir,.wrap>.stack>.notice,
   .wrap>.stack>.cform,.wrap>.stack>.daygroup,.wrap>.stack>.quick,.wrap>.stack>.grid2,.wrap .stack>.section-title,.wrap .stack>.board-note,.wrap .stack>.seg{margin-inline:12px}
+  .wrap .stack>.seg{max-width:calc(100% - 24px)}
+  .seg button{padding:6px 11px}
   .wrap>.stack>.dir details{border-radius:var(--r)}
   .chat.lobby{min-height:52vh}
 }
@@ -435,11 +437,17 @@ label.f small,div.f small{color:var(--muted);font-weight:400;font-size:13px}
 .news-li{color:inherit;text-decoration:none}
 .news-li:hover .t{color:var(--pine);text-decoration:underline}
 .course-next{border:0}
+/* ---------- language ---------- */
+.lang-btn{font:700 13px var(--f-body,inherit);width:auto!important;padding:0 10px!important;min-width:40px}
+.lang-row{display:flex;align-items:center;gap:6px;padding:6px 10px;color:var(--muted)}
+.lang-row button{border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:999px;padding:4px 12px;font-size:13px}
+.lang-row button[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.gate-lang{position:absolute;top:12px;right:12px;z-index:2}
 /* ---------- maps ---------- */
 .map-wrap{position:relative}
 .lmap{cursor:auto;touch-action:auto}
 .lmap.placing{cursor:crosshair}
-.map-home{position:absolute;right:10px;bottom:24px;z-index:500;font-size:13px;padding:6px 12px;background:var(--surface);box-shadow:var(--shadow)}
+.map-home{position:absolute;right:10px;bottom:30px;z-index:1100;font-size:13px;padding:6px 12px;background:var(--surface);box-shadow:var(--shadow)}
 .map-wrap .map-hint{z-index:600}
 .lm-icon span{display:inline-block;transform:translate(-50%,-50%);white-space:nowrap;font:700 12px var(--f-body);color:var(--ink);background:var(--surface);border-radius:999px;padding:2px 8px;box-shadow:var(--shadow)}
 .leaflet-container{font:inherit;background:var(--map-bg)}
@@ -450,6 +458,47 @@ label.f small,div.f small{color:var(--muted);font-weight:400;font-size:13px}
 .map-hint .ghost{padding:2px 10px;font-size:12px}
 .cdot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:6px;vertical-align:0;font-style:normal}
 .cdot.lg{width:14px;height:14px;margin:0}
+.cdot.hollow{background:var(--surface);border:2.5px solid var(--pine);box-sizing:border-box}
+/* ---------- food map ---------- */
+.food-map,.map-wrap{position:relative;isolation:isolate;z-index:0}
+.food-page .lmap{height:min(62vh,560px)}
+.map-fab{position:absolute;right:12px;bottom:30px;z-index:1100;box-shadow:0 4px 14px rgba(0,0,0,.25);border-radius:999px;padding:11px 18px;font-size:15px}
+.legend{display:flex;gap:16px;flex-wrap:wrap;align-items:center;padding:0 4px}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.lg-pin{width:12px;height:12px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);background:var(--pine);display:inline-block;border:2px solid #fff;box-shadow:0 0 0 1px var(--line)}
+.lg-dot{width:11px;height:11px;border-radius:50%;background:var(--fc2);border:2px solid #fff;box-shadow:0 0 0 1px var(--line);display:inline-block}
+.fpin-wrap{background:none;border:0}
+.fpin{display:block;width:24px;height:24px;margin:1px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);background:var(--c);border:2.5px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,.35);box-sizing:border-box;position:relative}
+.fpin::after{content:"";position:absolute;inset:6px;border-radius:50%;background:#fff}
+.fpin.rated::after{background:#ffd34d}
+.fpin.sel{width:30px;height:30px;margin:-4px -2px;border-width:3px;box-shadow:0 0 0 4px color-mix(in srgb,var(--c) 30%,transparent),0 3px 10px rgba(0,0,0,.4)}
+.fpin.pause{opacity:.55;border-style:dashed}
+.fpin.dim{background:#9aa49e;opacity:.7}
+.leaflet-tooltip.tt-ours{font-weight:700;font-size:12px;padding:2px 7px;border-radius:8px}
+.leaflet-tooltip.tt-osm{font-size:11px;padding:1px 6px;border-radius:6px;color:#444}
+.map-wrap.picking .lmap{cursor:grab}
+.pick-pin{position:absolute;left:50%;top:50%;z-index:1100;pointer-events:none;width:44px;height:44px;margin:-44px 0 0 -22px;color:var(--warn);filter:drop-shadow(0 3px 4px rgba(0,0,0,.35))}
+.pick-pin svg{width:44px;height:44px;fill:var(--warn);stroke:#fff;stroke-width:1.4}
+.pick-pin::after{content:"";position:absolute;left:50%;bottom:-3px;width:8px;height:4px;margin-left:-4px;border-radius:50%;background:rgba(0,0,0,.35)}
+.pick-hint{position:absolute;left:60px;right:12px;top:12px;z-index:1100;background:var(--ink);color:var(--bg);border-radius:12px;padding:9px 14px;font-size:14px;font-weight:600;text-align:center;box-shadow:0 4px 14px rgba(0,0,0,.25)}
+.pick-bar{position:absolute;left:12px;right:12px;bottom:30px;z-index:1100;display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
+.pick-bar button{box-shadow:0 4px 14px rgba(0,0,0,.2);border-radius:999px;padding:10px 16px}
+.pick-bar .ghost{background:var(--surface)}
+.place-li{display:flex;gap:10px;align-items:center}
+.place-li .t{display:flex;flex-direction:column;gap:1px;flex:1;min-width:0;white-space:normal}
+.place-li .t b{font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.place-li .cdot{flex:none;margin:0}
+.fc-title{margin:0;font-size:20px;font-weight:800;overflow-wrap:anywhere;line-height:1.25}
+.rating{font-size:18px;font-weight:700;color:var(--bus)}
+.food-sel{scroll-margin:80px}
+.chips.scroll-x{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;padding-bottom:2px}
+.chips.scroll-x::-webkit-scrollbar{display:none}
+.chips.sug .chip{background:var(--pine-soft);color:var(--pine)}
+.pos-row{display:flex;align-items:center;gap:8px;background:var(--sunk);border-radius:12px;padding:8px 10px;font-size:14px;font-weight:600}
+.pos-ic svg{width:18px;height:18px;color:var(--warn)}
+details.more-fields summary{cursor:pointer;font-weight:600;color:var(--pine);font-size:14px}
+.primary.wide{flex:1;padding:12px}
+.food-page .map-home{left:10px;right:auto}
 .stars-row{display:flex;gap:2px}
 .star{background:none;border:0;font-size:26px;line-height:1;color:var(--line);padding:0 2px}
 .star.on{color:var(--cone)}
@@ -465,6 +514,7 @@ a.ghost{color:var(--ink)}
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.2/dist/umd/supabase.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="/config.js"></script>
+<script src="/i18n.js"></script>
 <script src="/shim.js"></script>
 
 
@@ -564,7 +614,9 @@ const DISCLAIMER = "本人保證所述內容皆為親身經歷之事實，未捏
 
 const ADJ = ["半夜煮泡麵的","熬夜趕報告的","232巷的","中大湖邊的","後門的","愛曬棉被的","常收包裹的","早八的","練吉他的","養多肉的","搶不到132的","宵夜街常客"];
 const NOUN = ["小貓","吉他手","室友","鄰居","房客","夜貓子","學長姐","路人","松鼠","宵夜仔","通勤族","松果"];
-const randNick = () => ADJ[Math.random()*ADJ.length|0] + NOUN[Math.random()*NOUN.length|0];
+const I18N = window.sgI18n || { tr:s=>s, translate(){}, lang:"zh", setLang(){}, randNick:null };
+const randNick = () => I18N.lang==="en" && I18N.randNick ? I18N.randNick() : ADJ[Math.random()*ADJ.length|0] + NOUN[Math.random()*NOUN.length|0];
+function switchLang(l){ I18N.setLang(l); S.dirty = false; render(); }
 
 const RIDE_PLACES = ["中央大學（正門）","中央大學（後門）","中壢火車站","高鐵桃園站","台北車站","松山機場","桃園機場","大江購物中心","中原商圈・中原夜市","龍岡・忠貞市場","中壢觀光夜市","青埔","其他"];
 
@@ -634,6 +686,7 @@ function h(tag, attrs, ...kids){
 }
 const SVGNS = "http://www.w3.org/2000/svg";
 const ICONS = {
+  globe:"M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18zM3 12h18M12 3c2.5 2.6 3.8 5.6 3.8 9s-1.3 6.4-3.8 9c-2.5-2.6-3.8-5.6-3.8-9S9.5 5.6 12 3z",
   home:"M3 11 12 4l9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z",
   bus:"M6 3h12a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2v2h-2v-2H8v2H6v-2a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2zM4 10h16M8 15h.01M16 15h.01",
   bag:"M5 8h14l-1 12H6zM9 8V6a3 3 0 0 1 6 0v2",
@@ -800,7 +853,7 @@ function patchLive(){
   for (const [k, fn] of LIVE){
     const el = document.querySelector(`[data-live="${k}"]`); if (!el || el.contains(document.activeElement)) continue;
     const wasBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 40;
-    const n = fn(); n.dataset.live = k; el.replaceWith(n);
+    const n = fn(); n.dataset.live = k; el.replaceWith(n); I18N.translate(n);
     if (n.classList.contains("chat") && wasBottom) n.scrollTop = n.scrollHeight;
   }
 }
@@ -816,7 +869,7 @@ document.addEventListener("pointerup", ptrUp, true); document.addEventListener("
 
 function render(){
   LIVE.clear(); app.replaceChildren();
-  if (!S.nick){ app.append(gate()); renderOverlay(); return; }
+  if (!S.nick){ app.append(gate()); renderOverlay(); I18N.translate(app); return; }
   const wide = ["schedule","food","nav"].includes(S.tab);
   app.append(topbar(),
     h("div",{class:"shell"},
@@ -825,6 +878,7 @@ function render(){
       h("aside",{class:"side rail-col","aria-label":"即時資訊"}, rightRail())),
     bottomNav());
   renderOverlay();
+  I18N.translate(app); document.title = I18N.lang==="en" ? "Songguo · NCU campus life" : "松果中大生活通";
 }
 function renderKeep(){
   if (S.modal || S.dragging){ S.dirty = true; return; }
@@ -842,11 +896,12 @@ function renderKeep(){
   if (id){ const el = document.getElementById(id); if (el && el.tagName !== "INPUT" && el.tagName !== "TEXTAREA") el.focus({preventScroll:true}); }
 }
 
+const tr = s => I18N.tr(s);
 /* ---------- avatars ---------- */
 const AV_COLORS = ["#17855b","#2563c9","#d9572b","#8a46c2","#c27c00","#d13b74","#0e8a8a","#5b6b8c"];
 function avatar(nick, cls = "", on = false){
   const n = String(nick || "?"); let hsh = 7; for (const ch of n) hsh = (hsh * 31 + ch.codePointAt(0)) >>> 0;
-  return h("i",{class:`av ${cls}${on ? " on" : ""}`,style:`background:${AV_COLORS[hsh % AV_COLORS.length]}`,"aria-hidden":"true"}, initial(n));
+  return h("i",{translate:"no",class:`av ${cls}${on ? " on" : ""}`,style:`background:${AV_COLORS[hsh % AV_COLORS.length]}`,"aria-hidden":"true"}, initial(n));
 }
 function brandMark(){
   const s = document.createElementNS(SVGNS,"svg"); s.setAttribute("viewBox","0 0 32 32"); s.setAttribute("aria-hidden","true");
@@ -863,11 +918,15 @@ function gate(){
   const input = h("input",{type:"text",id:"nick-in",maxlength:"16",value:val,"aria-label":"匿名暱稱",oninput:e=>val=e.target.value});
   const err = h("p",{class:"err",hidden:true});
   const enter = () => { const v = val.trim();
-    if (v.length < 2){ err.textContent="暱稱至少要 2 個字。"; err.hidden=false; return; }
+    if (v.length < 2){ err.textContent=tr("暱稱至少要 2 個字。"); err.hidden=false; return; }
     S.nick = v; LS.set("pc.nick", v); saveProfile(); render(); };
   input.addEventListener("keydown", e => { if (e.key==="Enter" && !e.isComposing) enter(); });
   const logo = brandMark(); logo.setAttribute("class","logo");
-  return h("div",{class:"gate"}, h("div",{class:"gate-card"},
+  return h("div",{class:"gate"},
+    h("div",{class:"lang-row gate-lang",translate:"no"},
+      h("button",{"aria-pressed":I18N.lang!=="en"?"true":"false",onclick:()=>switchLang("zh")},"中文"),
+      h("button",{"aria-pressed":I18N.lang==="en"?"true":"false",onclick:()=>switchLang("en")},"English")),
+    h("div",{class:"gate-card"},
     logo, h("h1",{},"松果"),
     h("p",{},"中央人的生活圈。看公車、揪拼車、找活動、聊天，打開就能用。"),
     h("label",{class:"f",for:"nick-in"},"取一個暱稱", h("small",{},"不用註冊，也不用學號。暱稱之後隨時可以改。")),
@@ -891,6 +950,7 @@ function topbar(){
     h("div",{class:"top-in"},
       h("button",{class:"brand",onclick:()=>go("home"),"aria-label":"松果首頁"}, brandMark(), h("b",{},"松果")),
       S.room ? h("button",{class:"online-pill",title:"看看誰在線上",onclick:()=>go("online")}, h("i",{}), h("b",{},"在線 "), h("span",{class:"mono"}, online || 1)) : null,
+      h("button",{class:"iconbtn lang-btn",translate:"no",title:I18N.lang==="en"?"切換成中文":"Switch to English","aria-label":I18N.lang==="en"?"切換成中文":"Switch to English",onclick:()=>switchLang(I18N.lang==="en"?"zh":"en")}, I18N.lang==="en" ? "中" : "EN"),
       h("button",{class:"iconbtn",title:"建立",onclick:()=>openModal({k:"create"}),"aria-label":"建立"}, icon("plus")),
       h("button",{class:"iconbtn",title:"私訊",onclick:()=>go("inbox"),"aria-label":"私訊"}, icon("send"), pending ? h("span",{class:"badge"}, pending) : null),
       h("button",{class:"me-btn",onclick:()=>openModal({k:"profile"}),"aria-label":"我的設定"}, avatar(S.nick, "sm"))));
@@ -903,6 +963,9 @@ function sideNav(){
       h("span",{class:"ico"}, icon(ic)), h("span",{class:"lbl"}, label), id==="inbox" && pending ? h("span",{class:"badge"}, pending) : null)),
     h("hr",{}),
     h("button",{onclick:()=>openModal({k:"install"}),title:"安裝到手機"}, h("span",{class:"ico"}, icon("phone")), h("span",{class:"lbl"},"安裝到手機")),
+    h("div",{class:"lang-row",translate:"no"}, h("span",{class:"ico"}, icon("globe")),
+      h("button",{"aria-pressed":I18N.lang!=="en"?"true":"false",onclick:()=>switchLang("zh")},"中文"),
+      h("button",{"aria-pressed":I18N.lang==="en"?"true":"false",onclick:()=>switchLang("en")},"English")),
     h("p",{class:"side-foot"},"松果是中央學生自己做的生活網站，資料來自學校公開資訊與大家的分享。"));
 }
 function bottomNav(){
@@ -932,7 +995,7 @@ function rightRail(){
       h("button",{class:"rrow",onclick:()=>go("weather")}, icon("cloud"), h("span",{class:"t"}, h("b",{}, wd.wx || "天氣"), h("span",{}, `降雨機率 ${wd.pop ?? "—"}%`)), h("span",{class:"big"}, `${Math.round(wd.temp)}°`))) : null,
     evs.length ? h("section",{}, h("h3",{},"近期活動"),
       h("div",{class:"rbox"}, evs.map(e => h("button",{class:"rrow",onclick:()=>go("news")},
-        h("span",{class:"t"}, h("b",{}, e.title), h("span",{}, evWhen(e))))))) : null,
+        h("span",{class:"t"}, h("b",{translate:"no"}, e.title), h("span",{}, evWhen(e))))))) : null,
     S.room ? h("section",{}, h("h3",{}, `在線 ${ppl.length || 1} 人`),
       h("div",{class:"rbox"}, ppl.map(p => { const nick = String(p.presence?.nick || "匿名").slice(0,16);
         return h("button",{class:"rrow",disabled:p.by===S.uid,onclick:()=>openModal({k:"dmreq",to:p.by,toNick:nick,from:p.presence?.where||"online"})},
@@ -1089,7 +1152,7 @@ function eventCard(e){
   return h("article",{class:"card ev"},
     h("div",{class:"cal"+(ranged?" range":"")}, h("i",{}, ranged ? (e.date < todayISO() ? "展期至" : "開始") : `${m}月`), h("b",{}, d), h("small",{}, ranged ? `${m}月` : "週"+wkOf(e.date))),
     h("div",{class:"body"},
-      h("h3",{}, e.url ? h("a",{href:e.url,target:"_blank",rel:"noopener"}, e.title) : e.title),
+      h("h3",{translate:"no"}, e.url ? h("a",{href:e.url,target:"_blank",rel:"noopener"}, e.title) : e.title),
       h("span",{class:"when"}, evWhen(e)),
       e.place ? h("span",{class:"where2"}, e.place) : null,
       e.body ? h("p",{class:"small",style:"margin:0;white-space:pre-wrap;overflow-wrap:anywhere"}, e.body) : null,
@@ -1401,17 +1464,17 @@ function postCard(p){
   const reported = S.uid && S.reports[p.id]?.has(S.uid);
   card.append(h("div",{class:"phead"},
     avatar(p.nick),
-    h("div",{class:"who"}, h("b",{}, p.nick, p.oneTime ? h("span",{class:"muted",style:"font-weight:400"}," （一次性暱稱）") : null),
+    h("div",{class:"who"}, h("b",{translate:"no"}, p.nick, p.oneTime ? h("span",{class:"muted",style:"font-weight:400"}," （一次性暱稱）") : null),
       h("span",{}, sp && S.tab==="home" ? [h("button",{onclick:()=>go(sp.tab, sp.id)}, spaceLabel(p.space)), " · "] : null, h("time",{datetime:new Date(p.ts).toISOString()}, ago(p.ts)))),
     h("span",{class:"cat"+(p.cat==="避雷"?" warn":"")}, p.cat)));
   if (hidden && !S.isOwner && p.uid!==S.uid){ card.append(h("p",{class:"body muted",style:"padding-bottom:12px"},"這篇貼文已被 3 位以上使用者檢舉，暫時隱藏，等待管理員審核。")); return card; }
   if (hidden) card.append(h("div",{class:"notice"}, `已被檢舉 ${reportCount(p.id)} 次，其他人目前看不到這篇。`, S.isOwner ? [" ", h("button",{class:"linkbtn",onclick:()=>clearReports(p.id)},"審核通過，恢復顯示")] : null));
   if (locName) card.append(h("div",{}, plate(locName)));
-  card.append(h("h3",{},p.title));
+  card.append(h("h3",{translate:"no"},p.title));
   if (p.price) card.append(h("div",{class:"price"}, p.price));
   if (p.rent) card.append(h("div",{class:"price"}, p.rent, p.htype ? h("span",{class:"muted small",style:"font-weight:400"},"　"+p.htype) : null));
   if (p.ratings) card.append(h("div",{class:"scores"}, [["隔音",p.ratings.sound],["房東態度",p.ratings.landlord],["CP 值",p.ratings.cp]].map(([k,n]) => h("div",{class:"score"},k,dots(n)))));
-  card.append(h("p",{class:"body"},p.body));
+  card.append(h("p",{class:"body",translate:"no"},p.body));
   const isOpen = S.open===p.id;
   const liked = S.uid && S.likes[p.id]?.has(S.uid);
   const n = likeCount(p.id);
@@ -1434,7 +1497,7 @@ async function toggleLike(p){
 function thread(path){
   const box = h("div",{class:"thread"});
   box.append(live("cmts", () => h("div",{class:"stack",style:"gap:8px"}, S.comments.length ? S.comments.map(c => h("div",{class:"cmt"}, avatar(c.nick,"sm"),
-      h("div",{style:"min-width:0"}, h("div",{class:"bubble"}, h("b",{}, c.nick), h("span",{}, c.body)), h("div",{class:"when"}, ago(c.ts))))) :
+      h("div",{style:"min-width:0"}, h("div",{class:"bubble",translate:"no"}, h("b",{}, c.nick), h("span",{}, c.body)), h("div",{class:"when"}, ago(c.ts))))) :
     h("p",{class:"muted small",style:"margin:0"},"還沒有留言，說點什麼吧。"))));
   if (canPost()){
     const inp = h("input",{type:"text",id:"cmt-in",maxlength:"500",placeholder:"寫留言…","aria-label":"留言內容",autocomplete:"off"});
@@ -1469,7 +1532,7 @@ function inboxPage(){
     st,
     h("section",{class:"stack"}, h("div",{class:"section-title"}, h("h2",{},"收到的請求")),
       incoming.length ? h("div",{class:"stack"}, incoming.map(r => h("div",{class:"card req"},
-        h("div",{class:"t"}, h("b",{}, r.fromNick), " 想跟你私訊", h("small",{}, `來自 ${spaceLabel(r.space)}・${ago(r.ts)}`), r.note ? h("div",{style:"margin-top:4px"},"「",r.note,"」") : null),
+        h("div",{class:"t"}, h("b",{translate:"no"}, r.fromNick), " 想跟你私訊", h("small",{}, `來自 ${spaceLabel(r.space)}・${ago(r.ts)}`), r.note ? h("div",{style:"margin-top:4px"},"「",r.note,"」") : null),
         h("button",{class:"ghost",onclick:()=>answerReq(r,"declined")},"拒絕"), h("button",{class:"primary",onclick:()=>answerReq(r,"accepted")},"同意")))) :
         h("p",{class:"muted small",style:"margin:0"},"目前沒有待回覆的請求。")),
     h("section",{class:"stack"}, h("div",{class:"section-title"}, h("h2",{},"對話")),
@@ -1532,9 +1595,9 @@ function chatView(){
     inp.disabled=false; inp.focus(); };
   inp.addEventListener("keydown", e => { if (e.key==="Enter" && !e.isComposing && e.keyCode !== 229) send(); });
   return h("div",{class:"stack"},
-    h("div",{class:"bar"}, h("button",{class:"ghost",onclick:()=>{closeChat();render();}},"返回"), avatar(c.nick), h("h1",{style:"margin:0;font-size:20px"}, c.nick), h("span",{class:"lock"}, icon("lock"),"加密對話")),
+    h("div",{class:"bar"}, h("button",{class:"ghost",onclick:()=>{closeChat();render();}},"返回"), avatar(c.nick), h("h1",{style:"margin:0;font-size:20px",translate:"no"}, c.nick), h("span",{class:"lock"}, icon("lock"),"加密對話")),
     c.err ? h("div",{class:"info"}, c.err) : null,
-    live("dm", () => h("div",{class:"card chat"}, S.chatMsgs.length ? S.chatMsgs.map(m => h("div",{class:"msg"+(m.mine?" mine":"")}, m.text, h("small",{}, fmtWhen(m.ts).time))) :
+    live("dm", () => h("div",{class:"card chat"}, S.chatMsgs.length ? S.chatMsgs.map(m => h("div",{class:"msg"+(m.mine?" mine":""),translate:"no"}, m.text, h("small",{}, fmtWhen(m.ts).time))) :
       h("p",{class:"muted small",style:"margin:0"},"打聲招呼吧。要不要交換 LINE 或其他聯絡方式，由你們自己決定。"))),
     h("div",{class:"cform"}, inp, h("button",{class:"primary",onclick:send},"傳送")));
 }
@@ -1571,7 +1634,7 @@ const foodRating = id => { const r = S.foodRates[id]; if (!r || !r.size) return 
 const landmarks = () => S.landmarks || LANDMARKS_DEFAULT;
 
 
-/* Restaurant guide: researched list (name, area, type, address). Not positioned on the map until someone pins it. */
+/* Restaurant guide: researched list (name, area, type, address), matched to map places by name when possible. */
 const FOOD_GUIDE_SRC = "「中央大學123家餐廳」全蒐錄（jfsblog）";
 const FOOD_GUIDE = [
   ["校內", [["小木屋鬆餅","甜點","志希館"],["麵屋喜多","正餐","女14舍"],["賈董的麵","正餐","女14舍"],["拉亞漢堡","早餐","女14舍"],
@@ -1595,117 +1658,267 @@ const FOOD_GUIDE = [
     ["㸆窯","正餐","中壢區五興路331巷56號"],["小紅牛平價牛排","正餐","中壢區五興路331巷58號"]]],
   ["其他", [["友竹居茶藝館","飲料咖啡","中壢區中大路32號"]]],
 ];
-const gSearch = (name, addr) => `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(name+" "+(/[路巷號]/.test(addr)?"桃園市"+addr:"中央大學 "+addr))}`;
-function foodGuide(){
-  const onMap = new Set(S.food.map(f => norm(f.name)));
-  const area = S.foodGuideArea || FOOD_GUIDE[0][0];
-  const cur = FOOD_GUIDE.find(g => g[0]===area) || FOOD_GUIDE[0];
-  const items = cur[1].filter(([n,c]) => (!S.foodFilter || c===S.foodFilter) && !onMap.has(norm(n)));
-  return h("section",{class:"stack"},
-    h("div",{class:"section-title"}, h("h2",{},"附近店家指南"), h("span",{class:"muted small"}, "還沒標上地圖的店")),
-    h("p",{class:"board-note"}, "整理自", FOOD_GUIDE_SRC, "，可能有店已歇業或搬家。吃過的話，按「標上地圖」幫大家定位。"),
-    h("div",{class:"chips"}, FOOD_GUIDE.map(([a,l]) => h("button",{class:"chip","aria-pressed":a===cur[0]?"true":"false",onclick:()=>{S.foodGuideArea=a;render();}}, a, " ", h("span",{class:"mono"},l.length)))),
-    items.length ? h("div",{class:"card list"}, items.map(([n,c,addr]) => h("div",{class:"li",style:"flex-wrap:wrap"},
-      h("span",{class:"t",style:"white-space:normal"}, h("i",{class:"cdot",style:`background:var(${catVar(c)})`}), n, h("span",{class:"muted small"},"　",c,"・",addr)),
-      h("span",{style:"display:flex;gap:12px;flex:none"},
-        h("a",{class:"linkbtn",href:gSearch(n,addr),target:"_blank",rel:"noopener"},"Google 地圖"),
-        h("button",{class:"linkbtn",disabled:!canPost(),onclick:()=>openModal({k:"food",st:{ cat:c, price:1, pos:null, name:n, note:"", hours:"", coord:"" }})},"標上地圖"))))) :
-      h("p",{class:"muted small",style:"margin:0"},"這一區的店都已經標上地圖了。"));
+const gSearch = (name, addr) => `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(name+" "+(/[路巷號]/.test(addr||"")?"桃園市"+addr:"中央大學 "+(addr||"")))}`;
+const gNav = p => `https://www.google.com/maps/dir/?api=1&destination=${p.lat.toFixed(6)},${p.lng.toFixed(6)}&travelmode=walking`;
+const mDist = (a,b) => { const A = toXY(a.lat,a.lng), B = toXY(b.lat,b.lng); return Math.hypot(A.x-B.x, A.y-B.y); };
+const nameKey = s => norm(String(s||"").replace(/[（(].*?[)）]/g,""));
+const sameName = (a,b) => { const x = nameKey(a), y = nameKey(b); return x.length >= 2 && y.length >= 2 && (x===y || (Math.min(x.length,y.length) >= 3 && (x.includes(y) || y.includes(x)))); };
+
+/* ---------- nearby places from OpenStreetMap ---------- */
+const OSM_TYPE = { "正餐":"餐廳", "小吃":"小吃", "早餐":"早餐店", "飲料咖啡":"飲料・咖啡", "宵夜":"宵夜", "甜點":"甜點" };
+let PLACES = null;
+function loadPlaces(){
+  if (PLACES && (PLACES.loading || Date.now()-PLACES.at < 6*3600e3)) return PLACES;
+  const cached = LS.json("pc.places", null);
+  if (!PLACES && cached && cached.items && Date.now()-cached.at < 24*3600e3){ PLACES = { items:cached.items, at:cached.at }; return PLACES; }
+  PLACES = { loading:true, items: (PLACES && PLACES.items) || (cached && cached.items) || [], at:0 };
+  const done = items => { PLACES = { items, at:Date.now() }; try { localStorage.setItem("pc.places", JSON.stringify(PLACES)); } catch {} renderFoodSoft(); };
+  fetch("/api/places").then(r => r.ok ? r.json() : Promise.reject(r.status)).then(j => (j.items && j.items.length) ? done(j.items) : Promise.reject("empty"))
+    .catch(() => fetch("https://overpass-api.de/api/interpreter", { method:"POST", body:"data="+encodeURIComponent(OVERPASS_Q) }).then(r => r.json())
+      .then(j => { const seen = new Set(); done((j.elements||[]).map(osmToPlace).filter(p => p && !seen.has(p.osm) && seen.add(p.osm))); }))
+    .catch(() => { PLACES = { items:PLACES.items, err:true, at:Date.now() }; renderFoodSoft(); });
+  return PLACES;
+}
+const OVERPASS_Q = `[out:json][timeout:25];(nwr["amenity"~"^(restaurant|fast_food|cafe|food_court|ice_cream|bar|pub)$"](around:2200,24.9668,121.1925);nwr["shop"~"^(bakery|beverages|coffee|tea|confectionery|deli|pastry)$"](around:2200,24.9668,121.1925););out center tags;`;
+function osmToPlace(el){
+  const t = el.tags || {}; const name = t["name:zh-Hant"] || t["name:zh"] || t.name || t["name:en"];
+  const lat = el.lat ?? el.center?.lat, lng = el.lon ?? el.center?.lon; if (!name || lat == null) return null;
+  const cu = (t.cuisine||"").toLowerCase(), a = t.amenity, sh = t.shop; let cat = "正餐";
+  if (a==="cafe" || ["coffee","tea","beverages"].includes(sh) || /bubble_tea|coffee|tea|juice/.test(cu) || /茶|咖啡|飲/.test(name)) cat = "飲料咖啡";
+  else if (a==="ice_cream" || ["bakery","confectionery","pastry"].includes(sh) || /dessert|ice_cream|cake|donut|waffle|crepe|bakery/.test(cu) || /豆花|甜點|冰|烘焙|麵包|鬆餅/.test(name)) cat = "甜點";
+  else if (/breakfast|brunch/.test(cu) || /早餐|早午餐|美而美/.test(name)) cat = "早餐";
+  else if (a==="fast_food" || /snack|noodle|dumpling|fried_chicken/.test(cu) || /滷味|雞排|鹹酥|小吃|麵線|湯包|蛋餅/.test(name)) cat = "小吃";
+  else if (a==="bar" || a==="pub") cat = "宵夜";
+  return { osm: el.type[0]+el.id, name, nameEn: t["name:en"]||"", cat, lat, lng, hours: t.opening_hours||"", addr: [t["addr:street"], t["addr:housenumber"]].filter(Boolean).join(" "), cuisine: t.cuisine||"" };
 }
 
-let mapPlacing = null;   // callback while picking a spot on any map
-const FOOD_STATUS = ["營業中","暫停營業","寒暑假暫停","已歇業"];
-const stClass = s => s==="已歇業" ? "status no" : s && s!=="營業中" ? "status warnish" : "status ok";
+/* everything the food page shows, after search / category filters */
+function foodModel(){
+  const P = loadPlaces();
+  const q = (S.foodQ||"").trim().toLowerCase(), f = S.foodFilter || "", openOnly = !!S.foodOpenOnly;
+  const hit = x => (!f || x.cat===f) && (!q || x.name.toLowerCase().includes(q) || (x.nameEn||"").toLowerCase().includes(q) || (x.note||"").toLowerCase().includes(q));
+  const ours = S.food.filter(hit).filter(x => S.foodShowClosed || x.status!=="已歇業").filter(x => !openOnly || !x.status || x.status==="營業中");
+  const linked = new Set(S.food.map(x => x.osm).filter(Boolean));
+  const osm = (P.items||[]).filter(p => !linked.has(p.osm) && !S.food.some(o => sameName(o.name, p.name) && mDist(o,p) < 150)).filter(hit);
+  return { P, ours, osm };
+}
+function foodMapOpts(){
+  const { ours, osm } = foodModel(); const sel = S.foodSel || "";
+  return { rings:true, labels: landmarks(), center:[24.9668,121.1925], zoom:16, pickable:true,
+    markers: [
+      ...osm.map(p => ({ kind:"osm", id:"o:"+p.osm, lat:p.lat, lng:p.lng, label:p.name, color:catVar(p.cat), sel: sel==="o:"+p.osm, onClick:()=>selectFood("o:"+p.osm) })),
+      ...ours.map(x => ({ id:x.id, lat:x.lat, lng:x.lng, label:x.name + (x.status && x.status!=="營業中" ? `（${x.status}）` : ""), color:catVar(x.cat), sel: sel===x.id,
+        dim: x.status==="已歇業", pause: x.status==="暫停營業" || x.status==="寒暑假暫停", rated: !!foodRating(x.id), onClick:()=>selectFood(x.id) })) ] };
+}
+function selectFood(id, center){
+  S.foodSel = id; closeThread();
+  if (center){ const p = id.startsWith("o:") ? (PLACES?.items||[]).find(x => "o:"+x.osm===id) : S.food.find(x => x.id===id); if (p) centerMap("food", p); }
+  render();
+  requestAnimationFrame(() => { const c = document.querySelector(".food-sel"); if (c && c.getBoundingClientRect().top > innerHeight - 120) c.scrollIntoView({ block:"nearest", behavior:"smooth" }); });
+}
+/* light refresh while someone is typing in the search box: redraw pins and the list only */
+function renderFoodSoft(){
+  if (S.tab !== "food") return;
+  if (isTyping() || composing){ const M = MAPS.food; if (M) drawMarkers(M, foodMapOpts()); patchLive(); return; }
+  renderKeep();
+}
+let foodT = 0;
+function startFoodAdd(st){
+  const base = st || {};
+  startPick("food", base.addr ? `把圖釘拖到「${base.name}」（${base.addr}）` : "拖曳地圖，把圖釘對準店門口", p => {
+    if (!p) return render();
+    openModal({ k:"food", st:{ name:"", cat:"正餐", price:0, hours:"", note:"", coord:"", status:"營業中", ...base, pos:p } });
+  }, base.near);
+}
 
 function foodPage(){
+  const { P, ours, osm } = foodModel();
   const f = S.foodFilter || "";
-  const showClosed = !!S.foodShowClosed;
-  const list = S.food.filter(x => (!f || x.cat===f) && (showClosed || x.status!=="已歇業")).map(x => ({ ...x, d: distM(x) }))
-    .sort((a,b) => S.foodSort==="rate" ? ((foodRating(b.id)?.avg||0) - (foodRating(a.id)?.avg||0)) : a.d - b.d);
-  const sel = S.food.find(x => x.id === S.foodSel);
+  const sel = S.foodSel || "";
+  const selOurs = sel && !sel.startsWith("o:") ? S.food.find(x => x.id===sel) : null;
+  const selOsm = sel.startsWith("o:") ? (P.items||[]).find(x => "o:"+x.osm===sel) : null;
   const closedN = S.food.filter(x => x.status==="已歇業").length;
-  return h("div",{class:"stack"},
-    h("div",{class:"sphead"}, h("h1",{},"中大美食地圖"), h("p",{},"大家一起編輯的地圖：任何人都能新增店家、修正位置、更新營業狀態（例如校內餐廳暫停營業、寒暑假休息）。點店家看評分與留言，一鍵用 Google 地圖導航。")),
+  const search = h("input",{type:"search",id:"food-q",value:S.foodQ||"",autocomplete:"off",placeholder:"搜尋店名、料理…","aria-label":"搜尋店家",
+    oninput:e=>{ if (e.isComposing) return; S.foodQ = e.target.value; clearTimeout(foodT); foodT = setTimeout(renderFoodSoft, 150); },
+    oncompositionend:e=>{ S.foodQ = e.target.value; clearTimeout(foodT); foodT = setTimeout(renderFoodSoft, 150); }});
+  const tab = S.foodList || "ours";
+  return h("div",{class:"stack food-page"},
+    h("div",{class:"sphead"}, h("h1",{},"美食地圖"),
+      h("p",{}, "地圖上已標出中大附近的餐廳。點店家看評分、留言和導航；找不到的店，按「＋ 新增店家」把圖釘拖到店門口就好。")),
     statusBanner(),
-    h("div",{class:"bar"},
-      h("div",{class:"chips"},
-        h("button",{class:"chip","aria-pressed":f===""?"true":"false",onclick:()=>{S.foodFilter="";render();}},"全部"),
-        FOOD_CATS.map(([c,v]) => h("button",{class:"chip","aria-pressed":f===c?"true":"false",onclick:()=>{S.foodFilter=c;render();}}, h("i",{class:"cdot",style:`background:var(${v})`}), c))),
-      h("span",{class:"spacer"}),
-      h("button",{class:"primary",disabled:!canPost(),onclick:()=>openModal({k:"food"})},"＋ 標一間店")),
-    leafletMap("food", { rings:true, labels: landmarks(), center:[24.9668,121.1925], zoom:16,
-      markers: list.map(x => ({ id:x.id, lat:x.lat, lng:x.lng, label:x.name + (x.status && x.status!=="營業中" ? `（${x.status}）` : ""), color:catVar(x.cat), sel:x.id===S.foodSel,
-        dim: x.status==="已歇業", hollow: x.status==="暫停營業" || x.status==="寒暑假暫停", dash: x.status==="暫停營業" || x.status==="寒暑假暫停", onClick:()=>{ S.foodSel = x.id; render(); } })) }),
-    h("p",{class:"board-note"},"實心圓點＝營業中；半透明虛線＝暫停營業或寒暑假休息；灰色＝已歇業。虛線圓圈是從中大正門算起的步行距離。",
-      closedN ? [" ", h("button",{class:"linkbtn",onclick:()=>{S.foodShowClosed=!showClosed;render();}}, showClosed ? "隱藏已歇業" : `顯示已歇業（${closedN}）`)] : null,
-      S.canEdit ? [" ", h("button",{class:"linkbtn",onclick:()=>openModal({k:"landmarks"})},"管理員：編輯地標")] : null),
-    sel ? foodDetail(sel) : null,
-    h("div",{class:"section-title"}, h("h2",{}, `${list.length} 間店`),
-      h("select",{id:"food-sort","aria-label":"排序",style:"width:auto",onchange:e=>{S.foodSort=e.target.value;render();}},
-        h("option",{value:"dist",selected:S.foodSort!=="rate"},"離正門最近"), h("option",{value:"rate",selected:S.foodSort==="rate"},"評分最高"))),
-    list.length ? h("div",{class:"card list"}, list.map(x => { const r = foodRating(x.id);
-      return h("button",{class:"li",onclick:()=>{ S.foodSel = x.id; centerMap("food", x); render(); window.scrollTo({top:0,behavior:"smooth"}); }},
-        h("span",{class:"t"}, h("i",{class:"cdot",style:`background:var(${catVar(x.cat)})`}), x.name, h("span",{class:"muted small"}, "　", x.cat, "・", "$".repeat(x.price||1)),
-          x.status && x.status!=="營業中" ? h("span",{class:stClass(x.status),style:"margin-left:6px"}, x.status) : null),
-        h("small",{class:"mono"}, r ? `★ ${r.avg.toFixed(1)}（${r.n}）・` : "", fmtDist(x.d), "・走路約 ", Math.max(1,Math.round(x.d/FOOD_WALK)), " 分")); })) :
-      h("div",{class:"empty"}, h("h3",{}, S.dbState==="loading" ? "載入中…" : "地圖上還沒有店"), h("p",{},"從下面的「附近店家指南」挑一間你知道位置的店，按「標上地圖」就好。"),
-        h("button",{class:"primary",disabled:!canPost(),onclick:()=>openModal({k:"food"})},"標第一間店")),
-    foodGuide());
+    h("div",{class:"bar"}, h("div",{style:"flex:1;min-width:180px"}, search), h("button",{class:"ghost",onclick:()=>locateMe("food")},"我的位置")),
+    h("div",{class:"chips scroll-x"},
+      h("button",{class:"chip","aria-pressed":f===""?"true":"false",onclick:()=>{S.foodFilter="";render();}},"全部"),
+      FOOD_CATS.map(([c,v]) => h("button",{class:"chip","aria-pressed":f===c?"true":"false",onclick:()=>{S.foodFilter=c;render();}}, h("i",{class:"cdot",style:`background:var(${v})`}), c)),
+      h("button",{class:"chip","aria-pressed":S.foodOpenOnly?"true":"false",onclick:()=>{S.foodOpenOnly=!S.foodOpenOnly;render();}},"只看營業中")),
+    h("div",{class:"food-map"},
+      leafletMap("food", foodMapOpts()),
+      mapPlacing ? null : h("button",{class:"primary map-fab",disabled:!canPost(),onclick:()=>startFoodAdd()}, "＋ 新增店家")),
+    h("div",{class:"legend small muted"},
+      h("span",{}, h("i",{class:"lg-pin"}), "松果店家（可評分、留言）"),
+      h("span",{}, h("i",{class:"lg-dot"}), "附近餐廳（OpenStreetMap）"),
+      P.loading && !(P.items||[]).length ? h("span",{},"正在載入附近餐廳…") : P.err && !(P.items||[]).length ? h("span",{},"附近餐廳暫時載入失敗") : null),
+    selOurs ? foodDetail(selOurs) : selOsm ? osmDetail(selOsm) : null,
+    h("div",{class:"seg"},
+      h("button",{"aria-pressed":tab==="ours"?"true":"false",onclick:()=>{S.foodList="ours";render();}}, `松果店家 ${ours.length}`),
+      h("button",{"aria-pressed":tab==="osm"?"true":"false",onclick:()=>{S.foodList="osm";render();}}, `附近餐廳 ${osm.length}`),
+      h("button",{"aria-pressed":tab==="guide"?"true":"false",onclick:()=>{S.foodList="guide";render();}}, "店家指南")),
+    live("foodlist", () => { const m = foodModel(); return tab==="osm" ? osmList(m.osm) : tab==="guide" ? foodGuide() : oursList(m.ours, closedN); }),
+    h("p",{class:"board-note"}, "附近餐廳的位置來自 OpenStreetMap 貢獻者，每天更新；松果店家由大家一起編輯，店關了請改成「已歇業」。",
+      S.canEdit ? [" ", h("button",{class:"linkbtn",onclick:()=>openModal({k:"landmarks"})},"管理員：編輯地標")] : null));
 }
+function oursList(list, closedN){
+  list = list.map(x => ({ ...x, d: distM(x) })).sort((a,b) => S.foodSort==="rate" ? ((foodRating(b.id)?.avg||0) - (foodRating(a.id)?.avg||0)) : a.d - b.d);
+  return h("div",{class:"stack"},
+    h("div",{class:"bar"},
+      h("select",{id:"food-sort","aria-label":"排序",style:"width:auto",onchange:e=>{S.foodSort=e.target.value;render();}},
+        h("option",{value:"dist",selected:S.foodSort!=="rate"},"離正門最近"), h("option",{value:"rate",selected:S.foodSort==="rate"},"評分最高")),
+      h("span",{class:"spacer"}),
+      closedN ? h("button",{class:"linkbtn",onclick:()=>{S.foodShowClosed=!S.foodShowClosed;render();}}, S.foodShowClosed ? "隱藏已歇業" : `顯示已歇業（${closedN}）`) : null),
+    list.length ? h("div",{class:"card list"}, list.map(x => { const r = foodRating(x.id);
+      return h("button",{class:"li place-li",onclick:()=>selectFood(x.id, true)},
+        h("i",{class:"cdot",style:`background:var(${catVar(x.cat)})`}),
+        h("span",{class:"t"}, h("b",{translate:"no"}, x.name), h("small",{class:"muted"}, x.cat, x.price ? " ・ " + "$".repeat(x.price) : "", x.status && x.status!=="營業中" ? " ・ " + x.status : "")),
+        h("small",{class:"mono"}, r ? `★ ${r.avg.toFixed(1)}  ` : "", fmtDist(x.d))); })) :
+      h("div",{class:"empty"}, h("h3",{}, S.dbState==="loading" ? "載入中…" : "還沒有人加入店家"),
+        h("p",{}, "點地圖上的任何一間餐廳，按「加入松果」就能評分和留言；地圖上沒有的店，按「＋ 新增店家」。")));
+}
+function osmList(list){
+  const P = PLACES || {};
+  if (!list.length) return h("p",{class:"muted small",style:"margin:0"}, P.loading ? "正在載入附近餐廳…" : P.err ? "附近餐廳暫時載入失敗，稍後再試。" : "沒有符合的餐廳。");
+  list = list.map(p => ({ ...p, d: distM(p) })).sort((a,b) => a.d - b.d).slice(0, 150);
+  return h("div",{class:"card list"}, list.map(p => h("button",{class:"li place-li",onclick:()=>selectFood("o:"+p.osm, true)},
+    h("i",{class:"cdot hollow",style:`border-color:var(${catVar(p.cat)})`}),
+    h("span",{class:"t"}, h("b",{}, p.name), h("small",{class:"muted"}, OSM_TYPE[p.cat] || p.cat, p.addr ? " ・ " + p.addr : "")),
+    h("small",{class:"mono"}, fmtDist(p.d)))));
+}
+function osmDetail(p){
+  return h("article",{class:"card stack food-card food-sel"},
+    h("div",{class:"bar"}, h("i",{class:"cdot lg hollow",style:`border-color:var(${catVar(p.cat)})`}),
+      h("div",{class:"stack",style:"gap:0;flex:1;min-width:0"}, h("h2",{class:"fc-title"}, p.name), h("span",{class:"muted small"}, OSM_TYPE[p.cat] || p.cat, " ・ ", `離正門 ${fmtDist(distM(p))}`)),
+      h("button",{class:"icon-btn","aria-label":"關閉",onclick:()=>{S.foodSel=null;render();}},"✕")),
+    p.addr || p.hours ? h("div",{class:"small muted"}, p.addr || "", p.addr && p.hours ? " ・ " : "", p.hours ? "營業時間 " + p.hours : "") : null,
+    h("p",{class:"small",style:"margin:0"}, "這間店還沒有人評分。加入松果後，大家就能評分、留言推薦必點，也能更新營業狀態。"),
+    h("div",{class:"bar"},
+      h("button",{class:"primary",disabled:!canPost(),onclick:()=>openModal({ k:"food", st:{ name:p.name, cat:p.cat, price:0, hours:p.hours||"", note:"", coord:"", status:"營業中", pos:{ lat:p.lat, lng:p.lng }, osm:p.osm } })},"加入松果"),
+      h("a",{class:"ghost",href:gNav(p),target:"_blank",rel:"noopener"},"步行導航"),
+      h("a",{class:"linkbtn",href:gSearch(p.name, p.addr),target:"_blank",rel:"noopener"},"Google 評論")));
+}
+function foodGuide(){
+  const items = [];
+  const placeItems = (PLACES && PLACES.items) || [];
+  for (const [area, list] of FOOD_GUIDE) for (const [n,c,addr] of list){
+    if (S.food.some(x => sameName(x.name, n))) continue;
+    if (S.foodFilter && c !== S.foodFilter) continue;
+    const q = (S.foodQ||"").trim(); if (q && !n.includes(q)) continue;
+    items.push({ area, n, c, addr, match: placeItems.find(p => sameName(p.name, n)) });
+  }
+  const area = S.foodGuideArea || "";
+  const shown = items.filter(x => !area || x.area===area);
+  return h("div",{class:"stack"},
+    h("p",{class:"board-note",style:"margin:0"}, "整理自", FOOD_GUIDE_SRC, "，還沒加入松果的店。有些可能已歇業或搬家；吃過的話幫大家加進來。"),
+    h("div",{class:"chips scroll-x"}, h("button",{class:"chip","aria-pressed":area===""?"true":"false",onclick:()=>{S.foodGuideArea="";render();}},"全部"),
+      FOOD_GUIDE.map(([a]) => h("button",{class:"chip","aria-pressed":a===area?"true":"false",onclick:()=>{S.foodGuideArea=a;render();}}, a))),
+    shown.length ? h("div",{class:"card list"}, shown.map(x => h("div",{class:"li place-li"},
+      h("i",{class:"cdot",style:`background:var(${catVar(x.c)})`}),
+      h("span",{class:"t"}, h("b",{}, x.n), h("small",{class:"muted"}, x.c, " ・ ", x.addr)),
+      h("span",{style:"display:flex;gap:12px;flex:none;align-items:center"},
+        x.match ? h("button",{class:"linkbtn",onclick:()=>selectFood("o:"+x.match.osm, true)},"在地圖上看") :
+          h("button",{class:"linkbtn",disabled:!canPost(),onclick:()=>startFoodAdd({ name:x.n, cat:x.c, addr:x.addr })},"標上地圖"),
+        h("a",{class:"linkbtn",href:gSearch(x.n,x.addr),target:"_blank",rel:"noopener"},"Google"))))) :
+      h("p",{class:"muted small",style:"margin:0"},"這一區的店都已經在松果上了。"));
+}
+
+let mapPlacing = null;   // callback while picking a spot on a map
+let mapPick = null;      // { key, hint } for the pick overlay
+function startPick(key, hint, cb, near){
+  mapPick = { key, hint };
+  mapPlacing = p => { mapPick = null; mapPlacing = null; cb(p); };
+  if (near) centerMap(key, near);
+  S.modal = null; render();
+  requestAnimationFrame(() => { const el = MAPS[key] && MAPS[key].el; if (el) el.scrollIntoView({ block:"center", behavior:"smooth" }); });
+}
+const FOOD_STATUS = ["營業中","暫停營業","寒暑假暫停","已歇業"];
+const stClass = s => s==="已歇業" ? "status no" : s && s!=="營業中" ? "status warnish" : "status ok";
 
 function foodDetail(f){
   const r = foodRating(f.id); const mine = S.uid && S.foodRates[f.id]?.get(S.uid);
   const isOpen = S.open === "food:"+f.id;
   const stars = h("div",{class:"stars-row"}, [1,2,3,4,5].map(n => h("button",{class:"star"+(mine && n<=mine?" on":""),disabled:!canPost(),"aria-label":`給 ${n} 顆星`,onclick:()=>rateFood(f,n)},"★")));
-  const card = h("article",{class:"card stack food-card"},
-    h("div",{class:"bar"}, h("i",{class:"cdot lg",style:`background:var(${catVar(f.cat)})`}), h("h2",{style:"margin:0;font-family:var(--f-display);font-size:22px"}, f.name),
+  const card = h("article",{class:"card stack food-card food-sel"},
+    h("div",{class:"bar"}, h("i",{class:"cdot lg",style:`background:var(${catVar(f.cat)})`}),
+      h("div",{class:"stack",style:"gap:0;flex:1;min-width:0"}, h("h2",{class:"fc-title",translate:"no"}, f.name),
+        h("span",{class:"muted small"}, f.cat, f.price ? " ・ " + "$".repeat(f.price) : "", " ・ ", `離正門 ${fmtDist(distM(f))}`)),
       h("span",{class:stClass(f.status)}, f.status || "營業中"),
-      h("span",{class:"muted small"}, f.cat, "・", "$".repeat(f.price||1)), h("span",{class:"spacer"}), h("button",{class:"ghost","aria-label":"關閉",onclick:()=>{S.foodSel=null;closeThread();render();}},"✕")),
-    h("div",{class:"bar small"}, h("span",{class:"mono"}, r ? `★ ${r.avg.toFixed(1)}・${r.n} 人評分` : "還沒有評分"), h("span",{class:"muted"}, `離正門 ${fmtDist(distM(f))}`), f.hours ? h("span",{class:"muted"}, f.hours) : null),
-    f.note ? h("p",{style:"margin:0;white-space:pre-wrap"}, f.note) : null,
-    h("div",{class:"bar"}, h("span",{class:"small muted"}, mine ? "你的評分" : "給個評分"), stars),
+      h("button",{class:"icon-btn","aria-label":"關閉",onclick:()=>{S.foodSel=null;closeThread();render();}},"✕")),
+    h("div",{class:"bar"}, h("span",{class:"rating mono"}, r ? `★ ${r.avg.toFixed(1)}` : "★ —"), h("span",{class:"small muted"}, r ? `${r.n} 人評分` : "還沒有評分"),
+      h("span",{class:"spacer"}), h("span",{class:"small muted"}, mine ? "你的評分" : "給個評分"), stars),
+    f.hours ? h("div",{class:"small muted"}, "營業時間 ", f.hours) : null,
+    f.note ? h("p",{style:"margin:0;white-space:pre-wrap",translate:"no"}, f.note) : null,
     h("div",{class:"bar"},
-      h("a",{class:"primary",href:gmapsLink(f),target:"_blank",rel:"noopener",style:"text-decoration:none"},"在 Google 地圖開啟"),
-      h("button",{class:"ghost",disabled:!canPost(),onclick:()=>openModal({k:"food",edit:f})},"編輯資訊・狀態"),
+      h("a",{class:"primary",href:gNav(f),target:"_blank",rel:"noopener"},"步行導航"),
+      h("button",{class:"ghost",onclick:()=>isOpen?closeThread():openThread("food:"+f.id)}, isOpen ? "收起留言" : "留言・必點"),
+      h("button",{class:"ghost",disabled:!canPost(),onclick:()=>openModal({k:"food",edit:f})},"編輯"),
       h("span",{class:"spacer"}),
-      h("button",{class:"linkbtn",onclick:()=>isOpen?closeThread():openThread("food:"+f.id)}, isOpen ? "收起留言" : "看留言・必點"),
       (f.uid && f.uid===S.uid) || S.isOwner ? h("button",{class:"linkbtn",onclick:()=>openModal({k:"delfood",id:f.id})},"刪除") : null),
-    h("p",{class:"muted small",style:"margin:0"}, "由 ", f.nick, " 標記・", ago(f.ts), f.editedBy ? `・最後由 ${f.editedBy} 編輯（${ago(f.editedAt)}）` : ""));
+    h("p",{class:"muted small",style:"margin:0"}, `由 ${f.nick} 加入・${ago(f.ts)}`, f.editedBy ? `・最後由 ${f.editedBy} 編輯（${ago(f.editedAt)}）` : ""));
   if (isOpen) card.append(thread("food/"+f.id+"/comments"));
   return card;
 }
 
+function chipPick(options, cur, onPick, cls){
+  const wrap = h("div",{class:"chips "+(cls||""),role:"radiogroup"});
+  const draw = v => wrap.replaceChildren(...options.map(([val,label,color]) => h("button",{type:"button",class:"chip","aria-pressed":v===val?"true":"false",role:"radio","aria-checked":v===val?"true":"false",
+    onclick:()=>{ onPick(val); draw(val); }}, color ? h("i",{class:"cdot",style:`background:var(${color})`}) : null, label)));
+  draw(cur); return wrap;
+}
 function foodSheet(){
   const m = S.modal; const ed = m.edit;
-  const st = m.st || (m.st = ed ? { cat:ed.cat, price:ed.price||1, pos:{ lat:ed.lat, lng:ed.lng }, name:ed.name, note:ed.note||"", hours:ed.hours||"", coord:"", status:ed.status||"營業中" }
-                                : { cat:"正餐", price:1, pos:null, name:"", note:"", hours:"", coord:"", status:"營業中" });
-  if (!st.status) st.status = "營業中";
+  const st = m.st || (m.st = ed ? { cat:ed.cat, price:ed.price||0, pos:{ lat:ed.lat, lng:ed.lng }, name:ed.name, note:ed.note||"", hours:ed.hours||"", coord:"", status:ed.status||"營業中", osm:ed.osm }
+                                : { cat:"正餐", price:0, pos:null, name:"", note:"", hours:"", coord:"", status:"營業中" });
   const err = h("p",{class:"err",hidden:true});
-  const name = h("input",{type:"text",id:"fd-name",maxlength:"30",value:st.name,placeholder:"店名",oninput:e=>st.name=e.target.value});
-  const posText = () => st.pos ? `已定位：${st.pos.lat.toFixed(5)}, ${st.pos.lng.toFixed(5)}（離正門 ${fmtDist(distM(st.pos))}）` : "尚未定位";
-  const posLine = h("span",{class:"small mono"}, posText());
-  const coord = h("input",{type:"text",id:"fd-coord",value:st.coord,placeholder:"貼上 Google 地圖連結或座標，例：24.9705, 121.1928",oninput:e=>{ st.coord=e.target.value; const p = parseCoords(st.coord); if (p){ st.pos = p; posLine.textContent = posText(); } }});
-  const note = h("textarea",{id:"fd-note",maxlength:"600",style:"min-height:80px",placeholder:"必點、份量、適合幾個人、要不要排隊",oninput:e=>st.note=e.target.value}, st.note);
+  const name = h("input",{type:"text",id:"fd-name",maxlength:"30",value:st.name,placeholder:"例：咖哩老師",autocomplete:"off",oninput:e=>{ st.name=e.target.value; drawSug(); }});
+  // suggestions: unlinked map places near the chosen spot, then guide names matching what's typed
+  const sug = h("div",{class:"chips sug"});
+  const drawSug = () => {
+    const q = (st.name||"").trim(); const out = [];
+    if (st.pos) for (const p of ((PLACES && PLACES.items) || []).map(p => ({ ...p, d:mDist(p, st.pos) })).filter(p => p.d < 90).sort((a,b) => a.d-b.d))
+      if (!S.food.some(x => x.osm===p.osm) && (!q || p.name.includes(q))) out.push({ n:p.name, c:p.cat, osm:p.osm, pos:{lat:p.lat,lng:p.lng} });
+    if (q) for (const [,list] of FOOD_GUIDE) for (const [n,c] of list) if (n.includes(q) && !out.some(o => o.n===n)) out.push({ n, c });
+    sug.replaceChildren(...out.slice(0,6).map(o => h("button",{type:"button",class:"chip",onclick:()=>{ st.name = o.n; name.value = o.n; st.cat = o.c; if (o.osm){ st.osm = o.osm; st.pos = o.pos; } catW.replaceWith(catW = catPick()); drawSug(); }}, o.n)));
+    sug.hidden = !out.length || out.length===1 && out[0].n===q;
+  };
+  const catPick = () => chipPick(FOOD_CATS.map(([c,v]) => [c,c,v]), st.cat, v => st.cat = v);
+  let catW = catPick();
+  const repick = () => { S.modal = null; startPick("food", "拖曳地圖，把圖釘對準店門口", p => { if (p){ st.pos = p; st.coord = ""; st.osm = st.osm && p ? st.osm : undefined; } S.modal = m; render(); }, st.pos); };
+  const coord = h("input",{type:"text",id:"fd-coord",value:st.coord,placeholder:"貼上 Google 地圖連結或座標",oninput:e=>{ st.coord=e.target.value; const p = parseCoords(st.coord); if (p){ st.pos = p; posLine.textContent = tr(posText()); } }});
+  const posText = () => st.pos ? `離正門 ${fmtDist(distM(st.pos))}` : "還沒選位置";
+  const posLine = h("span",{}, posText());
+  const note = h("textarea",{id:"fd-note",maxlength:"600",style:"min-height:70px",placeholder:"必點、份量、要不要排隊（選填）",oninput:e=>st.note=e.target.value}, st.note);
   const hours = h("input",{type:"text",id:"fd-hours",maxlength:"40",value:st.hours,placeholder:"例：17:00–02:00，週一休",oninput:e=>st.hours=e.target.value});
-  const btn = h("button",{class:"primary",onclick:async()=>{
-    if (st.name.trim().length < 1) return fail(err,"請填店名。");
-    if (!st.pos) return fail(err,"請貼上座標，或在地圖上點選位置。");
-    if (distM(st.pos) > 15000) return fail(err,"這個位置離中大超過 15 公里，請確認座標。");
-    const fields = { name:st.name.trim(), cat:st.cat, price:st.price, lat:st.pos.lat, lng:st.pos.lng, note:st.note.trim(), hours:st.hours.trim(), status:st.status };
+  const btn = h("button",{class:"primary wide",onclick:async()=>{
+    if ((st.name||"").trim().length < 1) return fail(err,"請填店名。");
+    if (!st.pos) return fail(err,"請先在地圖上選位置。");
+    if (distM(st.pos) > 15000) return fail(err,"這個位置離中大超過 15 公里，請確認位置。");
+    const fields = { name:st.name.trim(), cat:st.cat, price:st.price||0, lat:st.pos.lat, lng:st.pos.lng, note:(st.note||"").trim(), hours:(st.hours||"").trim(), status:st.status||"營業中" };
+    if (st.osm) fields.osm = st.osm;
     btn.disabled = true;
     try {
       if (ed){ await S.db.doc("food/"+ed.id).update({ ...fields, editedBy:S.nick, editedAt:Date.now() }); S.foodSel = ed.id; }
       else { const ref = await S.db.collection("food").add({ ...fields, nick:S.nick, uid:S.uid||"", ts:Date.now() }); S.foodSel = ref.id; }
-      closeModal(); toast(ed ? "已更新，謝謝你" : "已加到地圖"); } catch(e){ fail(err, writeErr(e)); btn.disabled=false; } }}, ed ? "儲存變更" : "加到地圖");
-  return sheet(ed ? "編輯店家" : "標一間店",
-    h("label",{class:"f",for:"fd-name"},"店名",name),
-    h("div",{class:"f"},"營業狀態", h("div",{class:"radios",role:"radiogroup"}, FOOD_STATUS.map(s => h("label",{}, h("input",{type:"radio",name:"fdst",checked:st.status===s,onchange:()=>st.status=s}),s)))),
-    h("div",{class:"f"},"類型", h("div",{class:"radios",role:"radiogroup"}, FOOD_CATS.map(([c]) => h("label",{}, h("input",{type:"radio",name:"fdcat",checked:st.cat===c,onchange:()=>st.cat=c}),c)))),
-    h("div",{class:"f"},"價位", h("div",{class:"radios",role:"radiogroup"}, [[1,"$ 百元內"],[2,"$$ 100–250"],[3,"$$$ 250 以上"]].map(([v,l]) => h("label",{}, h("input",{type:"radio",name:"fdp",checked:st.price===v,onchange:()=>st.price=v}),l)))),
-    h("label",{class:"f",for:"fd-coord"},"位置", h("small",{},"在 Google 地圖長按（手機）或右鍵（電腦）店家位置，複製座標貼上最準。"), coord),
-    h("div",{class:"bar"}, posLine, h("span",{class:"spacer"}), h("button",{class:"ghost",onclick:()=>{ S.modal = null; mapPlacing = p => { if (p){ st.pos = p; st.coord = ""; } S.modal = m; render(); }; S.tab="food"; render(); toast("在地圖上點店家的位置"); }},"在地圖上點選")),
-    h("label",{class:"f",for:"fd-hours"},"營業時間（選填）",hours),
-    h("label",{class:"f",for:"fd-note"},"推薦說明（選填）",note),
+      closeModal(); toast(ed ? "已更新，謝謝你" : "已加到地圖，謝謝你"); } catch(e){ fail(err, writeErr(e)); btn.disabled=false; } }}, ed ? "儲存變更" : "加到地圖");
+  setTimeout(drawSug);
+  return sheet(ed ? "編輯店家" : "新增店家",
+    h("div",{class:"pos-row"}, h("span",{class:"pos-ic"}, icon("pin")), posLine, h("span",{class:"spacer"}), h("button",{class:"ghost",onclick:repick}, st.pos ? "重新選位置" : "在地圖上選位置")),
+    h("label",{class:"f",for:"fd-name"},"店名",name), sug,
+    h("div",{class:"f"},"類型", catW),
+    h("div",{class:"f"},"營業狀態", chipPick(FOOD_STATUS.map(s => [s,s]), st.status, v => st.status = v)),
+    h("details",{class:"more-fields"}, h("summary",{},"更多資訊（選填）"),
+      h("div",{class:"stack",style:"gap:12px;padding-top:10px"},
+        h("div",{class:"f"},"價位", chipPick([[1,"$ 百元內"],[2,"$$ 100–250"],[3,"$$$ 250 以上"]], st.price, v => st.price = v)),
+        h("label",{class:"f",for:"fd-hours"},"營業時間",hours),
+        h("label",{class:"f",for:"fd-note"},"推薦說明",note),
+        h("label",{class:"f",for:"fd-coord"},"直接貼座標", h("small",{},"在 Google 地圖長按店家位置，複製座標貼上。"), coord))),
     ed ? h("p",{class:"muted small",style:"margin:0"},"這是大家一起編輯的地圖，你的修改會記錄暱稱。店家關了請改成「已歇業」，不要刪除。") : null,
     err, foot(btn));
 }
@@ -1715,9 +1928,10 @@ async function rateFood(f, n){ try { await S.db.doc(`foodrate/${f.id}__${S.uid}`
 
 function delFoodSheet(){
   const id = S.modal.id;
-  return sheet("從地圖移除這間店？", h("p",{class:"muted",style:"margin:0"},"評分與留言也會看不到。"),
+  return sheet("從地圖移除這間店？", h("p",{class:"muted",style:"margin:0"},"評分與留言也會看不到。店家只是關了的話，請改成「已歇業」。"),
     foot(h("button",{class:"primary",onclick:async()=>{ try { await S.db.doc("food/"+id).delete(); S.foodSel=null; closeModal(); toast("已移除"); } catch(e){ toast(writeErr(e)); } }},"移除")));
 }
+
 function landmarkSheet(){
   const items = JSON.parse(JSON.stringify(landmarks())); const err = h("p",{class:"err",hidden:true});
   const ta = h("textarea",{id:"lm-ta",style:"min-height:140px"}, items.map(l => `${l.name}, ${l.lat}, ${l.lng}`).join("\n"));
@@ -1792,9 +2006,9 @@ function forumPage(){
         const mine = m.uid && m.uid === S.uid;
         return h("div",{class:"lmsg"+(mine?" mine":"")}, mine ? null : avatar(m.nick,"sm"),
           h("div",{class:"col"},
-            h("div",{class:"lwho"}, mine ? null : h("b",{}, m.nick), h("span",{class:"mono"}, fmtWhen(m.ts).time),
+            h("div",{class:"lwho"}, mine ? null : h("b",{translate:"no"}, m.nick), h("span",{class:"mono"}, fmtWhen(m.ts).time),
               mine || S.isOwner ? h("button",{class:"linkbtn",style:"font-size:12px",onclick:async()=>{ try { await S.db.doc("lobby/"+m.id).delete(); } catch(e){ toast(writeErr(e)); } }},"刪除") : null),
-            h("div",{class:"lbody"}, m.body))); }) :
+            h("div",{class:"lbody",translate:"no"}, m.body))); }) :
       h("p",{class:"muted small",style:"margin:0"}, S.dbState==="loading" ? "載入中…" : "大廳還很安靜，說聲嗨吧。")); }),
     h("div",{class:"cform"}, inp, h("button",{class:"primary",disabled:!canPost(),onclick:send},"送出")),
     h("p",{class:"board-note"},"請友善發言。不當內容管理員會刪除；每人每小時最多 120 則。"));
@@ -2071,7 +2285,7 @@ function spotDetail(s){
   return h("article",{class:"card stack",style:"gap:8px"},
     h("div",{class:"bar"}, h("i",{class:"cdot lg",style:`background:var(${spotVar(s.cat)})`}), h("h2",{style:"margin:0;font-family:var(--f-display);font-size:22px"}, s.name), h("span",{class:"muted small"}, s.cat),
       h("span",{class:"spacer"}), h("button",{class:"ghost","aria-label":"關閉",onclick:()=>{S.navSel=null;render();}},"✕")),
-    s.note ? h("p",{style:"margin:0;white-space:pre-wrap"}, s.note) : null,
+    s.note ? h("p",{style:"margin:0;white-space:pre-wrap",translate:"no"}, s.note) : null,
     has && !s.fixed ? h("p",{class:"small muted",style:"margin:0"}, `離正門約 ${fmtDist(distM(s))}・走路約 ${Math.max(1,Math.round(distM(s)/FOOD_WALK))} 分`) : null,
     h("div",{class:"bar"},
       has ? h("a",{class:"primary",href:walkLink(s),target:"_blank",rel:"noopener",style:"text-decoration:none"},"Google 步行導航") : h("a",{class:"primary",href:campusSearch(s.name),target:"_blank",rel:"noopener",style:"text-decoration:none"},"用 Google 搜尋"),
@@ -2085,7 +2299,7 @@ function spotSheet(){
   const name = h("input",{type:"text",id:"sp-name",maxlength:"30",value:st.name,disabled:!!(base && !base.custom && CAMPUS_SPOTS.some(([,l]) => l.includes(base.name))),oninput:e=>st.name=e.target.value});
   const posText = () => st.pos ? `已定位：${st.pos.lat.toFixed(5)}, ${st.pos.lng.toFixed(5)}` : "尚未定位";
   const posLine = h("span",{class:"small mono"}, posText());
-  const coord = h("input",{type:"text",id:"sp-coord",value:st.coord,placeholder:"貼上 Google 地圖連結或座標",oninput:e=>{ st.coord=e.target.value; const p = parseCoords(st.coord); if (p){ st.pos = p; posLine.textContent = posText(); } }});
+  const coord = h("input",{type:"text",id:"sp-coord",value:st.coord,placeholder:"貼上 Google 地圖連結或座標",oninput:e=>{ st.coord=e.target.value; const p = parseCoords(st.coord); if (p){ st.pos = p; posLine.textContent = tr(posText()); } }});
   const note = h("textarea",{id:"sp-note",maxlength:"300",style:"min-height:70px",placeholder:"例：入口在大樓東側、二樓有飲水機",oninput:e=>st.note=e.target.value}, st.note);
   const btn = h("button",{class:"primary",onclick:async()=>{
     const nm = (st.name||"").trim(); if (!nm) return fail(err,"請填地點名稱。");
@@ -2101,7 +2315,7 @@ function spotSheet(){
     h("label",{class:"f",for:"sp-name"},"名稱",name),
     h("div",{class:"f"},"類別", h("div",{class:"radios",role:"radiogroup"}, SPOT_CATS.map(([c]) => h("label",{}, h("input",{type:"radio",name:"spcat",checked:st.cat===c,onchange:()=>st.cat=c}),c)))),
     h("label",{class:"f",for:"sp-coord"},"位置", h("small",{},"最快：在 Google 地圖長按該地點，複製座標貼上。或按下方按鈕直接在地圖上點。"), coord),
-    h("div",{class:"bar"}, posLine, h("span",{class:"spacer"}), h("button",{class:"ghost",onclick:()=>{ S.modal = null; mapPlacing = p => { if (p){ st.pos = p; st.coord = ""; } S.modal = m; render(); }; S.tab = "nav"; render(); toast("在地圖上點這個地點的位置"); }},"在地圖上點選")),
+    h("div",{class:"bar"}, posLine, h("span",{class:"spacer"}), h("button",{class:"ghost",onclick:()=>{ S.tab = "nav"; startPick("nav", "拖曳地圖，把圖釘對準「" + (st.name||"這個地點") + "」", p => { if (p){ st.pos = p; st.coord = ""; } S.modal = m; render(); }, st.pos); }},"在地圖上選")),
     h("label",{class:"f",for:"sp-note"},"說明（選填）",note),
     h("p",{class:"muted small",style:"margin:0"},"地圖是大家一起編輯的。標錯了沒關係，其他人可以再修正。"),
     err, foot(btn));
@@ -2116,43 +2330,73 @@ function leafletMap(key, opts){
   let M = MAPS[key];
   if (!M){
     const saved = LS.json("pc.map."+key, null);
-    const el = h("div",{class:"map lmap","aria-label":"地圖"});
-    const map = L.map(el, { zoomControl:true }).setView(saved ? [saved.lat, saved.lng] : opts.center, saved ? saved.z : opts.zoom);
+    const el = h("div",{class:"map lmap","aria-label":"地圖","data-notr":"1"});
+    const map = L.map(el, { zoomControl:true, tap:true }).setView(saved ? [saved.lat, saved.lng] : opts.center, saved ? saved.z : opts.zoom);
     L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom:19, attribution:'&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>' }).addTo(map);
-    const layer = L.layerGroup().addTo(map);
+    const base = L.layerGroup().addTo(map), layer = L.layerGroup().addTo(map);
     map.on("movestart", () => { S.dragging = true; });
     map.on("moveend", () => { const c = map.getCenter(); LS.set("pc.map."+key, JSON.stringify({ lat:c.lat, lng:c.lng, z:map.getZoom() }));
       S.dragging = false; if (S.dirty && !S.modal){ S.dirty = false; setTimeout(renderKeep); } });
-    map.on("click", e => { if (!mapPlacing) return; const cb = mapPlacing; mapPlacing = null; cb({ lat:e.latlng.lat, lng:e.latlng.lng }); });
-    M = MAPS[key] = { el, map, layer, me:null };
+    map.on("zoomend", () => drawMarkers(M, M.opts));
+    map.on("click", e => { if (mapPlacing && (!mapPick || mapPick.key===key)) map.panTo(e.latlng); });
+    M = MAPS[key] = { el, map, base, layer, me:null, opts };
   }
-  M.el.classList.toggle("placing", !!mapPlacing);
-  M.layer.clearLayers();
+  M.opts = opts;
+  const picking = !!mapPlacing && (!mapPick || mapPick.key===key);
+  M.el.classList.toggle("placing", picking);
+  // rings + landmark labels (static)
+  M.base.clearLayers();
   const css = getComputedStyle(document.documentElement);
-  const pine = css.getPropertyValue("--pine").trim() || "#235c45";
+  const pine = css.getPropertyValue("--pine").trim() || "#1f7a52";
   if (opts.rings) [[400,"走路 5 分"],[800,"走路 10 分"],[1600,"走路 20 分"]].forEach(([r,l]) =>
-    L.circle([ORIGIN.lat, ORIGIN.lng], { radius:r, color:pine, weight:1.5, dashArray:"4 6", fill:false, interactive:false }).addTo(M.layer).bindTooltip(l, { direction:"top" }));
-  (opts.labels||[]).forEach(m => L.marker([m.lat, m.lng], { interactive:false, icon:L.divIcon({ className:"lm-icon", html:`<span>${esc(m.name)}</span>`, iconSize:null }) }).addTo(M.layer));
-  for (const k of opts.markers){
-    const mk = L.circleMarker([k.lat, k.lng], { radius: k.sel ? 11 : 8, color: k.dim ? (css.getPropertyValue("--muted").trim()||"#888") : "#ffffff", weight:2, dashArray: k.dash ? "3 3" : null,
-      fillColor: k.dim ? "#9aa49e" : (css.getPropertyValue(k.color).trim() || pine), fillOpacity: k.hollow ? 0.35 : 1 }).addTo(M.layer);
-    mk.bindTooltip(k.label, { direction:"top", offset:[0,-8], permanent: !!k.sel });
-    mk.on("click", ev => { L.DomEvent.stopPropagation(ev); if (mapPlacing) return; k.onClick(); });
-  }
-  const wrap = h("div",{class:"map-wrap"}, M.el,
-    h("div",{class:"map-hint",hidden:!mapPlacing}, "點地圖選位置", h("button",{class:"ghost",onclick:e=>{ e.stopPropagation(); const cb = mapPlacing; mapPlacing = null; cb && cb(null); }},"取消")),
-    h("button",{class:"ghost map-home",onclick:()=>M.map.setView(opts.center, opts.zoom)},"回到中大"));
+    L.circle([ORIGIN.lat, ORIGIN.lng], { radius:r, color:pine, weight:1.2, opacity:.5, dashArray:"4 6", fill:false, interactive:false }).addTo(M.base).bindTooltip(tr(l), { direction:"top" }));
+  (opts.labels||[]).forEach(m => L.marker([m.lat, m.lng], { interactive:false, icon:L.divIcon({ className:"lm-icon", html:`<span>${esc(tr(m.name))}</span>`, iconSize:null }) }).addTo(M.base));
+  drawMarkers(M, opts);
+  const finish = p => { const cb = mapPlacing; if (cb) cb(p); };
+  const wrap = h("div",{class:"map-wrap"+(picking?" picking":"")}, M.el,
+    picking ? [
+      h("div",{class:"pick-pin","aria-hidden":"true"}, icon("pin")),
+      h("div",{class:"pick-hint"}, (mapPick && mapPick.hint) || "拖曳地圖，把圖釘對準位置"),
+      h("div",{class:"pick-bar"},
+        h("button",{class:"ghost",onclick:e=>{ e.stopPropagation(); finish(null); }},"取消"),
+        h("button",{class:"ghost",onclick:e=>{ e.stopPropagation(); locateMe(key, true); }},"用我的位置"),
+        h("button",{class:"primary",onclick:e=>{ e.stopPropagation(); const c = M.map.getCenter(); finish({ lat:c.lat, lng:c.lng }); }},"確定位置"))
+    ] : h("button",{class:"ghost map-home",onclick:()=>M.map.setView(opts.center, opts.zoom)},"回到中大"));
   requestAnimationFrame(() => M.map.invalidateSize());
   return wrap;
 }
+function drawMarkers(M, opts){
+  if (!M || !opts) return;
+  M.layer.clearLayers();
+  const css = getComputedStyle(document.documentElement);
+  const pine = css.getPropertyValue("--pine").trim() || "#1f7a52";
+  const z = M.map.getZoom();
+  const picking = !!mapPlacing;
+  for (const k of opts.markers){
+    const color = css.getPropertyValue(k.color).trim() || pine;
+    let mk;
+    if (k.kind === "osm"){
+      mk = L.circleMarker([k.lat, k.lng], { radius: k.sel ? 10 : (z >= 17 ? 7.5 : 6), color:"#ffffff", weight:2, fillColor: color, fillOpacity: picking ? .45 : 1, opacity: picking ? .45 : 1 });
+    } else {
+      const cls = "fpin" + (k.sel ? " sel" : "") + (k.dim ? " dim" : "") + (k.pause ? " pause" : "") + (k.rated ? " rated" : "");
+      mk = L.marker([k.lat, k.lng], { icon: L.divIcon({ className:"fpin-wrap", html:`<span class="${cls}" style="--c:${color}"></span>`, iconSize:[26,32], iconAnchor:[13,30], tooltipAnchor:[0,-28] }),
+        zIndexOffset: k.sel ? 1000 : 200, opacity: picking ? .5 : 1, keyboard:true, title:k.label });
+    }
+    mk.addTo(M.layer);
+    const showLabel = k.sel || z >= 17;
+    mk.bindTooltip(esc(k.label), { direction:"top", offset: k.kind === "osm" ? [0,-6] : [0,0], permanent: showLabel, className: k.kind === "osm" ? "tt-osm" : "tt-ours" });
+    mk.on("click", ev => { L.DomEvent.stopPropagation(ev); if (mapPlacing){ M.map.panTo(mk.getLatLng()); return; } k.onClick(); });
+  }
+}
 function centerMap(key, p){ const M = MAPS[key]; if (M) M.map.setView([p.lat, p.lng], Math.max(M.map.getZoom(), 17)); else LS.set("pc.map."+key, JSON.stringify({ lat:p.lat, lng:p.lng, z:17 })); }
-function locateMe(key){
+function locateMe(key, quiet){
   const M = MAPS[key]; if (!M || !navigator.geolocation) return toast("這個裝置無法取得位置");
   navigator.geolocation.getCurrentPosition(pos => {
     const ll = [pos.coords.latitude, pos.coords.longitude];
     if (M.me) M.me.remove();
-    M.me = L.circleMarker(ll, { radius:8, color:"#fff", weight:3, fillColor:"#2b7cff", fillOpacity:1 }).addTo(M.map).bindTooltip("你在這裡", { permanent:true, direction:"top", offset:[0,-8] });
-    M.map.setView(ll, 17);
+    M.me = L.circleMarker(ll, { radius:8, color:"#fff", weight:3, fillColor:"#2b7cff", fillOpacity:1, interactive:false }).addTo(M.map);
+    if (!quiet) M.me.bindTooltip(tr("你在這裡"), { permanent:true, direction:"top", offset:[0,-8] });
+    M.map.setView(ll, 18);
   }, () => toast("沒有取得位置權限"), { enableHighAccuracy:true, timeout:10000 });
 }
 
@@ -2171,7 +2415,7 @@ function renderOverlay(){
 }
 const foot = (...b) => h("div",{class:"foot"}, h("button",{class:"ghost",onclick:closeModal},"取消"), b);
 const sheet = (title, ...kids) => h("div",{class:"sheet",role:"dialog","aria-modal":"true","aria-label":title}, h("h2",{},title), kids);
-const fail = (el, msg) => { el.textContent = msg; el.hidden = false; };
+const fail = (el, msg) => { el.textContent = tr(msg); el.hidden = false; };
 
 function profileSheet(){
   const nick = h("input",{type:"text",id:"pf-nick",maxlength:"16",value:S.nick});
@@ -2359,7 +2603,7 @@ function writeErr(e){
 }
 let toastEl = null, toastT = 0;
 function toast(msg){ if (!toastEl){ toastEl = h("div",{class:"toast",role:"status"}); document.body.append(toastEl); }
-  toastEl.textContent = msg; toastEl.hidden = false; clearTimeout(toastT); toastT = setTimeout(()=>toastEl.hidden=true, 2600); }
+  toastEl.textContent = I18N.tr(msg); toastEl.hidden = false; clearTimeout(toastT); toastT = setTimeout(()=>toastEl.hidden=true, 2600); }
 
 scheduleReminders();
 /* ---------- PWA ---------- */
