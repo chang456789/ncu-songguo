@@ -54,6 +54,8 @@ begin
   elsif new.collection = 'food'            then lim := 15;  pat := 'food';
   elsif new.collection = 'spots'           then lim := 30;  pat := 'spots';
   elsif new.collection = 'lobby'           then lim := 120; pat := 'lobby';
+  elsif new.collection = 'events'          then lim := 10;  pat := 'events';
+  elsif new.collection = 'going'           then lim := 200; pat := 'going';
   elsif new.collection = 'locations'       then lim := 3;   pat := 'locations';
   elsif new.collection = 'dmreq'           then lim := 20;  pat := 'dmreq';
   elsif new.collection like 'dms/%'        then lim := 300; pat := 'dms/%';

@@ -16,6 +16,7 @@ web/
   sw.js                 Service worker（可安裝成 App、網路不穩時顯示上次畫面）
   manifest.webmanifest  App 名稱與圖示
   icons/                App 圖示
+api/events.js           整理近期校園活動（學校活動、校園公告、人文藝術中心）：日期、時間、地點、有沒有餐點／時數，CDN 快取 30 分鐘
 api/news.js             讀取中大官網最新消息／活動（Vercel 伺服器端，CDN 快取 15 分鐘）
 api/weather.js          中央氣象署中壢區天氣預報（需要 CWA_API_KEY，沒有就自動改用 Open-Meteo）
 supabase/schema.sql     資料庫結構與權限規則（Row Level Security）
