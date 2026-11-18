@@ -67,14 +67,16 @@ supabase/schema.sql  資料庫結構與權限規則（Row Level Security），�
    - 本機開 `cd web && python3 -m http.server 8080` 看畫面（/api 在本機不會動，要用 Vercel 預覽網址測）
    - 手機寬度（約 390px）不會有東西超出畫面、淺色深色都正常
 8. 不確定的事先問隊友，不要猜。不要刪除或改寫別人負責的功能。
+9. **合併到 main（＝網站正式更新）之前，一定要先取得隊長張宇鈞同意。** 做法：開好 Pull Request 後，把「PR 連結＋Vercel 預覽網址＋三行改了什麼」傳給隊長，隊長回覆 OK 才合併。
 
 ## 團隊分工（AI 功能）
 
 | 分支 | 負責 | 功能 |
 |---|---|---|
-| `ai-assistant` | 組員 A | 松果 AI 助理：自然語言問公車、活動、美食、校園生活，AI 讀網站現有資料回答（`api/ai-chat.js`） |
-| `ai-translate` | 組員 B | AI 翻譯：貼文、活動、公告一鍵翻成英文；英文介面下自動提供翻譯（`api/ai-translate.js`） |
-| `ai-events` | 組員 C | AI 活動擷取：用 AI 從學校公告抽出日期、時間、地點、有無餐點與時數並寫摘要，取代 `api/events.js` 的規則式解析 |
+| `ai-assistant` | 林宥綸（技術總管，負責合併） | 松果 AI 助理：自然語言問公車、活動、美食、校園生活，AI 讀網站現有資料回答（`api/ai-chat.js`） |
+| `ai-translate` | 陳奕晴 | AI 翻譯：貼文、活動、公告一鍵翻成英文；英文介面下提供翻譯（`api/ai-translate.js`） |
+| `ai-events` | 陳奕晴 | AI 活動擷取：用 AI 從學校公告抽出日期、時間、地點、有無餐點與時數並寫摘要，加在 `api/events.js` 規則式解析之後，AI 失敗時退回原結果 |
 
-AI 金鑰由組員 C 申請（Azure for Students），交給網站擁有者加到 Vercel 環境變數後，三個功能都能使用。
+謝恩妮負責 Azure 金鑰、問卷、影響力數據、簡報與報名，不改程式。
+AI 金鑰由謝恩妮申請（Azure for Students），交給網站擁有者加到 Vercel 環境變數後，三個功能都能使用。
 在金鑰設定好之前，可以先用 GitHub Models 的免費權杖測試（見 `api/_lib/ai.js` 開頭的說明）。
