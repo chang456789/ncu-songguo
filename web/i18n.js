@@ -112,6 +112,11 @@
     "發文":"Post", "發布":"Publish", "已發布":"Posted", "標題":"Title", "內容":"Content", "分類":"Category", "發文身分":"Post as", "發文身分　":"Post as  ",
     "用我的暱稱":"My nickname", "一次性隨機暱稱":"One-time random name", " （一次性暱稱）":" (one-time name)", "請填寫標題。":"Enter a title.", "內容太短了，再多寫一點。":"Too short — write a bit more.",
     "打到一半關掉也沒關係，草稿會自動保留。":"Drafts are saved automatically.", "讚":"Like", "已按讚":"Liked", "留言":"Comment", "寫留言…":"Write a comment…", "留言內容":"Comment",
+    // ---------- AI translation (web/translate.js) ----------
+    "翻譯":"Translate", "翻譯中…":"Translating…", "顯示原文":"Show original", "翻譯全部留言":"Translate all comments",
+    "用 AI 翻譯":"Translate with AI", "AI 翻譯，可能有誤":"AI translation — may contain mistakes",
+    "AI 翻譯尚未啟用，請稍後再試。":"AI translation isn't available yet. Please try again later.",
+    "翻譯太頻繁了，請稍後再試。":"Too many translations — please wait a moment and try again.", "翻譯失敗，請稍後再試。":"Translation failed. Please try again later.",
     "還沒有留言，說點什麼吧。":"No comments yet. Say something!", "收起留言":"Hide comments", "檢舉":"Report", "已檢舉":"Reported", "刪除":"Delete", "已刪除":"Deleted",
     "刪除這篇貼文？":"Delete this post?", "刪除後無法復原。":"This can't be undone.", "檢舉這篇貼文":"Report this post", "送出檢舉":"Report",
     "人身攻擊或謾罵":"Harassment or abuse", "捏造不實內容":"False information", "洩漏個人資料":"Personal information", "廣告或詐騙":"Spam or scam",

@@ -309,6 +309,11 @@ nav.bottom{display:none}
 .cmt .bubble b{font-size:13px;display:block}
 .cmt .bubble span{font-size:14px;white-space:pre-wrap;overflow-wrap:anywhere}
 .cmt .when{font-size:12px;color:var(--muted);margin:2px 0 0 12px}
+/* AI 翻譯按鈕（web/translate.js） */
+.tr-btn{color:var(--pine);font-weight:600;font-size:13px}
+.tr-btn.sm{font-size:12px;margin-left:8px}
+.tr-btn:disabled{color:var(--muted);text-decoration:none;cursor:default}
+.tr-all{align-self:flex-start}
 .cform{display:flex;gap:8px;align-items:center}
 .cform input{flex:1;min-width:0;border-radius:999px!important;background:var(--sunk)!important;border:0!important;padding:9px 14px!important}
 
@@ -516,6 +521,7 @@ a.ghost{color:var(--ink)}
 <script src="/config.js"></script>
 <script src="/i18n.js"></script>
 <script src="/shim.js"></script>
+<script src="/translate.js"></script>
 
 
 <script>
@@ -616,6 +622,9 @@ const ADJ = ["半夜煮泡麵的","熬夜趕報告的","232巷的","中大湖邊
 const NOUN = ["小貓","吉他手","室友","鄰居","房客","夜貓子","學長姐","路人","松鼠","宵夜仔","通勤族","松果"];
 const I18N = window.sgI18n || { tr:s=>s, translate(){}, lang:"zh", setLang(){}, randNick:null };
 const randNick = () => I18N.lang==="en" && I18N.randNick ? I18N.randNick() : ADJ[Math.random()*ADJ.length|0] + NOUN[Math.random()*NOUN.length|0];
+// AI 翻譯（web/translate.js）：英文介面翻中文內容、中文介面翻英文內容
+const TR = window.sgTranslate || { view:(id,texts)=>({ texts, button:null }), translateItems(){}, needs:()=>false, init(){} };
+TR.init({ db:()=>S.db, uid:()=>S.uid, lang:()=>I18N.lang, onChange:()=>renderKeep(), toast:m=>toast(m) });
 function switchLang(l){ I18N.setLang(l); S.dirty = false; render(); }
 
 const RIDE_PLACES = ["中央大學（正門）","中央大學（後門）","中壢火車站","高鐵桃園站","台北車站","松山機場","桃園機場","大江購物中心","中原商圈・中原夜市","龍岡・忠貞市場","中壢觀光夜市","青埔","其他"];
@@ -1149,17 +1158,19 @@ function eventCard(e){
   const goingSet = S.going[e.id]; const n = goingSet ? goingSet.size : 0; const me = S.uid && goingSet?.has(S.uid);
   const ranged = !!e.end; const [,m,d] = (ranged && e.date < todayISO() ? e.end : e.date).split("-").map(Number);
   const mine = e.community && e.uid && e.uid === S.uid;
+  const tv = TR.view("ev:"+e.id, [e.title, e.place || "", e.body || ""]); const [evTitle, evPlace, evBody] = tv.texts;
   return h("article",{class:"card ev"},
     h("div",{class:"cal"+(ranged?" range":"")}, h("i",{}, ranged ? (e.date < todayISO() ? "展期至" : "開始") : `${m}月`), h("b",{}, d), h("small",{}, ranged ? `${m}月` : "週"+wkOf(e.date))),
     h("div",{class:"body"},
-      h("h3",{translate:"no"}, e.url ? h("a",{href:e.url,target:"_blank",rel:"noopener"}, e.title) : e.title),
+      h("h3",{translate:"no"}, e.url ? h("a",{href:e.url,target:"_blank",rel:"noopener"}, evTitle) : evTitle),
       h("span",{class:"when"}, evWhen(e)),
-      e.place ? h("span",{class:"where2"}, e.place) : null,
-      e.body ? h("p",{class:"small",style:"margin:0;white-space:pre-wrap;overflow-wrap:anywhere"}, e.body) : null,
+      e.place ? h("span",{class:"where2",translate:tv.translated?"no":null}, evPlace) : null,
+      e.body ? h("p",{class:"small",style:"margin:0;white-space:pre-wrap;overflow-wrap:anywhere",translate:"no"}, evBody) : null,
       e.tags && e.tags.length ? h("div",{class:"tags"}, e.tags.map(t => h("span",{class:"tag "+(TAG_CLASS[t]||"")}, t))) : null,
       h("span",{class:"src"}, e.community ? `${e.nick} 分享・${ago(e.ts)}` : `來源：${e.srcLabel || "學校網站"}${e.url ? "・點標題看原公告" : ""}`),
       h("div",{class:"ev-acts"},
         h("button",{class:"going"+(me?" on":""),disabled:!canPost(),onclick:()=>toggleGoing(e)}, icon(me ? "check" : "star"), me ? "我會去" : "想去", n ? `・${n}` : ""),
+        tv.button,
         mine || (e.community && S.isOwner) ? h("button",{class:"linkbtn",onclick:async()=>{ try { await S.db.doc("events/"+e.docId).delete(); toast("已刪除"); } catch(err){ toast(writeErr(err)); } }},"刪除") : null)));
 }
 async function toggleGoing(e){
@@ -1470,17 +1481,19 @@ function postCard(p){
   if (hidden && !S.isOwner && p.uid!==S.uid){ card.append(h("p",{class:"body muted",style:"padding-bottom:12px"},"這篇貼文已被 3 位以上使用者檢舉，暫時隱藏，等待管理員審核。")); return card; }
   if (hidden) card.append(h("div",{class:"notice"}, `已被檢舉 ${reportCount(p.id)} 次，其他人目前看不到這篇。`, S.isOwner ? [" ", h("button",{class:"linkbtn",onclick:()=>clearReports(p.id)},"審核通過，恢復顯示")] : null));
   if (locName) card.append(h("div",{}, plate(locName)));
-  card.append(h("h3",{translate:"no"},p.title));
+  const tv = TR.view("post:"+p.id, [p.title || "", p.body || ""]);
+  card.append(h("h3",{translate:"no"},tv.texts[0]));
   if (p.price) card.append(h("div",{class:"price"}, p.price));
   if (p.rent) card.append(h("div",{class:"price"}, p.rent, p.htype ? h("span",{class:"muted small",style:"font-weight:400"},"　"+p.htype) : null));
   if (p.ratings) card.append(h("div",{class:"scores"}, [["隔音",p.ratings.sound],["房東態度",p.ratings.landlord],["CP 值",p.ratings.cp]].map(([k,n]) => h("div",{class:"score"},k,dots(n)))));
-  card.append(h("p",{class:"body",translate:"no"},p.body));
+  card.append(h("p",{class:"body",translate:"no"},tv.texts[1]));
   const isOpen = S.open===p.id;
   const liked = S.uid && S.likes[p.id]?.has(S.uid);
   const n = likeCount(p.id);
   card.append(h("div",{class:"counts"},
     h("span",{}, n ? [h("span",{class:"heart"}, icon("heart")), n] : ""),
     h("span",{style:"display:flex;gap:14px"},
+      tv.button,
       !mine && canPost() ? h("button",{class:"linkbtn",style:"color:var(--muted);font-weight:500;font-size:13px",disabled:reported,onclick:()=>openModal({k:"report",pid:p.id})}, reported?"已檢舉":"檢舉") : null,
       mine || S.isOwner ? h("button",{class:"linkbtn",style:"color:var(--muted);font-weight:500;font-size:13px",onclick:()=>openModal({k:"del",pid:p.id})},"刪除") : null)));
   card.append(h("div",{class:"acts"},
@@ -1496,9 +1509,12 @@ async function toggleLike(p){
 }
 function thread(path){
   const box = h("div",{class:"thread"});
-  box.append(live("cmts", () => h("div",{class:"stack",style:"gap:8px"}, S.comments.length ? S.comments.map(c => h("div",{class:"cmt"}, avatar(c.nick,"sm"),
-      h("div",{style:"min-width:0"}, h("div",{class:"bubble",translate:"no"}, h("b",{}, c.nick), h("span",{}, c.body)), h("div",{class:"when"}, ago(c.ts))))) :
-    h("p",{class:"muted small",style:"margin:0"},"還沒有留言，說點什麼吧。"))));
+  const cKey = c => "cmt:"+path+":"+c.ts+":"+(c.uid||"");
+  box.append(live("cmts", () => { const trAll = S.comments.filter(c => TR.needs(c.body)); return h("div",{class:"stack",style:"gap:8px"},
+    trAll.length > 1 ? h("button",{type:"button",class:"linkbtn tr-btn tr-all",onclick:()=>TR.translateItems(trAll.map(c => ({ id:cKey(c), texts:[c.body] })))},"翻譯全部留言") : null,
+    S.comments.length ? S.comments.map(c => { const tv = TR.view(cKey(c), [c.body || ""], { small:true }); return h("div",{class:"cmt"}, avatar(c.nick,"sm"),
+      h("div",{style:"min-width:0"}, h("div",{class:"bubble",translate:"no"}, h("b",{}, c.nick), h("span",{}, tv.texts[0])), h("div",{class:"when"}, ago(c.ts), tv.button))); }) :
+    h("p",{class:"muted small",style:"margin:0"},"還沒有留言，說點什麼吧。")); }));
   if (canPost()){
     const inp = h("input",{type:"text",id:"cmt-in",maxlength:"500",placeholder:"寫留言…","aria-label":"留言內容",autocomplete:"off"});
     const send = async () => { const body = inp.value.trim(); if (!body) return; inp.disabled = true;

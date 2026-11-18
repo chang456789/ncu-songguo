@@ -28,6 +28,9 @@
     },
     "api/places.js": {
       "maxDuration": 30
+    },
+    "api/ai-translate.js": {
+      "maxDuration": 30
     }
   }
 }
