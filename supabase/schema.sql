@@ -20,6 +20,8 @@ create table if not exists public.docs (
 create index if not exists docs_collection_idx on public.docs (collection);
 create index if not exists docs_collection_ts_idx on public.docs (collection, ((data->'ts')));
 create index if not exists docs_owner_created_idx on public.docs (owner, created_at);
+-- AI 翻譯快取：用 key（原文雜湊）查詢
+create index if not exists docs_translations_key_idx on public.docs ((data->>'key')) where collection = 'translations';
 
 -- 管理員名單：把你自己的使用者 ID 加進來（說明見 README）
 create table if not exists public.admins (uid uuid primary key references auth.users(id) on delete cascade);
@@ -59,6 +61,7 @@ begin
   elsif new.collection = 'locations'       then lim := 3;   pat := 'locations';
   elsif new.collection = 'dmreq'           then lim := 20;  pat := 'dmreq';
   elsif new.collection like 'dms/%'        then lim := 300; pat := 'dms/%';
+  elsif new.collection = 'translations'    then lim := 300; pat := 'translations';
   else return new; end if;
   select count(*) into n from public.docs
    where owner = auth.uid() and collection like pat and created_at > now() - interval '1 hour';
@@ -96,6 +99,8 @@ language sql stable security definer set search_path = public as $$
     and (p_collection <> 'keys' or p_path = 'keys/' || auth.uid()::text)
     -- 私訊內容只能寫進自己參與的對話
     and (p_collection not like 'dms/%' or position(auth.uid()::text in p_collection) > 0)
+    -- AI 翻譯快取：文件 ID 必須等於 key（原文雜湊），同一段文字只會有一份翻譯
+    and (p_collection <> 'translations' or p_path = 'translations/' || (p_data->>'key'))
     -- 不能冒用別人的 uid / from
     and (not (p_data ? 'uid')  or p_data->>'uid'  = '' or p_data->>'uid'  = auth.uid()::text)
     and (
