@@ -522,6 +522,7 @@ a.ghost{color:var(--ink)}
 <script src="/i18n.js"></script>
 <script src="/shim.js"></script>
 <script src="/translate.js"></script>
+<script src="/assistant.js"></script>
 
 
 <script>
@@ -625,6 +626,11 @@ const randNick = () => I18N.lang==="en" && I18N.randNick ? I18N.randNick() : ADJ
 // AI 翻譯（web/translate.js）：英文介面翻中文內容、中文介面翻英文內容
 const TR = window.sgTranslate || { view:(id,texts)=>({ texts, button:null }), translateItems(){}, needs:()=>false, init(){} };
 TR.init({ db:()=>S.db, uid:()=>S.uid, lang:()=>I18N.lang, onChange:()=>renderKeep(), toast:m=>toast(m) });
+// 松果 AI 助理（web/assistant.js）：首頁卡片＋右下角「問松果」按鈕。aiContext() 在下面 BUS／EVENTS 之後定義
+const AI = window.sgAssistant || { init(){}, sync(){}, homeCard:()=>null, open(){} };
+AI.init({ context:()=>aiContext(), lang:()=>I18N.lang, tr:s=>I18N.tr(s), translate:el=>I18N.translate(el),
+  visible:()=>!!S.nick && !["food","nav"].includes(S.tab),   // 地圖頁右下角已有按鈕，避免重疊
+  openRides:()=>{ S.space.transit="rides"; saveSpace(); go("transit"); } });
 function switchLang(l){ I18N.setLang(l); S.dirty = false; render(); }
 
 const RIDE_PLACES = ["中央大學（正門）","中央大學（後門）","中壢火車站","高鐵桃園站","台北車站","松山機場","桃園機場","大江購物中心","中原商圈・中原夜市","龍岡・忠貞市場","中壢觀光夜市","青埔","其他"];
@@ -888,6 +894,7 @@ function render(){
     bottomNav());
   renderOverlay();
   I18N.translate(app); document.title = I18N.lang==="en" ? "Songguo · NCU campus life" : "松果中大生活通";
+  AI.sync();
 }
 function renderKeep(){
   if (S.modal || S.dragging){ S.dirty = true; return; }
@@ -1077,7 +1084,7 @@ function homePage(){
   const items = feedItems(f);
   const evs = upcomingEvents().slice(0, 2);
   return h("div",{class:"stack"},
-    stories(), statusBanner(), composer(),
+    stories(), statusBanner(), AI.homeCard(), composer(),
     h("div",{class:"only-phone stack"}, homeBusBoard()),
     evs.length ? h("section",{class:"stack"},
       h("div",{class:"section-title"}, h("h2",{},"近期活動"), h("button",{class:"linkbtn",onclick:()=>go("news")},"查看全部")),
@@ -1233,6 +1240,36 @@ function eventSheet(){
     h("label",{class:"f",for:"ev-link"},"網址",link),
     h("label",{class:"f",for:"ev-body"},"補充說明",body),
     err, foot(btn));
+}
+
+/* ---------- AI 助理用的 context（web/assistant.js 會再裁到 6,000 字以內） ---------- */
+async function aiContext(){
+  // 活動資料還在載入就等一下（最多 8 秒）
+  loadEvents();
+  for (let i = 0; i < 40 && EVS && EVS.loading; i++) await new Promise(r => setTimeout(r, 200));
+  const now = new Date(), c = dayCtx();
+  const bus = {};
+  for (const d of ["zl","hsr","tpe"]){
+    const { list, tomorrow } = nextTrips(d, "out", 3);
+    bus[DEST[d]] = { next: list.map(x => ({ route:x.route, time:fromMin(x.t), approx:!!x.approx, note:x.sub })),
+      ...(list.length ? {} : { todayDone:true, tomorrowFirst: tomorrow ? { route:tomorrow.route, time:fromMin(tomorrow.t), approx:!!tomorrow.approx } : null }) };
+  }
+  const events = (EVS?.data?.upcoming || []).slice(0, 15).map(e => ({ title:e.title, date:e.date, ...(e.end ? { end:e.end } : {}),
+    ...(e.time ? { time:[e.time, e.timeEnd].filter(Boolean).join("–") } : {}), ...(e.place ? { place:e.place } : {}), ...(e.tags?.length ? { tags:e.tags } : {}), source:e.srcLabel || "" }));
+  const food = S.food.filter(f => f.status !== "已歇業").map(f => ({ f, r:foodRating(f.id) }))
+    .sort((a,b) => (b.r?.avg||0) - (a.r?.avg||0) || (b.r?.n||0) - (a.r?.n||0)).slice(0, 20)
+    .map(({f, r}) => ({ name:f.name, type:f.cat, stars: r ? Math.round(r.avg*10)/10 : null, ratings: r ? r.n : 0,
+      ...(f.price ? { price:"$".repeat(f.price) } : {}), ...(f.hours ? { hours:f.hours } : {}), ...(f.status && f.status!=="營業中" ? { status:f.status } : {}),
+      walkMin: Math.max(1, Math.round(distM(f)/FOOD_WALK)), ...(f.note ? { note:String(f.note).slice(0, 60) } : {}) }));
+  const n = nextClass();
+  const nextCourse = n ? { name:n.c.name, weekday:"週"+DAYN[n.c.day], start:n.c.start, end:n.c.end, room:n.c.room||"", teacher:n.c.teacher||"",
+    when: n.ongoing ? "上課中" : n.inDays===0 ? "今天" : n.inDays===1 ? "明天" : `${n.inDays} 天後` } : null;
+  return {
+    now: { date:todayISO(), weekday:"週"+DAYN[todayDow()], time:fromMin(nowMin()), busSchedule:c.label },
+    bus, events, eventsNote: EVS?.data ? "學校網站的近期活動，時間地點由程式自動整理，可能有誤" : "活動資料暫時抓不到",
+    food, foodNote:"美食地圖評分最高的店（stars 是同學評分 1–5，walkMin 是從正門步行約幾分鐘）",
+    nextCourse, rides:{ openGroups: upcomingRides().length },
+  };
 }
 
 /* ---------- BUS UI ---------- */

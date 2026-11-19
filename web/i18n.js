@@ -112,6 +112,17 @@
     "發文":"Post", "發布":"Publish", "已發布":"Posted", "標題":"Title", "內容":"Content", "分類":"Category", "發文身分":"Post as", "發文身分　":"Post as  ",
     "用我的暱稱":"My nickname", "一次性隨機暱稱":"One-time random name", " （一次性暱稱）":" (one-time name)", "請填寫標題。":"Enter a title.", "內容太短了，再多寫一點。":"Too short — write a bit more.",
     "打到一半關掉也沒關係，草稿會自動保留。":"Drafts are saved automatically.", "讚":"Like", "已按讚":"Liked", "留言":"Comment", "寫留言…":"Write a comment…", "留言內容":"Comment",
+    // ---------- AI assistant (web/assistant.js) ----------
+    "問松果":"Ask Songguo", "松果 AI 助理":"Songguo AI assistant", "AI 助理幫你查公車、活動、美食和課表":"Your AI assistant for buses, events, food and classes",
+    "自己問…":"Ask your own…", "嗨，我是松果 AI 助理":"Hi, I'm the Songguo AI assistant",
+    "可以問我公車、活動、美食和你的課表。我只會根據松果網站上的資料回答。":"Ask me about buses, events, food and your timetable. I only answer from data on Songguo.",
+    "下一班到中壢火車站的公車是幾點？":"When is the next bus to Zhongli Station?", "這週有什麼活動？有提供餐點的嗎？":"What events are on this week? Any with free food?",
+    "評價最高的店有哪些？":"Which places are rated highest?", "我的下一堂課是什麼時候、在哪裡？":"When and where is my next class?",
+    "輸入問題…":"Type a question…", "清除對話":"Clear chat", "松果正在想…":"Songguo is thinking…", "看拼車":"See ride shares",
+    "AI 可能出錯，重要資訊請以網站頁面與學校公告為準。你的下一堂課會一起送出，但不會被保存。":"AI can make mistakes — check the site's pages and official notices for anything important. Your next class is sent along with your question but never stored.",
+    "松果 AI 助理還在準備中（尚未設定 AI 金鑰），先用網站上的各個頁面查詢吧。":"The Songguo AI assistant isn't set up yet (no AI key configured). Please use the site's pages for now.",
+    "問得太快了，請等一分鐘再試。":"You're asking too fast — please wait a minute and try again.",
+    "AI 暫時無法回答，請稍後再試。":"The AI can't answer right now. Please try again later.", "連不上松果，請檢查網路後再試。":"Can't reach Songguo. Check your connection and try again.",
     // ---------- AI translation (web/translate.js) ----------
     "翻譯":"Translate", "翻譯中…":"Translating…", "顯示原文":"Show original", "翻譯全部留言":"Translate all comments",
     "用 AI 翻譯":"Translate with AI", "AI 翻譯，可能有誤":"AI translation — may contain mistakes",

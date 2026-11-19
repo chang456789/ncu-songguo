@@ -31,6 +31,9 @@
     },
     "api/ai-translate.js": {
       "maxDuration": 30
+    },
+    "api/ai-chat.js": {
+      "maxDuration": 30
     }
   }
 }
