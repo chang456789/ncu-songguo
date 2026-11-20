@@ -18,6 +18,7 @@
     "找不到符合的結果":"No matches found", "松鼠翻遍了松果堆也沒找到，換個關鍵字試試？":"The squirrel dug through the whole pinecone pile and found nothing. Try another keyword?", "清除搜尋":"Clear search",
     "連不上松果":"Can't reach Songguo", "網路好像斷線了，松鼠也好難過。檢查網路後再試一次。":"Looks like you're offline — the squirrel is sad too. Check your connection and try again.", "重新整理":"Reload",
     "已發布！":"Posted!", "已開團！":"Ride posted!",
+    "下拉重新整理":"Pull to refresh", "放開重新整理":"Release to refresh", "重新整理中…":"Refreshing…",
     // ---------- shell & navigation ----------
     "松果":"Songguo", "松果首頁":"Songguo home", "主選單":"Main menu", "選單":"Menu", "即時資訊":"Live info", "快速查看":"At a glance",
     "首頁":"Home", "交通":"Transit", "活動":"Events", "論壇":"Forum", "課表":"Timetable", "美食":"Food", "導航":"Campus map",

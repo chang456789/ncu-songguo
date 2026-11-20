@@ -32,9 +32,15 @@
   <section class="demo-card"><h2>③ 空白狀態</h2><div id="empties"></div></section>
   <section class="demo-card"><h2>⑤ 斷線或錯誤</h2><div id="error"></div></section>
   <section class="demo-card"><h2>⑥ 天氣卡</h2><div id="weather" style="display:flex;gap:16px;align-items:center"></div></section>
+  <h2 style="margin:8px 0 0;font-size:20px">任務二：骨架屏與小動畫</h2>
+  <section class="demo-card"><h2>骨架屏：貼文、活動、拼車、店家</h2><div id="skeletons" style="display:flex;flex-direction:column;gap:12px"></div></section>
+  <section class="demo-card"><h2>按讚、送出</h2>
+    <div class="demo-bar"><button class="ghost" id="t-like" type="button"></button><button class="primary" id="t-send" type="button">送出</button></div>
+    <p style="margin:8px 0 0;color:var(--muted);font-size:14px">手機上把這一頁往下拉，可以試「下拉重新整理」。</p></section>
 </main>
 <script src="/i18n.js"></script>
 <script src="/pixel.js"></script>
+<script src="/ui.js"></script>
 <script>
 (async () => {
   // 從 index.html 複製網站的樣式（顏色變數、按鈕），預覽畫面才會和正式網站一致
@@ -58,6 +64,12 @@
   $("t-pop").onclick = () => PX.celebrate("已發布！", { translate: el => I18N.translate(el) });
   $("t-theme").onclick = () => { const r = document.documentElement; const dark = r.dataset.theme === "dark" || (!r.dataset.theme && matchMedia("(prefers-color-scheme: dark)").matches); r.dataset.theme = dark ? "light" : "dark"; };
   $("t-lang").onclick = () => { I18N.setLang(I18N.lang === "en" ? "zh" : "en"); location.reload(); };
+  const UI = window.sgUI;
+  for (const k of ["post","event","ride","shop"]) $("skeletons").append(UI.skeleton(k, 1));
+  $("t-like").innerHTML = '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/></svg> 讚';
+  $("t-like").onclick = e => { const b = e.currentTarget; b.classList.toggle("liked"); b.style.color = b.classList.contains("liked") ? "var(--like)" : ""; b.querySelector("svg").setAttribute("fill", b.classList.contains("liked") ? "currentColor" : "none"); UI.pop(b); };
+  $("t-send").onclick = e => UI.sent(e.currentTarget);
+  UI.pullToRefresh(() => new Promise(r => setTimeout(r, 1200)), { tr: s => I18N.tr(s) });
   I18N.translate(document.body);
 })();
 </script>
