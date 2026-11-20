@@ -51,26 +51,42 @@ async function callModel(messages, opts) {
   if (!p) { const e = new Error("AI 尚未設定：請在 Vercel 環境變數加上 Azure OpenAI 或 GitHub Models 的金鑰"); e.code = "ai_not_configured"; throw e; }
   const body = { messages, max_tokens: opts.maxTokens || 600, temperature: opts.temperature ?? 0.3 };
   if (opts.json) body.response_format = { type: "json_object" };
-  let url, headers = { "content-type": "application/json" };
+  let j;
   if (p === "azure") {
-    const base = process.env.AZURE_OPENAI_ENDPOINT.replace(/\/+$/, "");
-    url = `${base}/openai/deployments/${encodeURIComponent(process.env.AZURE_OPENAI_DEPLOYMENT)}/chat/completions?api-version=${AZURE_API_VERSION}`;
-    headers["api-key"] = process.env.AZURE_OPENAI_API_KEY;
+    const base = process.env.AZURE_OPENAI_ENDPOINT.trim().replace(/\/+$/, "");
+    const url = `${base}/openai/deployments/${encodeURIComponent(process.env.AZURE_OPENAI_DEPLOYMENT.trim())}/chat/completions?api-version=${AZURE_API_VERSION}`;
+    j = await post(url, { "api-key": process.env.AZURE_OPENAI_API_KEY.trim() }, body, opts);
   } else {
-    url = "https://models.github.ai/inference/chat/completions";
-    headers.authorization = `Bearer ${process.env.GITHUB_MODELS_TOKEN}`;
-    body.model = process.env.GITHUB_MODELS_MODEL || "openai/gpt-4o-mini";
+    // GitHub Models：先用新網址，回應異常（非 JSON、404、5xx）時改用舊網址再試一次
+    const auth = { authorization: `Bearer ${process.env.GITHUB_MODELS_TOKEN.trim()}` };
+    const model = (process.env.GITHUB_MODELS_MODEL || "openai/gpt-4o-mini").trim();
+    try {
+      j = await post("https://models.github.ai/inference/chat/completions", auth, { ...body, model }, opts);
+    } catch (e) {
+      if (e.status === 401 || e.status === 403 || e.status === 429) throw e;
+      console.error("github models primary failed, retry legacy:", e.message);
+      j = await post("https://models.inference.ai.azure.com/chat/completions", auth, { ...body, model: model.replace(/^[^/]+\//, "") }, opts);
+    }
   }
-  const r = await fetch(url, { method: "POST", headers, body: JSON.stringify(body), signal: AbortSignal.timeout(opts.timeoutMs || 20000) });
-  if (!r.ok) {
-    const detail = (await r.text()).slice(0, 300);
-    const e = new Error(`AI 服務回應 ${r.status}：${detail}`); e.code = r.status === 429 ? "ai_rate_limited" : "ai_error"; e.status = r.status; throw e;
-  }
-  const j = await r.json();
   const text = (j.choices && j.choices[0] && j.choices[0].message && j.choices[0].message.content) || "";
   let json = null;
   if (opts.json) { try { json = JSON.parse(text.replace(/^```(?:json)?\s*|\s*```$/g, "")); } catch { json = null; } }
   return { text, json, provider: p, usage: j.usage || null };
+}
+
+// 送出請求並確認回應是模型的 JSON；不是的話丟出含狀態碼與前 200 字的錯誤（不含使用者內容）
+async function post(url, extraHeaders, body, opts) {
+  const r = await fetch(url, { method: "POST", headers: { "content-type": "application/json", accept: "application/json", ...extraHeaders }, body: JSON.stringify(body), signal: AbortSignal.timeout(opts.timeoutMs || 20000) });
+  const raw = await r.text();
+  const host = new URL(url).host;
+  if (!r.ok) {
+    const e = new Error(`AI 服務回應 ${r.status}（${host}）：${raw.slice(0, 300)}`); e.code = r.status === 429 ? "ai_rate_limited" : "ai_error"; e.status = r.status; throw e;
+  }
+  let j = null; try { j = JSON.parse(raw); } catch {}
+  if (!j || !Array.isArray(j.choices)) {
+    const e = new Error(`AI 服務回應格式不對 ${r.status}（${host}，${r.headers.get("content-type") || "?"}）：${raw.slice(0, 200)}`); e.code = "ai_error"; e.status = 502; throw e;
+  }
+  return j;
 }
 
 // 簡單的防濫用：同一個 IP 每分鐘最多 limit 次（同一台伺服器實例內有效，足夠擋住惡意狂刷）
