@@ -25,32 +25,68 @@ function provider() {
  * opts.json: true 時要求模型只回傳 JSON，並幫你解析成 result.json
  * opts.maxTokens: 回覆長度上限（預設 600）
  * opts.temperature: 預設 0.3
+ * opts.task: 選填，這次呼叫是哪個功能（例如 "translate"），只用在下面的使用紀錄
  */
 async function chat(messages, opts = {}) {
+  const t0 = Date.now(); let ok = false;
+  try {
+    const result = await callModel(messages, opts);
+    ok = true;
+    return result;
+  } finally {
+    logUsage({ task: opts.task, latencyMs: Date.now() - t0, ok, cached: false });
+  }
+}
+
+// AI 使用紀錄（微軟 AI 可觀測性，簡報用）：每次呼叫在 Vercel → Logs 印一行 JSON。
+// 只記功能名稱、服務、耗時、成功與否、是否走快取，絕不記錄使用者的內容。
+function logUsage({ task, latencyMs = 0, ok = true, cached = false }) {
+  try { console.log(JSON.stringify({ task: task || "unknown", provider: provider() || "none", latencyMs, ok, cached })); } catch {}
+}
+// 各功能的快取命中時呼叫（沒有呼叫 AI，但留下紀錄，才看得出快取省了多少次）
+const logCached = task => logUsage({ task, latencyMs: 0, ok: true, cached: true });
+
+async function callModel(messages, opts) {
   const p = provider();
   if (!p) { const e = new Error("AI 尚未設定：請在 Vercel 環境變數加上 Azure OpenAI 或 GitHub Models 的金鑰"); e.code = "ai_not_configured"; throw e; }
   const body = { messages, max_tokens: opts.maxTokens || 600, temperature: opts.temperature ?? 0.3 };
   if (opts.json) body.response_format = { type: "json_object" };
-  let url, headers = { "content-type": "application/json" };
+  let j;
   if (p === "azure") {
-    const base = process.env.AZURE_OPENAI_ENDPOINT.replace(/\/+$/, "");
-    url = `${base}/openai/deployments/${encodeURIComponent(process.env.AZURE_OPENAI_DEPLOYMENT)}/chat/completions?api-version=${AZURE_API_VERSION}`;
-    headers["api-key"] = process.env.AZURE_OPENAI_API_KEY;
+    const base = process.env.AZURE_OPENAI_ENDPOINT.trim().replace(/\/+$/, "");
+    const url = `${base}/openai/deployments/${encodeURIComponent(process.env.AZURE_OPENAI_DEPLOYMENT.trim())}/chat/completions?api-version=${AZURE_API_VERSION}`;
+    j = await post(url, { "api-key": process.env.AZURE_OPENAI_API_KEY.trim() }, body, opts);
   } else {
-    url = "https://models.github.ai/inference/chat/completions";
-    headers.authorization = `Bearer ${process.env.GITHUB_MODELS_TOKEN}`;
-    body.model = process.env.GITHUB_MODELS_MODEL || "openai/gpt-4o-mini";
+    // GitHub Models：先用新網址，回應異常（非 JSON、404、5xx）時改用舊網址再試一次
+    const auth = { authorization: `Bearer ${process.env.GITHUB_MODELS_TOKEN.trim()}` };
+    const model = (process.env.GITHUB_MODELS_MODEL || "openai/gpt-4o-mini").trim();
+    try {
+      j = await post("https://models.github.ai/inference/chat/completions", auth, { ...body, model }, opts);
+    } catch (e) {
+      if (e.status === 401 || e.status === 403 || e.status === 429) throw e;
+      console.error("github models primary failed, retry legacy:", e.message);
+      j = await post("https://models.inference.ai.azure.com/chat/completions", auth, { ...body, model: model.replace(/^[^/]+\//, "") }, opts);
+    }
   }
-  const r = await fetch(url, { method: "POST", headers, body: JSON.stringify(body), signal: AbortSignal.timeout(opts.timeoutMs || 20000) });
-  if (!r.ok) {
-    const detail = (await r.text()).slice(0, 300);
-    const e = new Error(`AI 服務回應 ${r.status}：${detail}`); e.code = r.status === 429 ? "ai_rate_limited" : "ai_error"; e.status = r.status; throw e;
-  }
-  const j = await r.json();
   const text = (j.choices && j.choices[0] && j.choices[0].message && j.choices[0].message.content) || "";
   let json = null;
   if (opts.json) { try { json = JSON.parse(text.replace(/^```(?:json)?\s*|\s*```$/g, "")); } catch { json = null; } }
   return { text, json, provider: p, usage: j.usage || null };
+}
+
+// 送出請求並確認回應是模型的 JSON；不是的話丟出含狀態碼與前 200 字的錯誤（不含使用者內容）
+async function post(url, extraHeaders, body, opts) {
+  const r = await fetch(url, { method: "POST", headers: { "content-type": "application/json", accept: "application/json", ...extraHeaders }, body: JSON.stringify(body), signal: AbortSignal.timeout(opts.timeoutMs || 20000) });
+  const raw = await r.text();
+  const host = new URL(url).host;
+  if (!r.ok) {
+    const e = new Error(`AI 服務回應 ${r.status}（${host}）：${raw.slice(0, 300)}`); e.code = r.status === 429 ? "ai_rate_limited" : "ai_error"; e.status = r.status; throw e;
+  }
+  let j = null; try { j = JSON.parse(raw); } catch {}
+  if (!j || !Array.isArray(j.choices)) {
+    const e = new Error(`AI 服務回應格式不對 ${r.status}（${host}，${r.headers.get("content-type") || "?"}）：${raw.slice(0, 200)}`); e.code = "ai_error"; e.status = 502; throw e;
+  }
+  return j;
 }
 
 // 簡單的防濫用：同一個 IP 每分鐘最多 limit 次（同一台伺服器實例內有效，足夠擋住惡意狂刷）
@@ -63,4 +99,4 @@ function rateLimit(req, limit = 12) {
   return list.length <= limit;
 }
 
-module.exports = { chat, provider, rateLimit };
+module.exports = { chat, provider, rateLimit, logCached };

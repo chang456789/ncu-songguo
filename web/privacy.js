@@ -90,13 +90,15 @@
       app.translate(wrap);
       document.addEventListener("keydown", onKey, true);
       open = { close };
-      const first = wrap.querySelector(".pv-acts .primary"); if (first) first.focus();
+      // 焦點放在對話框本身，不放在按鈕上：使用者是按 Enter 送出的話，同一個 Enter 不能順便按到「改成校內集合點」
+      const box = wrap.querySelector(".pv-box"); box.setAttribute("tabindex", "-1"); box.focus({ preventScroll: true });
     });
   }
 
   const css = `
 .pv-scrim{position:fixed;inset:0;z-index:50;background:rgba(10,15,12,.55);display:flex;align-items:center;justify-content:center;padding:16px}
 .pv-box{background:var(--surface);color:var(--ink);border-radius:16px;max-width:460px;width:100%;max-height:calc(100dvh - 32px);overflow-y:auto;padding:18px 20px;display:flex;flex-direction:column;gap:10px;box-shadow:0 12px 40px rgba(0,0,0,.3);border-top:4px solid var(--bus)}
+.pv-box:focus{outline:none}
 .pv-box h2{margin:0;font-size:19px;font-weight:800}
 .pv-box p{margin:0;font-size:14px;line-height:1.55}
 .pv-tip{color:var(--muted)}
