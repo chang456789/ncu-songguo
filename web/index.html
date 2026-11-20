@@ -350,6 +350,12 @@ nav.bottom{display:none}
 .mod-note.warn{border-left-color:#d99a00}
 .mod-note .linkbtn{font-size:13px}
 @media (max-width:720px){ .wrap>.stack>.mod-note,.wrap>.stack>[data-live="lobbymod"]{margin-inline:12px} }
+/* 語音輸入（web/voice.js） */
+.mic-btn{flex:none;width:42px;height:42px;border-radius:50%;border:1px solid var(--line);background:var(--sunk);color:var(--ink);display:inline-grid;place-items:center;padding:0;cursor:pointer}
+.mic-btn:hover{border-color:var(--pine);color:var(--pine)}
+.mic-btn.on{background:var(--pine);border-color:var(--pine);color:var(--bg);animation:mic-pulse 1.2s ease-in-out infinite}
+@keyframes mic-pulse{0%,100%{box-shadow:0 0 0 0 var(--pine-soft)}50%{box-shadow:0 0 0 6px var(--pine-soft)}}
+@media (prefers-reduced-motion:reduce){.mic-btn.on{animation:none}}
 .cform{display:flex;gap:8px;align-items:center}
 .cform input{flex:1;min-width:0;border-radius:999px!important;background:var(--sunk)!important;border:0!important;padding:9px 14px!important}
 
@@ -562,6 +568,7 @@ a.ghost{color:var(--ink)}
 <script src="/events-ai.js"></script>
 <script src="/chatroom-ai.js"></script>
 <script src="/moderation.js"></script>
+<script src="/voice.js"></script>
 
 
 <script>
@@ -680,7 +687,10 @@ CHAI.init({ lobby:()=>S.lobby, lang:()=>I18N.lang, onChange:()=>renderKeep(),
 // 內容安全過濾（web/moderation.js）：即時大廳與留言送出前先用規則檢查
 const MOD = window.sgModeration || { init(){}, guard:async()=>true, note:()=>h("div") };
 MOD.init({ onChange:()=>renderKeep() });
-function switchLang(l){ I18N.setLang(l); S.dirty = false; render(); }
+// 語音輸入（web/voice.js）：辨識結果只填進輸入框，不自動送出；瀏覽器不支援時不顯示按鈕
+const VOICE = window.sgVoice || { init(){}, button:()=>null, stop(){} };
+VOICE.init({ lang:()=>I18N.lang, toast:m=>toast(m), tr:s=>I18N.tr(s) });
+function switchLang(l){ VOICE.stop(); I18N.setLang(l); S.dirty = false; render(); }
 
 const RIDE_PLACES = ["中央大學（正門）","中央大學（後門）","中壢火車站","高鐵桃園站","台北車站","松山機場","桃園機場","大江購物中心","中原商圈・中原夜市","龍岡・忠貞市場","中壢觀光夜市","青埔","其他"];
 
@@ -1435,9 +1445,10 @@ function rideCard(r){
   const w = fmtWhen(r.when);
   const left = Math.max(0,total-taken);
   const isOpen = S.open === "ride:"+r.id;
+  const tv = TR.view("ride:"+r.id, [r.note || ""]);
   const card = h("article",{class:"card ride"},
     h("div",{class:"clock"}, h("b",{},w.time), h("small",{},w.day)),
-    h("div",{class:"route"}, h("b",{}, r.from, " → ", r.to), h("small",{}, r.nick, "・", r.split || "車資平分", r.note ? `・${r.note}` : "")),
+    h("div",{class:"route"}, h("b",{}, r.from, " → ", r.to), h("small",{}, h("span",{translate:"no"}, r.nick), "・", r.split || "車資平分", r.note ? ["・", h("span",{translate:"no"}, tv.texts[0])] : "")),
     h("div",{class:"side",style:"display:flex;flex-direction:column;align-items:flex-end;gap:4px"},
       h("span",{class:"seats","aria-label":`${taken}/${total} 人`}, Array.from({length:total},(_,i)=>h("i",{class:i<taken?"on":""}))),
       h("small",{class:"muted mono"}, left ? `剩 ${left} 位` : "已滿")),
@@ -1447,6 +1458,7 @@ function rideCard(r){
         h("button",{class:"primary",disabled:!canPost()||!left,onclick:()=>joinRide(r)}, left ? "加入" : "已額滿"),
       riders.length ? h("span",{class:"muted"}, "已加入：", riders.join("、")) : null,
       h("span",{class:"spacer"}),
+      tv.button,
       h("button",{class:"linkbtn",onclick:()=>isOpen?closeThread():openThread("ride:"+r.id)}, isOpen ? "收起討論" : "討論集合點"),
       mine || S.isOwner ? h("button",{class:"linkbtn",onclick:()=>openModal({k:"delride",id:r.id})},"取消這團") : null));
   if (isOpen){ const th = thread("rides/"+r.id+"/comments"); th.style.gridColumn = "1/-1"; card.append(th); }
@@ -2125,13 +2137,14 @@ function forumPage(){
     live("lobbyai", () => CHAI.panel()),
     live("lobby", () => { const msgs = S.lobby || []; return h("div",{class:"card chat lobby"}, msgs.length ? msgs.map(m => {
         const mine = m.uid && m.uid === S.uid;
+        const tv = TR.view("lobby:"+m.id, [m.body || ""], { small:true });
         return h("div",{class:"lmsg"+(mine?" mine":"")}, mine ? null : avatar(m.nick,"sm"),
           h("div",{class:"col"},
             h("div",{class:"lwho"}, mine ? null : h("b",{translate:"no"}, m.nick), h("span",{class:"mono"}, fmtWhen(m.ts).time),
-              mine || S.isOwner ? h("button",{class:"linkbtn",style:"font-size:12px",onclick:async()=>{ try { await S.db.doc("lobby/"+m.id).delete(); } catch(e){ toast(writeErr(e)); } }},"刪除") : null),
-            h("div",{class:"lbody",translate:"no"}, m.body))); }) :
+              mine || S.isOwner ? h("button",{class:"linkbtn",style:"font-size:12px",onclick:async()=>{ try { await S.db.doc("lobby/"+m.id).delete(); } catch(e){ toast(writeErr(e)); } }},"刪除") : null, tv.button),
+            h("div",{class:"lbody",translate:"no"}, tv.texts[0]))); }) :
       h("p",{class:"muted small",style:"margin:0"}, S.dbState==="loading" ? "載入中…" : "大廳還很安靜，說聲嗨吧。")); }),
-    h("div",{class:"cform"}, inp, h("button",{class:"primary",disabled:!canPost(),onclick:()=>send()},"送出")),
+    h("div",{class:"cform"}, inp, canPost() ? VOICE.button("lobby", () => document.getElementById("lobby-in")) : null, h("button",{class:"primary",disabled:!canPost(),onclick:()=>send()},"送出")),
     live("lobbymod", () => MOD.note("lobby")),
     h("p",{class:"board-note"},"請友善發言。不當內容管理員會刪除；每人每小時最多 120 則。"));
 }
