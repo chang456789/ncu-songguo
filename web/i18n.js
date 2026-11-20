@@ -99,6 +99,10 @@
     "AI 功能還沒啟用，聊天照常可以使用。":"AI features aren't available yet — chat works as usual.", "AI 使用量太多了，請稍後再試。":"AI is busy right now. Please try again later.",
     "AI 回應逾時，請稍後再試。":"AI took too long. Please try again later.",
     "AI 暫時無法使用，請稍後再試。":"AI is unavailable right now. Please try again later.",
+    // ---------- voice input (web/voice.js) ----------
+    "語音輸入":"Voice input", "停止語音輸入":"Stop voice input", "請允許松果使用麥克風，才能用語音輸入。":"Allow Songguo to use your microphone for voice input.",
+    "沒有聽到聲音，請再試一次。":"Didn't hear anything — please try again.", "找不到麥克風。":"No microphone found.",
+    "語音辨識需要網路連線，請稍後再試。":"Voice input needs an internet connection. Please try again later.", "語音辨識失敗，請再試一次。":"Voice input failed. Please try again.",
     // ---------- content safety (web/moderation.js) ----------
     "為了大家的安全，短網址和 LINE 加好友連結不能發在這裡。請改貼完整網址，或私訊對方。":"For everyone's safety, short links and LINE add-friend links can't be posted here. Paste the full link, or send a private message.",
     "訊息看起來像投資或詐騙宣傳，已擋下。如果是誤會，請換個說法再試。":"This looks like an investment or scam promotion, so it was blocked. If that's a mistake, try rephrasing.",
