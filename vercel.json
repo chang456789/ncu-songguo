@@ -37,6 +37,9 @@
     },
     "api/ai-chatroom.js": {
       "maxDuration": 30
+    },
+    "api/ai-ride.js": {
+      "maxDuration": 30
     }
   }
 }

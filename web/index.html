@@ -569,6 +569,7 @@ a.ghost{color:var(--ink)}
 <script src="/chatroom-ai.js"></script>
 <script src="/moderation.js"></script>
 <script src="/voice.js"></script>
+<script src="/ride-ai.js"></script>
 
 
 <script>
@@ -690,6 +691,16 @@ MOD.init({ onChange:()=>renderKeep() });
 // 語音輸入（web/voice.js）：辨識結果只填進輸入框，不自動送出；瀏覽器不支援時不顯示按鈕
 const VOICE = window.sgVoice || { init(){}, button:()=>null, stop(){} };
 VOICE.init({ lang:()=>I18N.lang, toast:m=>toast(m), tr:s=>I18N.tr(s) });
+// 松果 AI 智慧交通與共乘（web/ride-ai.js）：交通精算師等功能，數字由程式計算、AI 只寫說明
+const RA = window.sgRideAI || { init(){}, commuteCard:()=>null, isPick:()=>false, filterRides:l=>l, filterBar:()=>null, setRideFilter(){} };
+RA.init({ h, tr:s=>I18N.tr(s), lang:()=>I18N.lang, renderKeep:()=>renderKeep(), canPost:()=>canPost(), uid:()=>S.uid,
+  bus:BUS, nowMin:()=>nowMin(), fromMin:m=>fromMin(m),
+  trips:d=>trips(d,"out",dayCtx()).filter(x => !x.offBoard), tomorrow:d=>nextTrips(d,"out",1).tomorrow,
+  rides:()=>upcomingRides(), seatsLeft:r=>Math.max(0, (r.seats||0) - 1 - (S.riders[r.id]?.size||0)),
+  weather:()=>{ const w = loadWeather(); return w.data ? upcomingHours(w.data)[0] || null : null; },
+  goBus:d=>{ S.busDest=d; LS.set("pc.busDest",d); S.busDir="out"; LS.set("pc.busDir","out"); S.space.transit="bus"; saveSpace(); go("transit"); },
+  goRides:f=>{ RA.setRideFilter(f); S.space.transit="rides"; saveSpace(); go("transit"); },
+  openRide:m=>openModal({ k:"ride", ...m }) });
 function switchLang(l){ VOICE.stop(); I18N.setLang(l); S.dirty = false; render(); }
 
 const RIDE_PLACES = ["中央大學（正門）","中央大學（後門）","中壢火車站","高鐵桃園站","台北車站","松山機場","桃園機場","大江購物中心","中原商圈・中原夜市","龍岡・忠貞市場","中壢觀光夜市","青埔","其他"];
@@ -1382,8 +1393,8 @@ function busPage(seg){
     h("div",{class:"board",role:"table","aria-label":"接下來的班次"}, boardRows(dest, dir, 4)),
     h("section",{class:"card stack",style:"gap:10px"},
       h("div",{class:"section-title"}, h("h2",{style:"font-size:17px"}, `今天全部班次（${c.label}）`), h("span",{class:"muted small mono"}, `${all.length} 班`)),
-      all.length ? h("div",{class:"tlist"}, all.map((x,i) => h("div",{class:"trow"+(i===nextIdx?" next":x.t<cur?" past":"")},
-        h("span",{class:"mono tt"}, (x.approx?"約 ":"")+fromMin(x.t)), h("span",{class:rtClass(x.route)}, x.route), h("span",{class:"small muted"}, x.sub)))) :
+      all.length ? h("div",{class:"tlist"}, all.map((x,i) => h("div",{class:"trow"+(i===nextIdx?" next":x.t<cur?" past":"")+(dir==="out" && RA.isPick(dest,x)?" ra-pick":"")},
+        h("span",{class:"mono tt"}, (x.approx?"約 ":"")+fromMin(x.t)), h("span",{class:rtClass(x.route)}, x.route), h("span",{class:"small muted"}, x.sub, dir==="out" && RA.isPick(dest,x) ? [" ", h("span",{class:"ra-pick-tag"},"★ 精算師推薦")] : null)))) :
         h("p",{class:"muted small",style:"margin:0"},"這個班表今天沒有班次。")),
     ridesTo.length || canPost() ? h("div",{class:"card bar"},
       h("span",{style:"flex:1;min-width:200px"}, h("b",{}, "沒趕上公車？"), h("span",{class:"muted small"}, ridesTo.length ? `　目前有 ${ridesTo.length} 團拼車同方向` : "　計程車到中壢車站約 165 元，4 人分攤每人約 40 元。")),
@@ -1427,11 +1438,12 @@ function transitPage(){
   const seg = h("div",{class:"seg"},
     h("button",{"aria-pressed":sub==="rides"?"true":"false",onclick:()=>{S.space.transit="rides";saveSpace();render();}},"拼車"),
     h("button",{"aria-pressed":sub==="bus"?"true":"false",onclick:()=>{S.space.transit="bus";saveSpace();render();}},"公車時刻"));
-  if (sub === "bus") return busPage(seg);
-  const rides = upcomingRides();
-  return h("div",{class:"stack"}, seg,
+  const top = [RA.commuteCard(), seg];
+  if (sub === "bus") return busPage(top);
+  const rides = RA.filterRides(upcomingRides());
+  return h("div",{class:"stack"}, top,
     h("div",{class:"sphead"}, h("h1",{},"拼車"), h("p",{},"公車少又擠，就揪人一起搭計程車。開團寫好時間、起訖和人數，同路的人按「加入」就能占位，留言區直接討論集合點。")),
-    statusBanner(),
+    statusBanner(), RA.filterBar(),
     h("div",{class:"bar"}, h("span",{class:"muted small"}, `${rides.length} 團即將出發`), h("span",{class:"spacer"}), h("button",{class:"primary",disabled:!canPost(),onclick:()=>openModal({k:"ride"})},"開一團")),
     rides.length ? h("div",{class:"stack"}, rides.map(rideCard)) :
       h("div",{class:"empty"}, h("h3",{},"目前沒有人揪車"), h("p",{},"週五下午回家、週日晚上回學校最常有人一起搭。開第一團吧。"),
@@ -2670,14 +2682,14 @@ function postSheet(){
 
 function rideSheet(){
   const m = S.modal; const err = h("p",{class:"err",hidden:true});
-  const d = new Date(Date.now()+60*60e3); d.setMinutes(Math.ceil(d.getMinutes()/15)*15,0,0);
+  const step = m.when ? 5 : 15; const d = m.when ? new Date(m.when) : new Date(Date.now()+60*60e3); d.setMinutes(Math.ceil(d.getMinutes()/step)*step,0,0);
   const local = `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
   const sel = (id, v) => h("select",{id}, RIDE_PLACES.map(p => h("option",{selected:p===v},p)));
   const from = sel("r-from", m.from || "中央大學（後門）"), to = sel("r-to", m.to || "中壢火車站");
   const when = h("input",{type:"datetime-local",id:"r-when",value:local});
   const seats = h("select",{id:"r-seats"}, [2,3,4,5,6].map(n => h("option",{value:n,selected:n===4}, `${n} 人（含我）`)));
   const split = h("select",{id:"r-split"}, ["車資平分","先到先付・現場再算","我出車・每人固定費用"].map(s => h("option",{},s)));
-  const note = h("input",{type:"text",id:"r-note",maxlength:"60",placeholder:"例：在後門 7-11 集合、有大行李"});
+  const note = h("input",{type:"text",id:"r-note",maxlength:"60",placeholder:"例：在後門 7-11 集合、有大行李",value:m.note||""});
   const btn = h("button",{class:"primary",onclick:async()=>{
     const ts = new Date(when.value).getTime();
     if (!ts || ts < Date.now()-5*60e3) return fail(err,"出發時間要在現在之後。");
