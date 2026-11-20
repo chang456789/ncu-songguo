@@ -570,6 +570,7 @@ a.ghost{color:var(--ink)}
 <script src="/moderation.js"></script>
 <script src="/voice.js"></script>
 <script src="/ride-ai.js"></script>
+<script src="/privacy.js"></script>
 
 
 <script>
@@ -702,6 +703,9 @@ RA.init({ h, tr:s=>I18N.tr(s), lang:()=>I18N.lang, renderKeep:()=>renderKeep(), 
   goBus:d=>{ S.busDest=d; LS.set("pc.busDest",d); S.busDir="out"; LS.set("pc.busDir","out"); S.space.transit="bus"; saveSpace(); go("transit"); },
   goRides:f=>{ RA.setRideFilter(f); S.space.transit="rides"; saveSpace(); go("transit"); },
   openRide:m=>openModal({ k:"ride", ...m }), rideCard:r=>rideCard(r), live:(k,fn)=>live(k,fn) });
+// 發布前隱私提醒（web/privacy.js）：純規則，偵測到手機、地址等個資時提醒，但不擋發布
+const PRIV = window.sgPrivacy || { init(){}, review:async x => x };
+PRIV.init({ tr:s=>I18N.tr(s), translate:el=>I18N.translate(el) });
 function switchLang(l){ VOICE.stop(); I18N.setLang(l); S.dirty = false; render(); }
 
 const RIDE_PLACES = ["中央大學（正門）","中央大學（後門）","中壢火車站","高鐵桃園站","台北車站","松山機場","桃園機場","大江購物中心","中原商圈・中原夜市","龍岡・忠貞市場","中壢觀光夜市","青埔","其他"];
@@ -1635,9 +1639,12 @@ function thread(path){
     const inp = h("input",{type:"text",id:"cmt-in",maxlength:"500",placeholder:"寫留言…","aria-label":"留言內容",autocomplete:"off"});
     // 重繪後輸入框會換成新的，所以每次都用 id 重新找
     const cur = () => document.getElementById("cmt-in") || inp;
-    const send = async (force) => { const body = cur().value.trim(); if (!body) return; cur().disabled = true;
+    const send = async (force) => { let body = cur().value.trim(); if (!body) return; cur().disabled = true;
       const mine = S.comments.filter(c => c.uid && c.uid === S.uid);
+      // ① 內容安全（web/moderation.js）
       if (!(await MOD.guard("cmt", body, mine, () => send(true), force === true))){ cur().disabled = false; cur().focus(); return; }
+      // ② 拼車討論區：發布前隱私提醒（web/privacy.js），選「回去修改」就不送出
+      if (path.startsWith("rides/")){ const pv = await PRIV.review([body]); if (!pv){ cur().disabled = false; cur().focus(); return; } body = pv[0]; }
       try { await S.db.collection(path).add({ body, nick:S.nick, uid:S.uid||"", ts:Date.now() }); cur().value=""; } catch(e){ toast(writeErr(e)); }
       cur().disabled = false; cur().focus(); };
     inp.addEventListener("keydown", e => { if (e.key==="Enter" && !e.isComposing && e.keyCode !== 229) send(); });
@@ -2661,7 +2668,8 @@ function postSheet(){
     if (b.length<4) return fail(err,"內容太短了，再多寫一點。");
     if (sp.review && !st.agree) return fail(err,"發表避雷文前必須勾選同意免責聲明。");
     if (sp.review && (!st.ratings.sound||!st.ratings.landlord||!st.ratings.cp)) return fail(err,"請完成三項評分。");
-    const doc = { space:sp.id, title:t, body:b, cat:st.cat, nick:st.nick, oneTime:st.oneTime, uid:S.uid||"", ts:Date.now() };
+    const pv = await PRIV.review([t, b]); if (!pv) return;
+    const doc = { space:sp.id, title:pv[0], body:pv[1], cat:st.cat, nick:st.nick, oneTime:st.oneTime, uid:S.uid||"", ts:Date.now() };
     if (sp.review){ doc.ratings = {...st.ratings}; doc.agreedDisclaimer = true; }
     if (about && about.value) doc.about = about.value;
     if (price && price.value.trim()) doc.price = price.value.trim();
@@ -2702,7 +2710,8 @@ function rideSheet(){
     if (!ts || ts < Date.now()-5*60e3) return fail(err,"出發時間要在現在之後。");
     if (from.value===to.value) return fail(err,"出發地和目的地不能一樣。");
     btn.disabled = true;
-    try { await S.db.collection("rides").add({ from:from.value, to:to.value, when:ts, seats:+seats.value, split:split.value, note:note.value.trim(), luggage:lug.value, tags:[...tagSel], nick:S.nick, uid:S.uid||"", ts:Date.now() }); closeModal(); toast("已開團"); }
+    const pv = await PRIV.review([note.value.trim()]); if (!pv){ btn.disabled = false; return; }
+    try { await S.db.collection("rides").add({ from:from.value, to:to.value, when:ts, seats:+seats.value, split:split.value, note:pv[0], luggage:lug.value, tags:[...tagSel], nick:S.nick, uid:S.uid||"", ts:Date.now() }); closeModal(); toast("已開團"); }
     catch(e){ fail(err, writeErr(e)); btn.disabled=false; } }},"開團");
   return sheet("開一團拼車",
     m.ai ? h("div",{class:"info ra-form-ai"},"AI 已幫你填好，確認後再發布") : null,

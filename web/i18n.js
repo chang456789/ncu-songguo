@@ -199,6 +199,14 @@
     "AI 暫時無法使用，請直接按「開一團」手動填寫，或瀏覽下面的列表。":"AI is unavailable — tap “Start one” to fill the form yourself, or browse the list below.", "沒有行李":"No luggage", "小行李":"Small luggage",
     "大行李":"Big luggage", "行李":"Luggage", "默契標籤":"Ride style",
     "讓同車的人知道你的習慣":"let fellow riders know your habits", "AI 已幫你填好，確認後再發布":"AI filled this in — check it before publishing",
+    // ---------- privacy reminder (web/privacy.js) ----------
+    "發布前提醒":"Before you post", "內容裡好像有個人資料：":"This looks like it contains personal info: ", "手機號碼":"phone number",
+    "Email":"email", "身分證字號":"national ID number", "LINE ID":"LINE ID",
+    "銀行帳號":"bank account", "門牌地址":"street address", "匿名平台建議不要公開個資，可以等對方同意私訊後再交換。":"Songguo is anonymous — it's safer not to post personal info publicly. Exchange it by private message once the other person agrees.",
+    "改成校內集合點：":"Use an on-campus meeting point instead:", "把個資換成「（私訊再交換）」：":"Replace the personal info with “(will share by DM)”:", "發布後的內容會變成：":"Your post will read:",
+    "改成校內集合點":"Use campus meeting point", "改掉個資再發布":"Remove personal info and post", "仍要照原內容發布":"Post as is",
+    "回去修改":"Go back and edit", "集合點":"Meeting point", "（私訊再交換）":"(will share by DM)",
+    "正門警衛室公車站":"Main Gate guardhouse bus stop", "校內集合（私訊確認地點）":"On campus (confirm by DM)",
     // ---------- AI translation (web/translate.js) ----------
     "翻譯":"Translate", "翻譯中…":"Translating…", "顯示原文":"Show original", "翻譯全部留言":"Translate all comments",
     "用 AI 翻譯":"Translate with AI", "AI 翻譯，可能有誤":"AI translation — may contain mistakes",
