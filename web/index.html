@@ -694,7 +694,7 @@ const VOICE = window.sgVoice || { init(){}, button:()=>null, stop(){} };
 VOICE.init({ lang:()=>I18N.lang, toast:m=>toast(m), tr:s=>I18N.tr(s) });
 // 松果 AI 智慧交通與共乘（web/ride-ai.js）：交通精算師等功能，數字由程式計算、AI 只寫說明
 const RA = window.sgRideAI || { init(){}, commuteCard:()=>null, isPick:()=>false, filterRides:l=>l, filterBar:()=>null, setRideFilter(){},
-  rideBox:()=>null, rideBadges:()=>null, TAGS:[], LUGGAGE:{}, myTags:()=>[] };
+  rideBox:()=>null, rideBadges:()=>null, TAGS:[], LUGGAGE:{}, myTags:()=>[], coordBox:()=>null };
 RA.init({ h, tr:s=>I18N.tr(s), lang:()=>I18N.lang, renderKeep:()=>renderKeep(), canPost:()=>canPost(), uid:()=>S.uid,
   bus:BUS, nowMin:()=>nowMin(), fromMin:m=>fromMin(m),
   trips:d=>trips(d,"out",dayCtx()).filter(x => !x.offBoard), tomorrow:d=>nextTrips(d,"out",1).tomorrow,
@@ -702,7 +702,14 @@ RA.init({ h, tr:s=>I18N.tr(s), lang:()=>I18N.lang, renderKeep:()=>renderKeep(), 
   weather:()=>{ const w = loadWeather(); return w.data ? upcomingHours(w.data)[0] || null : null; },
   goBus:d=>{ S.busDest=d; LS.set("pc.busDest",d); S.busDir="out"; LS.set("pc.busDir","out"); S.space.transit="bus"; saveSpace(); go("transit"); },
   goRides:f=>{ RA.setRideFilter(f); S.space.transit="rides"; saveSpace(); go("transit"); },
-  openRide:m=>openModal({ k:"ride", ...m }), rideCard:r=>rideCard(r), live:(k,fn)=>live(k,fn) });
+  openRide:m=>openModal({ k:"ride", ...m }), rideCard:r=>rideCard(r), live:(k,fn)=>live(k,fn),
+  toast:m=>toast(m), isRider:r=>!!(S.uid && S.riders[r.id]?.has(S.uid)),
+  // 行程異動通知：和一般留言一樣寫進這一團的討論串，一樣先跑內容安全（MOD.guard）再跑隱私提醒（PRIV.review）
+  postComment:async function post(r, text, force){
+    const mine = S.comments.filter(c => c.uid && c.uid === S.uid);
+    if (!(await MOD.guard("cmt", text, mine, () => post(r, text, true), force === true))) return false;
+    const pv = await PRIV.review([text]); if (!pv) return false;
+    try { await S.db.collection("rides/"+r.id+"/comments").add({ body:pv[0], nick:S.nick, uid:S.uid||"", ts:Date.now() }); return true; } catch(e){ toast(writeErr(e)); return false; } } });
 // 發布前隱私提醒（web/privacy.js）：純規則，偵測到手機、地址等個資時提醒，但不擋發布
 const PRIV = window.sgPrivacy || { init(){}, review:async x => x };
 PRIV.init({ tr:s=>I18N.tr(s), translate:el=>I18N.translate(el) });
@@ -1479,7 +1486,7 @@ function rideCard(r){
       tv.button,
       h("button",{class:"linkbtn",onclick:()=>isOpen?closeThread():openThread("ride:"+r.id)}, isOpen ? "收起討論" : "討論集合點"),
       mine || S.isOwner ? h("button",{class:"linkbtn",onclick:()=>openModal({k:"delride",id:r.id})},"取消這團") : null));
-  if (isOpen){ const th = thread("rides/"+r.id+"/comments"); th.style.gridColumn = "1/-1"; card.append(th); }
+  if (isOpen){ const th = thread("rides/"+r.id+"/comments"); th.style.gridColumn = "1/-1"; card.append(RA.coordBox(r) || "", th); }
   return card;
 }
 async function joinRide(r){ try { await S.db.doc(`riders/${r.id}__${S.uid}`).set({ ride:r.id, uid:S.uid, nick:S.nick, ts:Date.now() }); toast("已加入，記得到討論區約集合點"); } catch(e){ toast(writeErr(e)); } }
