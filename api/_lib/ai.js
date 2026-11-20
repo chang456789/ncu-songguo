@@ -25,8 +25,28 @@ function provider() {
  * opts.json: true 時要求模型只回傳 JSON，並幫你解析成 result.json
  * opts.maxTokens: 回覆長度上限（預設 600）
  * opts.temperature: 預設 0.3
+ * opts.task: 選填，這次呼叫是哪個功能（例如 "translate"），只用在下面的使用紀錄
  */
 async function chat(messages, opts = {}) {
+  const t0 = Date.now(); let ok = false;
+  try {
+    const result = await callModel(messages, opts);
+    ok = true;
+    return result;
+  } finally {
+    logUsage({ task: opts.task, latencyMs: Date.now() - t0, ok, cached: false });
+  }
+}
+
+// AI 使用紀錄（微軟 AI 可觀測性，簡報用）：每次呼叫在 Vercel → Logs 印一行 JSON。
+// 只記功能名稱、服務、耗時、成功與否、是否走快取，絕不記錄使用者的內容。
+function logUsage({ task, latencyMs = 0, ok = true, cached = false }) {
+  try { console.log(JSON.stringify({ task: task || "unknown", provider: provider() || "none", latencyMs, ok, cached })); } catch {}
+}
+// 各功能的快取命中時呼叫（沒有呼叫 AI，但留下紀錄，才看得出快取省了多少次）
+const logCached = task => logUsage({ task, latencyMs: 0, ok: true, cached: true });
+
+async function callModel(messages, opts) {
   const p = provider();
   if (!p) { const e = new Error("AI 尚未設定：請在 Vercel 環境變數加上 Azure OpenAI 或 GitHub Models 的金鑰"); e.code = "ai_not_configured"; throw e; }
   const body = { messages, max_tokens: opts.maxTokens || 600, temperature: opts.temperature ?? 0.3 };
@@ -63,4 +83,4 @@ function rateLimit(req, limit = 12) {
   return list.length <= limit;
 }
 
-module.exports = { chat, provider, rateLimit };
+module.exports = { chat, provider, rateLimit, logCached };

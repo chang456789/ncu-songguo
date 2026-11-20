@@ -4,7 +4,7 @@
 // For each recent item it opens the announcement and pulls out the event date, time, place and perks
 // (free meal, 藝文時數, free tickets). The result is cached on Vercel's CDN for 30 minutes.
 const news = require("./news.js");
-const { chat, rateLimit } = require("./_lib/ai");
+const { chat, rateLimit, logCached } = require("./_lib/ai");
 
 const UA = { "user-agent": "Mozilla/5.0 (songguo campus app; +https://ncu-songguo.vercel.app)", "accept-language": "zh-TW" };
 const SRC = {
@@ -173,6 +173,7 @@ async function addHighlights(events, msLeft) {
     }
     if (aiMemo.size > 600) aiMemo.clear();
   } else if (todo.length) ai = "skipped";
+  else if (events.length) logCached("events-highlight");
   for (const e of events) {
     const m = aiMemo.get(memoKey(e)); delete e.snippet;
     if (!m) continue;
@@ -200,7 +201,7 @@ async function matchHandler(req, res) {
   const cands = b.candidates.map((c, i) => ({ i, title: str(c.title, 80), when: str(c.when, 40), place: str(c.place, 40),
     tags: Array.isArray(c.tags) ? c.tags.slice(0, 6).map(t => str(t, 10)) : [], highlight: str(c.highlight, 60) }));
   const key = JSON.stringify([b.slot, lang, str(b.now, 20).slice(0, 13), cands]);
-  if (matchMemo.has(key)) return res.status(200).json({ ...matchMemo.get(key), cached: true });
+  if (matchMemo.has(key)) { logCached("events-match"); return res.status(200).json({ ...matchMemo.get(key), cached: true }); }
   const system = [
     "你幫中央大學學生用空檔找校園活動。使用者現在有空的時間是：" + SLOT_LABEL[b.slot] + "（現在時間 " + str(b.now, 20) + "）。",
     "candidates 是程式已經篩好、時間吻合的活動。從中挑 1–3 個最值得去的（優先：快開始、免費、有餐點、可認證時數、適合一個人臨時參加）。",
