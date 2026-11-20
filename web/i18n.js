@@ -90,6 +90,15 @@
     "展期至":"Until", "想去":"Interested", "我會去":"Going", "有餐點":"Food provided", "可認證時數":"Counts for hours", "免費":"Free", "有抽獎贈品":"Prizes/giveaways", "需報名":"Registration",
     "近期還沒有活動":"No upcoming events", "正在整理學校的活動…":"Collecting school events…", "學校網站":"School website",
     "學校活動的時間、地點和標籤由程式從公告內文自動整理，亮點與部分標籤由 AI 整理，可能有誤，請以原公告為準。資料每小時更新。":"Times, places and tags are extracted automatically from the announcements; highlights and some tags are written by AI. They may be wrong — check the original notice. Updated hourly.",
+    // ---------- lobby AI: summary & icebreakers (web/chatroom-ai.js) ----------
+    "AI 懶人包":"AI recap", "AI 破冰話題":"AI icebreakers", "訊息還不夠多":"Not enough messages yet", "收起":"Hide",
+    "大廳有點安靜，要不要用「AI 破冰話題」開個頭？":"It's quiet in here — start things off with an AI icebreaker?",
+    "AI 正在整理最近的訊息…":"AI is summarizing recent messages…", "AI 整理，可能有誤。":"Summarized by AI — may contain mistakes.",
+    "AI 正在想話題…":"AI is thinking of topics…", "點一下會填進輸入框，確認後再自己按送出。":"Tap one to put it in the message box, then send it yourself.",
+    "換一組":"Show others", "先給你幾個常見話題。":"Here are some popular topics for now.",
+    "AI 功能還沒啟用，聊天照常可以使用。":"AI features aren't available yet — chat works as usual.", "AI 使用量太多了，請稍後再試。":"AI is busy right now. Please try again later.",
+    "AI 回應逾時，請稍後再試。":"AI took too long. Please try again later.",
+    "AI 暫時無法使用，請稍後再試。":"AI is unavailable right now. Please try again later.",
     // ---------- event AI: tags, free-time matching (web/events-ai.js) ----------
     "講座":"Talk", "表演":"Performance", "展覽":"Exhibition", "社交":"Social", "練英文":"English practice", "依標籤篩選":"Filter by tag",
     "有空檔嗎？":"Got some free time?", "AI 從時間剛好的活動裡幫你挑":"AI picks from events that fit your time",
