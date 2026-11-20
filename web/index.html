@@ -327,6 +327,21 @@ nav.bottom{display:none}
 .gap-t b{overflow-wrap:anywhere;min-width:0}
 .gap-t .tag{flex:none;background:var(--surface)}
 .gap-why{font-size:14px;color:var(--ink)}
+/* 即時大廳 AI 懶人包與破冰話題（web/chatroom-ai.js） */
+.lobby-ai{display:flex;flex-direction:column;gap:8px}
+.lobby-ai-bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.ai-chip{background:var(--pine-soft);color:var(--pine)}
+.ai-chip:disabled{background:var(--sunk);color:var(--muted);cursor:not-allowed}
+.lobby-ai-idle{margin:0;color:var(--muted)}
+.lobby-ai-card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:12px 14px;display:flex;flex-direction:column;gap:8px}
+.lobby-ai-card p{margin:0}
+.lobby-ai-head{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.lobby-ai-points{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:4px;overflow-wrap:anywhere}
+.lobby-ai-tip{font-size:14px;overflow-wrap:anywhere}
+.lobby-ai-topics{display:flex;flex-direction:column;gap:8px;align-items:flex-start}
+.lobby-ai-topics .topic{border:1px solid var(--line);background:var(--sunk);color:var(--ink);border-radius:14px;padding:8px 12px;font-size:14px;text-align:left;max-width:100%;overflow-wrap:anywhere}
+.lobby-ai-topics .topic:hover{border-color:var(--pine)}
+@media (max-width:720px){ .lobby-ai-bar,.lobby-ai-idle,.lobby-ai-card{margin-inline:12px} }
 .cform{display:flex;gap:8px;align-items:center}
 .cform input{flex:1;min-width:0;border-radius:999px!important;background:var(--sunk)!important;border:0!important;padding:9px 14px!important}
 
@@ -537,6 +552,7 @@ a.ghost{color:var(--ink)}
 <script src="/translate.js"></script>
 <script src="/assistant.js"></script>
 <script src="/events-ai.js"></script>
+<script src="/chatroom-ai.js"></script>
 
 
 <script>
@@ -648,6 +664,10 @@ AI.init({ context:()=>aiContext(), lang:()=>I18N.lang, tr:s=>I18N.tr(s), transla
 // 活動空檔媒合（web/events-ai.js）。upcomingEvents／evWhen 在下面定義
 const EVAI = window.sgEventsAI || { init(){}, panel:()=>null };
 EVAI.init({ events:()=>upcomingEvents(), when:e=>evWhen(e), lang:()=>I18N.lang, onChange:()=>renderKeep() });
+// 即時大廳 AI 懶人包與破冰話題（web/chatroom-ai.js）：話題只填進輸入框，不自動送出
+const CHAI = window.sgChatroomAI || { init(){}, panel:()=>h("div") };
+CHAI.init({ lobby:()=>S.lobby, lang:()=>I18N.lang, onChange:()=>renderKeep(),
+  fill:text=>{ const el = document.getElementById("lobby-in"); if (!el || el.disabled) return; el.value = text; el.focus(); el.setSelectionRange(text.length, text.length); } });
 function switchLang(l){ I18N.setLang(l); S.dirty = false; render(); }
 
 const RIDE_PLACES = ["中央大學（正門）","中央大學（後門）","中壢火車站","高鐵桃園站","台北車站","松山機場","桃園機場","大江購物中心","中原商圈・中原夜市","龍岡・忠貞市場","中壢觀光夜市","青埔","其他"];
@@ -2082,6 +2102,7 @@ function forumPage(){
   return h("div",{class:"stack"}, segBar,
     h("div",{class:"sphead"}, h("h1",{},"即時大廳"), h("p",{}, "全校共用的聊天大廳，下課無聊就進來聊。", S.room ? `現在有 ${Math.max(here,1)} 人在大廳。` : "")),
     statusBanner(),
+    live("lobbyai", () => CHAI.panel()),
     live("lobby", () => { const msgs = S.lobby || []; return h("div",{class:"card chat lobby"}, msgs.length ? msgs.map(m => {
         const mine = m.uid && m.uid === S.uid;
         return h("div",{class:"lmsg"+(mine?" mine":"")}, mine ? null : avatar(m.nick,"sm"),
