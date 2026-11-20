@@ -31,7 +31,8 @@
   async function keyOf(target, text){
     const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(text));
     const hex = [...new Uint8Array(buf)].map(b => b.toString(16).padStart(2, "0")).join("");
-    return `${target}_${hex.slice(0, 40)}`;
+    // "g" = 加入中大詞彙表後的版本；詞彙表之前的舊翻譯不再沿用
+    return `${target}g_${hex.slice(0, 40)}`;
   }
 
   /* ---------- 查快取、呼叫 AI、存回快取 ---------- */
