@@ -175,6 +175,18 @@
     "改成校內集合點":"Use campus meeting point", "改掉個資再發布":"Remove personal info and post", "仍要照原內容發布":"Post as is",
     "回去修改":"Go back and edit", "集合點":"Meeting point", "（私訊再交換）":"(will share by DM)",
     "正門警衛室公車站":"Main Gate guardhouse bus stop", "校內集合（私訊確認地點）":"On campus (confirm by DM)",
+    // ---------- AI trip change helper (web/ride-ai.js) ----------
+    "行程異動小幫手":"Trip change helper", "選一個狀況，AI 幫你寫好給團員的通知，確認後再發出":"Pick what changed — AI drafts a note for your group, you check it before sending", "我會晚 5 分鐘":"I'll be 5 min late",
+    "我會晚 10 分鐘":"I'll be 10 min late", "多帶一個大行李":"Bringing an extra big bag", "下雨了，改在有遮雨的地方上車":"It's raining — let's meet somewhere covered",
+    "或自己輸入異動，例如：我改成 8:40 才能到":"Or type your own, e.g. I can only make it by 8:40", "行程異動":"Trip change", "產生通知":"Draft message",
+    "AI 正在寫通知…":"AI is writing the message…", "不影響出發時間和座位":"No effect on departure time or seats", "AI 寫的通知（可以修改）：":"AI draft (you can edit it):",
+    "發到討論區":"Post to discussion", "再試一次 AI":"Try AI again", "已發到討論區":"Posted to the discussion",
+    "AI 尚未設定，先用範本幫你寫好了，可以直接修改。":"AI isn't set up yet — here's a template you can edit.", "AI 使用太頻繁了，先用範本幫你寫好了，可以直接修改。":"Too many AI requests — here's a template you can edit.", "AI 回應逾時，先用範本幫你寫好了，可以直接修改。":"The AI timed out — here's a template you can edit.",
+    "AI 暫時無法使用，先用範本幫你寫好了，可以直接修改。":"AI is unavailable — here's a template you can edit.", "出發時間可能從":"Departure may move from", "延到":"to",
+    "大行李可能要占 1 個空位，占用後剩":"The big bag may take 1 empty seat, leaving", "車上已經坐滿，大行李可能放不下，需要先跟大家確認":"The car is full — the big bag may not fit, check with everyone first", "集合點要改到有遮雨的地方，請在討論區確認地點":"Meeting point moves somewhere covered — confirm the spot in the discussion",
+    "大家好，":"Hi all! ", "出發時間可能延到 ":"Departure may move to ", "，抱歉讓大家等！":" — sorry to keep you waiting!",
+    "車上已經坐滿，大行李放不下的話我再想辦法，請大家告訴我。":"The car is full; if my bag doesn't fit I'll figure something out — let me know.", "大行李可能會占一個空位，請大家見諒。":"My big bag may take an empty seat — hope that's OK.", "集合點改到有遮雨的地方，地點我們在這裡確認一下。":"Let's move the meeting point somewhere covered — let's confirm the spot here.",
+    "不影響出發時間和座位。":"This doesn't affect departure time or seats.",
     // ---------- AI translation (web/translate.js) ----------
     "翻譯":"Translate", "翻譯中…":"Translating…", "顯示原文":"Show original", "翻譯全部留言":"Translate all comments",
     "用 AI 翻譯":"Translate with AI", "AI 翻譯，可能有誤":"AI translation — may contain mistakes",

@@ -11,6 +11,7 @@
 //   commute_advisor  交通精算師：根據程式算好的方案比較，寫一句首選建議＋理由＋風險
 //   parse_ride       自然語言拼車：一句話 → { intent, from, to, when, seats, luggage, split, tags, missing_fields }，
 //                    找車時同一次呼叫一起寫每一團的「為什麼適合你」（reasons）
+//   coordinate_ride  行程異動小幫手：根據這一團的人數、座位、出發時間與程式算好的影響，寫一則給團員的通知
 const { chat, rateLimit } = require("./_lib/ai");
 
 const MAX_PAYLOAD = 5000;   // payload 轉成文字後最多幾個字
@@ -96,6 +97,24 @@ const TASKS = {
       if (j.reasons && typeof j.reasons === "object") for (const [id, v] of Object.entries(j.reasons)) if (ids.has(id) && typeof v === "string" && v.trim()) reasons[id] = v.trim().slice(0, 60);
       return { intent, from, to, when, seats, luggage, split, tags, missing_fields: [...missing], reasons };
     },
+  },
+
+  // 行程異動小幫手：寫一則給同團成員的通知（3 句以內）
+  coordinate_ride: {
+    system: lang => [
+      "你是「松果拼車小幫手」，幫一位拼車團成員寫一則發在這一團討論區的通知。",
+      "你會收到 JSON：ride（這一團的出發地、目的地、出發時間、總人數、已加入人數、剩餘座位、行李與標籤）、me（我是不是團主）、change（使用者想通知的異動）、impact（程式已經算好的影響：新的出發時間、座位變化等）。",
+      "",
+      "規則：",
+      "1. 用第一人稱、口氣友善有禮貌，最多 3 句，總長 90 字以內（英文 60 個字以內）。",
+      "2. 一定要清楚說出 impact 裡的影響（例如出發時間可能延到幾點、會不會占用座位、車是否已滿）。impact 為空時，就說明不影響出發時間與座位。",
+      "3. 只能使用 ride、change、impact 裡的數字、時間和地點。不可以自己編造集合地點、時間或人數；需要改集合點但 change 沒說在哪裡時，請大家在討論區確認地點。",
+      "4. 不要加入電話、LINE 等聯絡方式。不要用 hashtag 或表情符號以外的格式。",
+      `5. 用${replyLang(lang)}寫。`,
+      "只輸出 JSON：{\"message\": \"...\"}",
+    ].join("\n"),
+    maxTokens: 250,
+    clean: j => { const message = str(j && j.message, 220); return message ? { message } : null; },
   },
 };
 
