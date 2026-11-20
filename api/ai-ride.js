@@ -9,6 +9,8 @@
 //
 // task：
 //   commute_advisor  交通精算師：根據程式算好的方案比較，寫一句首選建議＋理由＋風險
+//   parse_ride       自然語言拼車：一句話 → { intent, from, to, when, seats, luggage, split, tags, missing_fields }，
+//                    找車時同一次呼叫一起寫每一團的「為什麼適合你」（reasons）
 const { chat, rateLimit } = require("./_lib/ai");
 
 const MAX_PAYLOAD = 5000;   // payload 轉成文字後最多幾個字
@@ -46,6 +48,53 @@ const TASKS = {
       const hero = str(j && j.hero, 80);
       if (!hero) return null;
       return { hero, reasons: strList(j.reasons, 3, 90), risks: strList(j.risks, 2, 90) };
+    },
+  },
+
+  // 自然語言發布與搜尋拼車：一句話 → 結構化欄位；要找車時，同一次呼叫一起寫每一團「為什麼適合你」
+  parse_ride: {
+    system: lang => [
+      "你是「松果拼車小幫手」，把中央大學學生的一句話轉成拼車資料。",
+      "你會收到 JSON：text（使用者的話）、now（現在的台灣時間與星期）、places（允許的地點清單）、tagOptions（允許的標籤）、myTags（使用者自己的偏好標籤）、rides（目前開放中的拼車團，可能是空的）。",
+      "",
+      "請輸出 JSON：",
+      "{\"intent\": \"offer\"|\"request\"|\"search\", \"from\": 地點或 null, \"to\": 地點或 null, \"when\": \"YYYY-MM-DDTHH:mm\" 或 null, \"seats\": 數字或 null, \"luggage\": \"none\"|\"light\"|\"heavy\", \"split\": 字串或 null, \"tags\": [], \"missing_fields\": [], \"reasons\": {\"團的 id\": \"為什麼適合你\"}}",
+      "",
+      "規則：",
+      "1. intent：要開團、揪人、「我出發，誰要一起」→ offer；想搭別人的車、徵求同行 → request；「找…的車」「有沒有…的團」→ search。",
+      "2. from、to 只能是 places 裡的其中一個（完全一樣的字）。「後門、宵夜街」→「中央大學（後門）」；「學校、中大、正門、校門口」→「中央大學（正門）」；「高鐵」→「高鐵桃園站」；「火車站、中壢車站」→「中壢火車站」；「回台北、去台北」→「台北車站」。對不上 places 的地點，該欄位填 null，並把欄位名稱放進 missing_fields。",
+      "3. 只說「回台北」「回家」而沒說出發地時，學生通常從學校出發，from 填「中央大學（正門）」。",
+      "4. when：依 now 換算成 24 小時制的台灣時間。「明早」＝明天早上；「今晚」＝今天晚上；「週五下午」沒說幾點就用 15:00。完全沒提到時間就填 null。",
+      "5. seats：開團的總人數（含自己）。「2 人」「我們兩個」＝使用者這邊的人數，開團時 seats 至少要比它多 1（預設 4）。沒提到就 null。",
+      "6. luggage：有大行李、行李箱 → heavy；背包、小行李 → light；沒提到 → none。",
+      "7. tags 只能從 tagOptions 選，依使用者的話判斷（例如「想睡覺」→「想安靜補眠」、有大行李 →「行李較多」、「要準時」→「準時優先」）。",
+      "8. missing_fields：intent 是 offer 或 request 時，from、to、when 缺哪個就列哪個。search 不用列。",
+      "9. reasons：只在 intent 是 search 或 request 時填。針對 rides 中「目的地相符」的團，各寫一句 25 字內的「為什麼適合你」，要具體（時間差幾分鐘、剩幾個位子、標籤是否合拍——只能用 rides 裡的資料）。不相符的團不要寫。沒有就給 {}。",
+      `10. reasons 用${replyLang(lang)}寫。其他欄位照格式。`,
+      "只輸出 JSON。",
+    ].join("\n"),
+    maxTokens: 600,
+    clean: (j, payload) => {
+      if (!j || typeof j !== "object") return null;
+      const places = Array.isArray(payload.places) ? payload.places : [];
+      const tagOptions = Array.isArray(payload.tagOptions) ? payload.tagOptions : [];
+      const intent = ["offer", "request", "search"].includes(j.intent) ? j.intent : "search";
+      const place = v => typeof v === "string" && places.includes(v.trim()) ? v.trim() : null;
+      const missing = new Set((Array.isArray(j.missing_fields) ? j.missing_fields : []).filter(f => ["from", "to", "when"].includes(f)));
+      const from = place(j.from), to = place(j.to);
+      // 時間：只接受「YYYY-MM-DDTHH:mm」格式
+      const when = typeof j.when === "string" && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/.test(j.when) ? j.when.slice(0, 16) : null;
+      if (intent !== "search"){ if (!from) missing.add("from"); if (!to) missing.add("to"); if (!when) missing.add("when"); }
+      else missing.clear();
+      if (from) missing.delete("from"); if (to) missing.delete("to"); if (when) missing.delete("when");
+      const seats = Number.isInteger(+j.seats) && +j.seats >= 2 && +j.seats <= 6 ? +j.seats : null;
+      const luggage = ["none", "light", "heavy"].includes(j.luggage) ? j.luggage : "none";
+      const tags = [...new Set((Array.isArray(j.tags) ? j.tags : []).filter(t => tagOptions.includes(t)))];
+      const split = typeof j.split === "string" ? j.split.trim().slice(0, 30) || null : null;
+      const ids = new Set((Array.isArray(payload.rides) ? payload.rides : []).map(r => r && r.id));
+      const reasons = {};
+      if (j.reasons && typeof j.reasons === "object") for (const [id, v] of Object.entries(j.reasons)) if (ids.has(id) && typeof v === "string" && v.trim()) reasons[id] = v.trim().slice(0, 60);
+      return { intent, from, to, when, seats, luggage, split, tags, missing_fields: [...missing], reasons };
     },
   },
 };
