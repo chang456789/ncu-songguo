@@ -1,7 +1,11 @@
 // 共用的 AI 呼叫程式（伺服器端）。所有 AI 功能都透過這裡呼叫模型，不要在別的檔案自己寫。
 // 檔名以 _ 開頭的資料夾不會變成網址，只能被 api/*.js 引用：const { chat } = require("./_lib/ai");
 //
-// 需要的 Vercel 環境變數（Settings → Environment Variables），擇一設定即可：
+// 需要的 Vercel 環境變數（Settings → Environment Variables），擇一設定即可（由上往下優先）：
+//   OpenAI 相容服務（目前使用 Groq，免費）：
+//     AI_BASE_URL   例：https://api.groq.com/openai/v1
+//     AI_API_KEY
+//     AI_MODEL      例：llama-3.3-70b-versatile
 //   Azure OpenAI（優先，比賽加分）：
 //     AZURE_OPENAI_ENDPOINT     例：https://songguo-ai.openai.azure.com
 //     AZURE_OPENAI_API_KEY
@@ -14,6 +18,7 @@
 const AZURE_API_VERSION = "2024-10-21";
 
 function provider() {
+  if (process.env.AI_BASE_URL && process.env.AI_API_KEY && process.env.AI_MODEL) return "openai-compatible";
   if (process.env.AZURE_OPENAI_ENDPOINT && process.env.AZURE_OPENAI_API_KEY && process.env.AZURE_OPENAI_DEPLOYMENT) return "azure";
   if (process.env.GITHUB_MODELS_TOKEN) return "github";
   return null;
@@ -52,7 +57,11 @@ async function callModel(messages, opts) {
   const body = { messages, max_tokens: opts.maxTokens || 600, temperature: opts.temperature ?? 0.3 };
   if (opts.json) body.response_format = { type: "json_object" };
   let j;
-  if (p === "azure") {
+  if (p === "openai-compatible") {
+    // 任何 OpenAI 相容服務（Groq 等）：AI_BASE_URL 例 https://api.groq.com/openai/v1
+    const base = process.env.AI_BASE_URL.trim().replace(/\/+$/, "");
+    j = await post(`${base}/chat/completions`, { authorization: `Bearer ${process.env.AI_API_KEY.trim()}` }, { ...body, model: process.env.AI_MODEL.trim() }, opts);
+  } else if (p === "azure") {
     const base = process.env.AZURE_OPENAI_ENDPOINT.trim().replace(/\/+$/, "");
     const url = `${base}/openai/deployments/${encodeURIComponent(process.env.AZURE_OPENAI_DEPLOYMENT.trim())}/chat/completions?api-version=${AZURE_API_VERSION}`;
     j = await post(url, { "api-key": process.env.AZURE_OPENAI_API_KEY.trim() }, body, opts);
