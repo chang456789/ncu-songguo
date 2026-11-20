@@ -571,6 +571,7 @@ a.ghost{color:var(--ink)}
 <script src="/voice.js"></script>
 <script src="/ride-ai.js"></script>
 <script src="/privacy.js"></script>
+<script src="/agent.js"></script>
 
 
 <script>
@@ -676,7 +677,7 @@ const TR = window.sgTranslate || { view:(id,texts)=>({ texts, button:null }), tr
 TR.init({ db:()=>S.db, uid:()=>S.uid, lang:()=>I18N.lang, onChange:()=>renderKeep(), toast:m=>toast(m) });
 // 松果 AI 助理（web/assistant.js）：首頁卡片＋右下角「問松果」按鈕。aiContext() 在下面 BUS／EVENTS 之後定義
 const AI = window.sgAssistant || { init(){}, sync(){}, homeCard:()=>null, open(){} };
-AI.init({ context:()=>aiContext(), lang:()=>I18N.lang, tr:s=>I18N.tr(s), translate:el=>I18N.translate(el),
+AI.init({ context:()=>aiContext(), agent:(t,hist)=>AGENT.ask(t,hist), lang:()=>I18N.lang, tr:s=>I18N.tr(s), translate:el=>I18N.translate(el),
   visible:()=>!!S.nick && !["food","nav"].includes(S.tab),   // 地圖頁右下角已有按鈕，避免重疊
   openRides:()=>{ S.space.transit="rides"; saveSpace(); go("transit"); } });
 // 活動空檔媒合（web/events-ai.js）。upcomingEvents／evWhen 在下面定義
@@ -694,7 +695,7 @@ const VOICE = window.sgVoice || { init(){}, button:()=>null, stop(){} };
 VOICE.init({ lang:()=>I18N.lang, toast:m=>toast(m), tr:s=>I18N.tr(s) });
 // 松果 AI 智慧交通與共乘（web/ride-ai.js）：交通精算師等功能，數字由程式計算、AI 只寫說明
 const RA = window.sgRideAI || { init(){}, commuteCard:()=>null, isPick:()=>false, filterRides:l=>l, filterBar:()=>null, setRideFilter(){},
-  rideBox:()=>null, rideBadges:()=>null, TAGS:[], LUGGAGE:{}, myTags:()=>[], coordBox:()=>null };
+  rideBox:()=>null, rideBadges:()=>null, TAGS:[], LUGGAGE:{}, myTags:()=>[] };
 RA.init({ h, tr:s=>I18N.tr(s), lang:()=>I18N.lang, renderKeep:()=>renderKeep(), canPost:()=>canPost(), uid:()=>S.uid,
   bus:BUS, nowMin:()=>nowMin(), fromMin:m=>fromMin(m),
   trips:d=>trips(d,"out",dayCtx()).filter(x => !x.offBoard), tomorrow:d=>nextTrips(d,"out",1).tomorrow,
@@ -702,17 +703,30 @@ RA.init({ h, tr:s=>I18N.tr(s), lang:()=>I18N.lang, renderKeep:()=>renderKeep(), 
   weather:()=>{ const w = loadWeather(); return w.data ? upcomingHours(w.data)[0] || null : null; },
   goBus:d=>{ S.busDest=d; LS.set("pc.busDest",d); S.busDir="out"; LS.set("pc.busDir","out"); S.space.transit="bus"; saveSpace(); go("transit"); },
   goRides:f=>{ RA.setRideFilter(f); S.space.transit="rides"; saveSpace(); go("transit"); },
-  openRide:m=>openModal({ k:"ride", ...m }), rideCard:r=>rideCard(r), live:(k,fn)=>live(k,fn),
-  toast:m=>toast(m), isRider:r=>!!(S.uid && S.riders[r.id]?.has(S.uid)),
-  // 行程異動通知：和一般留言一樣寫進這一團的討論串，一樣先跑內容安全（MOD.guard）再跑隱私提醒（PRIV.review）
-  postComment:async function post(r, text, force){
-    const mine = S.comments.filter(c => c.uid && c.uid === S.uid);
-    if (!(await MOD.guard("cmt", text, mine, () => post(r, text, true), force === true))) return false;
-    const pv = await PRIV.review([text]); if (!pv) return false;
-    try { await S.db.collection("rides/"+r.id+"/comments").add({ body:pv[0], nick:S.nick, uid:S.uid||"", ts:Date.now() }); return true; } catch(e){ toast(writeErr(e)); return false; } } });
+  openRide:m=>openModal({ k:"ride", ...m }), rideCard:r=>rideCard(r), live:(k,fn)=>live(k,fn) });
 // 發布前隱私提醒（web/privacy.js）：純規則，偵測到手機、地址等個資時提醒，但不擋發布
 const PRIV = window.sgPrivacy || { init(){}, review:async x => x };
 PRIV.init({ tr:s=>I18N.tr(s), translate:el=>I18N.translate(el) });
+// 問松果 AI 代理人（web/agent.js）：AI 選工具 → 程式用網站資料算結果 → 回答下面附可以點的卡片
+const AGENT = window.sgAgent || { init(){}, ask:async()=>({ general:true }) };
+AGENT.init({ lang:()=>I18N.lang, tr:s=>I18N.tr(s), places:()=>RIDE_PLACES.filter(p => p !== "其他"),
+  events:()=>upcomingEvents(), evWhen:e=>evWhen(e), seatsLeft:r=>Math.max(0, (r.seats||0) - 1 - (S.riders[r.id]?.size||0)),
+  // 美食：松果美食地圖的店（有評分、價位）＋ OpenStreetMap 上的附近店家（沒有價位與評分）
+  foods:()=>{
+    const ours = S.food.filter(f => f.status !== "已歇業").map(f => { const r = foodRating(f.id);
+      return { id:f.id, name:f.name, type:f.cat, price:f.price||0, hours:f.hours||"", note:f.note||"", stars:r ? Math.round(r.avg*10)/10 : null, ratings:r ? r.n : 0, walkMin:Math.max(1, Math.round(distM(f)/FOOD_WALK)) }; });
+    const osm = (loadPlaces().items||[]).filter(p => !S.food.some(o => sameName(o.name, p.name)))
+      .map(p => ({ id:"o:"+p.osm, name:p.name, type:p.cat, price:0, hours:p.hours||"", note:"", stars:null, ratings:0, walkMin:Math.max(1, Math.round(distM(p)/FOOD_WALK)) }));
+    return ours.concat(osm); },
+  nextClass:()=>{ const n = nextClass(); return n && { name:n.c.name, weekday:"週"+DAYN[n.c.day], start:n.c.start, end:n.c.end, room:n.c.room||"", inDays:n.inDays, ongoing:n.ongoing }; },
+  // 卡片點下去要去的地方（並帶入條件）
+  goBus:d=>{ S.busDest=d; LS.set("pc.busDest",d); S.busDir="out"; LS.set("pc.busDir","out"); S.space.transit="bus"; saveSpace(); go("transit");
+    setTimeout(() => { const el = document.querySelector(".trow.ra-pick"); if (el) el.scrollIntoView({ block:"center", behavior:"smooth" }); }, 120); },
+  openRide:m=>openModal({ k:"ride", ...m }),
+  openRideThread:id=>{ RA.setRideFilter(null); S.space.transit="rides"; saveSpace(); go("transit"); openThread("ride:"+id); },
+  goEvent:id=>{ go("news"); setTimeout(() => { const el = document.querySelector(`[data-ev="${CSS.escape(id)}"]`); if (el){ el.scrollIntoView({ block:"center", behavior:"smooth" }); el.classList.add("ag-flash"); } }, 150); },
+  goFood:id=>{ go("food"); selectFood(id, true); },
+  goSchedule:()=>go("schedule"), findRoom:room=>{ S.navQ = roomBuilding(room); go("nav"); } });
 function switchLang(l){ VOICE.stop(); I18N.setLang(l); S.dirty = false; render(); }
 
 const RIDE_PLACES = ["中央大學（正門）","中央大學（後門）","中壢火車站","高鐵桃園站","台北車站","松山機場","桃園機場","大江購物中心","中原商圈・中原夜市","龍岡・忠貞市場","中壢觀光夜市","青埔","其他"];
@@ -1249,7 +1263,7 @@ function eventCard(e){
   const ranged = !!e.end; const [,m,d] = (ranged && e.date < todayISO() ? e.end : e.date).split("-").map(Number);
   const mine = e.community && e.uid && e.uid === S.uid;
   const tv = TR.view("ev:"+e.id, [e.title, e.place || "", e.body || ""]); const [evTitle, evPlace, evBody] = tv.texts;
-  return h("article",{class:"card ev"},
+  return h("article",{class:"card ev","data-ev":e.id},
     h("div",{class:"cal"+(ranged?" range":"")}, h("i",{}, ranged ? (e.date < todayISO() ? "展期至" : "開始") : `${m}月`), h("b",{}, d), h("small",{}, ranged ? `${m}月` : "週"+wkOf(e.date))),
     h("div",{class:"body"},
       h("h3",{translate:"no"}, e.url ? h("a",{href:e.url,target:"_blank",rel:"noopener"}, evTitle) : evTitle),
@@ -1486,7 +1500,7 @@ function rideCard(r){
       tv.button,
       h("button",{class:"linkbtn",onclick:()=>isOpen?closeThread():openThread("ride:"+r.id)}, isOpen ? "收起討論" : "討論集合點"),
       mine || S.isOwner ? h("button",{class:"linkbtn",onclick:()=>openModal({k:"delride",id:r.id})},"取消這團") : null));
-  if (isOpen){ const th = thread("rides/"+r.id+"/comments"); th.style.gridColumn = "1/-1"; card.append(RA.coordBox(r) || "", th); }
+  if (isOpen){ const th = thread("rides/"+r.id+"/comments"); th.style.gridColumn = "1/-1"; card.append(th); }
   return card;
 }
 async function joinRide(r){ try { await S.db.doc(`riders/${r.id}__${S.uid}`).set({ ride:r.id, uid:S.uid, nick:S.nick, ts:Date.now() }); toast("已加入，記得到討論區約集合點"); } catch(e){ toast(writeErr(e)); } }
