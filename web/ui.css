@@ -164,3 +164,18 @@ body.kb-open .ai-fab{display:none!important}
 .ph-nav.prev{left:var(--space-2)} .ph-nav.next{right:var(--space-2)}
 @media (pointer:coarse){ .ph-nav{display:none} }
 body.ph-open{overflow:hidden}
+
+/* =====================================================================
+   今日松果（任務四，web/today.js）
+   ===================================================================== */
+.today-card{display:flex;flex-direction:column;gap:var(--space-2);background:linear-gradient(135deg,var(--pine-soft),var(--surface) 70%)}
+.today-head{display:flex;align-items:center;gap:var(--space-2)}
+.today-head>div{display:flex;flex-direction:column;line-height:1.25}
+.today-head b{font-size:var(--fs-3)}
+.today-head small{font-size:var(--fs-1);color:var(--muted)}
+.today-text{margin:0;font-size:var(--fs-3);line-height:1.6;overflow-wrap:anywhere}
+.today-loading{display:flex;align-items:center;gap:var(--space-2);color:var(--muted);font-size:var(--fs-2)}
+.today-chips{display:flex;flex-wrap:wrap;gap:var(--space-1) var(--space-2)}
+.today-chip{font-size:var(--fs-1);background:var(--surface);border:1px solid var(--line);border-radius:var(--radius-pill);padding:2px 10px;white-space:nowrap}
+.today-chip b{color:var(--pine)}
+.today-foot{margin:0;font-size:var(--fs-1);color:var(--muted)}

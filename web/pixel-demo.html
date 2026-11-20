@@ -40,6 +40,9 @@
   <h2 style="margin:8px 0 0;font-size:20px">任務三：照片</h2>
   <section class="demo-card"><h2>選照片（會真的上傳；需要先執行 schema.sql）</h2><div id="ph-pick"></div><p id="ph-out" style="margin:8px 0 0;color:var(--muted);font-size:13px;overflow-wrap:anywhere"></p></section>
   <section class="demo-card"><h2>只壓縮、不上傳</h2><input type="file" accept="image/*" id="ph-test"><p id="ph-size" style="margin:8px 0 0;color:var(--muted);font-size:13px"></p></section>
+  <h2 style="margin:8px 0 0;font-size:20px">任務四：今日松果</h2>
+  <div id="today"></div>
+  <div class="demo-bar"><button class="ghost" type="button" id="td-a">範例：有課、會下雨</button><button class="ghost" type="button" id="td-b">範例：沒有課表</button><button class="ghost" type="button" id="td-c">清除今天的快取</button></div>
   <section class="demo-card"><h2>列表縮圖（點開左右滑）</h2><div id="ph-thumbs" style="display:flex;flex-direction:column;gap:12px"></div></section>
 </main>
 <script src="/i18n.js"></script>
@@ -49,6 +52,7 @@
 <script src="/config.js"></script>
 <script src="/shim.js"></script>
 <script src="/photos.js"></script>
+<script src="/today.js"></script>
 <script>
 (async () => {
   // 從 index.html 複製網站的樣式（顏色變數、按鈕），預覽畫面才會和正式網站一致
@@ -89,6 +93,25 @@
   const pics = [sample(140,"書桌 1"), sample(30,"書桌 2"), sample(200,"書桌 3"), sample(320,"書桌 4"), sample(80,"書桌 5")];
   for (const n of [1,2,3,5]) $("ph-thumbs").append(PH.thumbs(pics.slice(0, n)));
   $("ph-thumbs").append(PH.thumbs(pics.slice(0, 3), { small: true }));
+  // 今日松果：用範例資料（接上 index.html 後會改用網站的真實資料）
+  const TD = window.sgToday, now = new Date(), P = n => String(n).padStart(2, "0"), today = `${now.getFullYear()}-${P(now.getMonth()+1)}-${P(now.getDate())}`;
+  const at = m => { const d = new Date(now); d.setHours(0, m, 0, 0); return `${P(d.getHours())}:${P(d.getMinutes())}`; }, nm = now.getHours()*60 + now.getMinutes();
+  const dow = now.getDay() === 0 ? 7 : now.getDay();
+  const SAMPLE = {
+    a: { weather: { hours: [0,3,6,9].map(h => { const d = new Date(now); d.setMinutes(0,0,0); d.setHours(d.getHours()+h); return { t: d.toISOString(), temp: 21+h/3, pop: h >= 3 ? 70 : 20, wx: h >= 3 ? "短暫陣雨" : "多雲" }; }).filter(x => x.t.slice(0,10) === today || true) },
+         courses: [{ name:"計算機概論", day:dow, start:at(Math.min(nm+40, 1380)), end:at(Math.min(nm+150, 1430)), room:"工程五館 E5-104" }, { name:"微積分", day:dow, start:at(Math.min(nm+300, 1420)), end:at(Math.min(nm+400, 1435)), room:"科學二館" }],
+         bus: [{ to:"中壢火車站", route:"132", time: at(Math.min(nm+12, 1430)) }],
+         events: [{ title:"AI 應用講座（附餐盒）", date: today, time: `${at(Math.min(nm+170, 1400))}–${at(Math.min(nm+230, 1430))}`, place:"羅家倫講堂", tags:["講座","有餐點"], highlight:"附餐盒的 AI 講座" }] },
+    b: { weather: { hours: [0,3].map(h => { const d = new Date(now); d.setHours(d.getHours()+h); return { t: d.toISOString(), temp: 24, pop: 10, wx: "晴" }; }) }, courses: [],
+         bus: [{ to:"中壢火車站", route:"132", time: at(Math.min(nm+8, 1430)) }, { to:"高鐵桃園站", route:"172", time: at(Math.min(nm+25, 1430)) }],
+         events: [{ title:"期末音樂會", date: today, time: at(Math.min(nm+120, 1400)), place:"大禮堂", tags:["表演","免費"] }] },
+  };
+  let which = "a";
+  const draw = () => { $("today").replaceChildren(TD.card()); I18N.translate($("today")); };
+  TD.init({ context: async () => SAMPLE[which], lang: () => I18N.lang, onChange: draw });
+  $("td-a").onclick = () => { which = "a"; TD.refresh(); }; $("td-b").onclick = () => { which = "b"; TD.refresh(); };
+  $("td-c").onclick = () => { try { localStorage.removeItem("pc.today"); } catch {} TD.refresh(); };
+  draw();
   I18N.translate(document.body);
 })();
 </script>
