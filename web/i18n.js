@@ -220,6 +220,10 @@
     "」，":"”, ", "，在 ":", in ", "找教室：":"Find room: ",
     "在校內導航上看位置":"See it on the campus map", "＋":"+", "・走路約":" · walk ~", "已帶入「問松果」的條件。":"Loaded the options from Ask Songguo.",
     "請 AI 寫建議":"Ask AI for advice",
+    // ---------- 5-group navigation ----------
+    "社群":"Community", "我的":"Me", "設定":"Settings", "匿名使用者・不用註冊":"Anonymous · no sign-up",
+    "暱稱、系所、住處":"Nickname, department, where you live", "場今天":"today", "場近期":"upcoming", "°・降雨":"° · rain",
+    "捷徑":"Shortcuts",
     // ---------- AI translation (web/translate.js) ----------
     "翻譯":"Translate", "翻譯中…":"Translating…", "顯示原文":"Show original", "翻譯全部留言":"Translate all comments",
     "用 AI 翻譯":"Translate with AI", "AI 翻譯，可能有誤":"AI translation — may contain mistakes",
