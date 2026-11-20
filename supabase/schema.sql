@@ -149,3 +149,43 @@ do $$ begin
   end if;
 exception when undefined_object then null;
 end $$;
+
+-- ---------------------------------------------------------------------
+-- 照片（市集貼文、美食店家）：Supabase Storage bucket「photos」
+-- - 所有人都能看（公開讀取）；只有已登入（含匿名登入）的使用者能上傳
+-- - 只能上傳到自己的資料夾：photos/<自己的 uid>/檔名.jpg
+-- - 只收 JPEG／WebP，每張 400KB 以內（前端會先壓到 300KB 以內）
+-- - 防洗版：每人每小時最多 20 張
+-- 可以重複執行。
+-- ---------------------------------------------------------------------
+insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+values ('photos', 'photos', true, 409600, array['image/jpeg', 'image/webp'])
+on conflict (id) do update
+  set public = excluded.public, file_size_limit = excluded.file_size_limit, allowed_mime_types = excluded.allowed_mime_types;
+
+-- 這一小時內上傳了幾張（security definer：不受 storage.objects 的權限規則影響）
+create or replace function public.photo_quota_ok() returns boolean
+language sql stable security definer set search_path = public, storage as $$
+  select public.is_admin() or (
+    select count(*) from storage.objects
+     where bucket_id = 'photos' and owner = auth.uid() and created_at > now() - interval '1 hour'
+  ) < 20;
+$$;
+grant execute on function public.photo_quota_ok() to authenticated;
+
+drop policy if exists photos_read on storage.objects;
+create policy photos_read on storage.objects for select to public
+  using (bucket_id = 'photos');
+
+drop policy if exists photos_insert on storage.objects;
+create policy photos_insert on storage.objects for insert to authenticated
+  with check (
+    bucket_id = 'photos'
+    and (storage.foldername(name))[1] = auth.uid()::text
+    and public.photo_quota_ok()
+  );
+
+-- 只能刪除自己上傳的照片（管理員可以刪任何照片）
+drop policy if exists photos_delete on storage.objects;
+create policy photos_delete on storage.objects for delete to authenticated
+  using (bucket_id = 'photos' and (owner = auth.uid() or public.is_admin()));
