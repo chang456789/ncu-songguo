@@ -99,6 +99,15 @@
     "AI 功能還沒啟用，聊天照常可以使用。":"AI features aren't available yet — chat works as usual.", "AI 使用量太多了，請稍後再試。":"AI is busy right now. Please try again later.",
     "AI 回應逾時，請稍後再試。":"AI took too long. Please try again later.",
     "AI 暫時無法使用，請稍後再試。":"AI is unavailable right now. Please try again later.",
+    // ---------- content safety (web/moderation.js) ----------
+    "為了大家的安全，短網址和 LINE 加好友連結不能發在這裡。請改貼完整網址，或私訊對方。":"For everyone's safety, short links and LINE add-friend links can't be posted here. Paste the full link, or send a private message.",
+    "訊息看起來像投資或詐騙宣傳，已擋下。如果是誤會，請換個說法再試。":"This looks like an investment or scam promotion, so it was blocked. If that's a mistake, try rephrasing.",
+    "訊息含有攻擊性的字眼，請友善發言。":"Your message contains abusive language. Please be kind.",
+    "發言太快了，休息 30 秒再繼續聊吧。":"You're sending messages too fast — take a 30-second break.",
+    "這則和你上一則一模一樣，請不要重複發送。":"This is the same as your last message. Please don't repeat it.",
+    "訊息裡有比較不禮貌的字眼，要不要修改一下？":"Your message has some rude words — want to edit it?",
+    "正在檢查連結安全…":"Checking the link…", "仍要送出":"Send anyway",
+    "這個連結看起來可能是詐騙或廣告，已擋下。如果是誤會，請改用文字說明。":"This link looks like it may be a scam or spam, so it was blocked. If that's a mistake, describe it in words instead.",
     // ---------- event AI: tags, free-time matching (web/events-ai.js) ----------
     "講座":"Talk", "表演":"Performance", "展覽":"Exhibition", "社交":"Social", "練英文":"English practice", "依標籤篩選":"Filter by tag",
     "有空檔嗎？":"Got some free time?", "AI 從時間剛好的活動裡幫你挑":"AI picks from events that fit your time",

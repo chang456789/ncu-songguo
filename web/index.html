@@ -342,6 +342,14 @@ nav.bottom{display:none}
 .lobby-ai-topics .topic{border:1px solid var(--line);background:var(--sunk);color:var(--ink);border-radius:14px;padding:8px 12px;font-size:14px;text-align:left;max-width:100%;overflow-wrap:anywhere}
 .lobby-ai-topics .topic:hover{border-color:var(--pine)}
 @media (max-width:720px){ .lobby-ai-bar,.lobby-ai-idle,.lobby-ai-card{margin-inline:12px} }
+/* 內容安全提示（web/moderation.js） */
+.mod-note{display:flex;flex-wrap:wrap;gap:6px 12px;align-items:center;font-size:13px;border-radius:12px;padding:8px 12px;background:var(--sunk);color:var(--ink);border-left:3px solid var(--muted)}
+.mod-note:empty{display:none}
+.mod-note span{flex:1 1 200px;min-width:0;overflow-wrap:anywhere}
+.mod-note.block{border-left-color:#d64545}
+.mod-note.warn{border-left-color:#d99a00}
+.mod-note .linkbtn{font-size:13px}
+@media (max-width:720px){ .wrap>.stack>.mod-note,.wrap>.stack>[data-live="lobbymod"]{margin-inline:12px} }
 .cform{display:flex;gap:8px;align-items:center}
 .cform input{flex:1;min-width:0;border-radius:999px!important;background:var(--sunk)!important;border:0!important;padding:9px 14px!important}
 
@@ -553,6 +561,7 @@ a.ghost{color:var(--ink)}
 <script src="/assistant.js"></script>
 <script src="/events-ai.js"></script>
 <script src="/chatroom-ai.js"></script>
+<script src="/moderation.js"></script>
 
 
 <script>
@@ -668,6 +677,9 @@ EVAI.init({ events:()=>upcomingEvents(), when:e=>evWhen(e), lang:()=>I18N.lang, 
 const CHAI = window.sgChatroomAI || { init(){}, panel:()=>h("div") };
 CHAI.init({ lobby:()=>S.lobby, lang:()=>I18N.lang, onChange:()=>renderKeep(),
   fill:text=>{ const el = document.getElementById("lobby-in"); if (!el || el.disabled) return; el.value = text; el.focus(); el.setSelectionRange(text.length, text.length); } });
+// 內容安全過濾（web/moderation.js）：即時大廳與留言送出前先用規則檢查
+const MOD = window.sgModeration || { init(){}, guard:async()=>true, note:()=>h("div") };
+MOD.init({ onChange:()=>renderKeep() });
 function switchLang(l){ I18N.setLang(l); S.dirty = false; render(); }
 
 const RIDE_PLACES = ["中央大學（正門）","中央大學（後門）","中壢火車站","高鐵桃園站","台北車站","松山機場","桃園機場","大江購物中心","中原商圈・中原夜市","龍岡・忠貞市場","中壢觀光夜市","青埔","其他"];
@@ -1595,11 +1607,15 @@ function thread(path){
     h("p",{class:"muted small",style:"margin:0"},"還沒有留言，說點什麼吧。")); }));
   if (canPost()){
     const inp = h("input",{type:"text",id:"cmt-in",maxlength:"500",placeholder:"寫留言…","aria-label":"留言內容",autocomplete:"off"});
-    const send = async () => { const body = inp.value.trim(); if (!body) return; inp.disabled = true;
-      try { await S.db.collection(path).add({ body, nick:S.nick, uid:S.uid||"", ts:Date.now() }); inp.value=""; } catch(e){ toast(writeErr(e)); }
-      inp.disabled = false; inp.focus(); };
+    // 重繪後輸入框會換成新的，所以每次都用 id 重新找
+    const cur = () => document.getElementById("cmt-in") || inp;
+    const send = async (force) => { const body = cur().value.trim(); if (!body) return; cur().disabled = true;
+      const mine = S.comments.filter(c => c.uid && c.uid === S.uid);
+      if (!(await MOD.guard("cmt", body, mine, () => send(true), force === true))){ cur().disabled = false; cur().focus(); return; }
+      try { await S.db.collection(path).add({ body, nick:S.nick, uid:S.uid||"", ts:Date.now() }); cur().value=""; } catch(e){ toast(writeErr(e)); }
+      cur().disabled = false; cur().focus(); };
     inp.addEventListener("keydown", e => { if (e.key==="Enter" && !e.isComposing && e.keyCode !== 229) send(); });
-    box.append(h("div",{class:"cform"}, avatar(S.nick,"sm"), inp, h("button",{class:"primary",onclick:send},"送出")));
+    box.append(h("div",{class:"cform"}, avatar(S.nick,"sm"), inp, h("button",{class:"primary",onclick:()=>send()},"送出")), live("cmtmod", () => MOD.note("cmt")));
   }
   return box;
 }
@@ -2095,9 +2111,13 @@ function forumPage(){
   }
   const here = onlinePeople().filter(p => p.presence?.where === "forum").length;
   const inp = h("input",{type:"text",id:"lobby-in",autocomplete:"off",maxlength:"300",placeholder: canPost() ? `以「${S.nick}」發言…` : "目前無法發言","aria-label":"大廳訊息",disabled:!canPost()});
-  const send = async () => { const body = inp.value.trim(); if (!body) return; inp.disabled = true;
-    try { await S.db.collection("lobby").add({ body, nick:S.nick, uid:S.uid||"", ts:Date.now() }); inp.value = ""; } catch(e){ toast(writeErr(e)); }
-    inp.disabled = false; inp.focus(); };
+  // 重繪後輸入框會換成新的，所以每次都用 id 重新找
+  const cur = () => document.getElementById("lobby-in") || inp;
+  const send = async (force) => { const body = cur().value.trim(); if (!body) return; cur().disabled = true;
+    const mine = (S.lobby || []).filter(m => m.uid && m.uid === S.uid);
+    if (!(await MOD.guard("lobby", body, mine, () => send(true), force === true))){ cur().disabled = false; cur().focus(); return; }
+    try { await S.db.collection("lobby").add({ body, nick:S.nick, uid:S.uid||"", ts:Date.now() }); cur().value = ""; } catch(e){ toast(writeErr(e)); }
+    cur().disabled = false; cur().focus(); };
   inp.addEventListener("keydown", e => { if (e.key==="Enter" && !e.isComposing && e.keyCode !== 229) send(); });
   return h("div",{class:"stack"}, segBar,
     h("div",{class:"sphead"}, h("h1",{},"即時大廳"), h("p",{}, "全校共用的聊天大廳，下課無聊就進來聊。", S.room ? `現在有 ${Math.max(here,1)} 人在大廳。` : "")),
@@ -2111,7 +2131,8 @@ function forumPage(){
               mine || S.isOwner ? h("button",{class:"linkbtn",style:"font-size:12px",onclick:async()=>{ try { await S.db.doc("lobby/"+m.id).delete(); } catch(e){ toast(writeErr(e)); } }},"刪除") : null),
             h("div",{class:"lbody",translate:"no"}, m.body))); }) :
       h("p",{class:"muted small",style:"margin:0"}, S.dbState==="loading" ? "載入中…" : "大廳還很安靜，說聲嗨吧。")); }),
-    h("div",{class:"cform"}, inp, h("button",{class:"primary",disabled:!canPost(),onclick:send},"送出")),
+    h("div",{class:"cform"}, inp, h("button",{class:"primary",disabled:!canPost(),onclick:()=>send()},"送出")),
+    live("lobbymod", () => MOD.note("lobby")),
     h("p",{class:"board-note"},"請友善發言。不當內容管理員會刪除；每人每小時最多 120 則。"));
 }
 
