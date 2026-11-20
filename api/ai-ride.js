@@ -71,7 +71,7 @@ module.exports = async (req, res) => {
     const r = await chat([
       { role: "system", content: task.system(lang) },
       { role: "user", content: payloadText },
-    ], { json: true, maxTokens: task.maxTokens, temperature: 0.2, timeoutMs: 18000 });
+    ], { json: true, maxTokens: task.maxTokens, temperature: 0.2, timeoutMs: 18000, task: body.task });
     const data = r.json ? task.clean(r.json, body.payload) : null;
     if (!data) return fail(502, "ai_error", "AI 回覆的格式不對，請稍後再試");
     return res.status(200).json({ ok: true, data });
