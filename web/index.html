@@ -633,7 +633,8 @@ AI.init({ context:()=>aiContext(), lang:()=>I18N.lang, tr:s=>I18N.tr(s), transla
   visible:()=>!!S.nick && !["food","nav"].includes(S.tab),   // 地圖頁右下角已有按鈕，避免重疊
   openRides:()=>{ S.space.transit="rides"; saveSpace(); go("transit"); } });
 // 松果 AI 智慧交通與共乘（web/ride-ai.js）：交通精算師等功能，數字由程式計算、AI 只寫說明
-const RA = window.sgRideAI || { init(){}, commuteCard:()=>null, isPick:()=>false, filterRides:l=>l, filterBar:()=>null, setRideFilter(){} };
+const RA = window.sgRideAI || { init(){}, commuteCard:()=>null, isPick:()=>false, filterRides:l=>l, filterBar:()=>null, setRideFilter(){},
+  rideBox:()=>null, rideBadges:()=>null, TAGS:[], LUGGAGE:{}, myTags:()=>[] };
 RA.init({ h, tr:s=>I18N.tr(s), lang:()=>I18N.lang, renderKeep:()=>renderKeep(), canPost:()=>canPost(), uid:()=>S.uid,
   bus:BUS, nowMin:()=>nowMin(), fromMin:m=>fromMin(m),
   trips:d=>trips(d,"out",dayCtx()).filter(x => !x.offBoard), tomorrow:d=>nextTrips(d,"out",1).tomorrow,
@@ -641,10 +642,11 @@ RA.init({ h, tr:s=>I18N.tr(s), lang:()=>I18N.lang, renderKeep:()=>renderKeep(), 
   weather:()=>{ const w = loadWeather(); return w.data ? upcomingHours(w.data)[0] || null : null; },
   goBus:d=>{ S.busDest=d; LS.set("pc.busDest",d); S.busDir="out"; LS.set("pc.busDir","out"); S.space.transit="bus"; saveSpace(); go("transit"); },
   goRides:f=>{ RA.setRideFilter(f); S.space.transit="rides"; saveSpace(); go("transit"); },
-  openRide:m=>openModal({ k:"ride", ...m }) });
+  openRide:m=>openModal({ k:"ride", ...m }), rideCard:r=>rideCard(r), live:(k,fn)=>live(k,fn) });
 function switchLang(l){ I18N.setLang(l); S.dirty = false; render(); }
 
 const RIDE_PLACES = ["中央大學（正門）","中央大學（後門）","中壢火車站","高鐵桃園站","台北車站","松山機場","桃園機場","大江購物中心","中原商圈・中原夜市","龍岡・忠貞市場","中壢觀光夜市","青埔","其他"];
+RA.init({ places: RIDE_PLACES.filter(p => p !== "其他") });
 
 /* ---------- spaces: every board or hub a post can live in ---------- */
 const SPACES = {};
@@ -1380,7 +1382,7 @@ function transitPage(){
   const rides = RA.filterRides(upcomingRides());
   return h("div",{class:"stack"}, top,
     h("div",{class:"sphead"}, h("h1",{},"拼車"), h("p",{},"公車少又擠，就揪人一起搭計程車。開團寫好時間、起訖和人數，同路的人按「加入」就能占位，留言區直接討論集合點。")),
-    statusBanner(), RA.filterBar(),
+    statusBanner(), RA.rideBox(), RA.filterBar(),
     h("div",{class:"bar"}, h("span",{class:"muted small"}, `${rides.length} 團即將出發`), h("span",{class:"spacer"}), h("button",{class:"primary",disabled:!canPost(),onclick:()=>openModal({k:"ride"})},"開一團")),
     rides.length ? h("div",{class:"stack"}, rides.map(rideCard)) :
       h("div",{class:"empty"}, h("h3",{},"目前沒有人揪車"), h("p",{},"週五下午回家、週日晚上回學校最常有人一起搭。開第一團吧。"),
@@ -1396,7 +1398,7 @@ function rideCard(r){
   const isOpen = S.open === "ride:"+r.id;
   const card = h("article",{class:"card ride"},
     h("div",{class:"clock"}, h("b",{},w.time), h("small",{},w.day)),
-    h("div",{class:"route"}, h("b",{}, r.from, " → ", r.to), h("small",{}, r.nick, "・", r.split || "車資平分", r.note ? `・${r.note}` : "")),
+    h("div",{class:"route"}, h("b",{}, r.from, " → ", r.to), h("small",{}, r.nick, "・", r.split || "車資平分", r.note ? `・${r.note}` : "", RA.rideBadges(r))),
     h("div",{class:"side",style:"display:flex;flex-direction:column;align-items:flex-end;gap:4px"},
       h("span",{class:"seats","aria-label":`${taken}/${total} 人`}, Array.from({length:total},(_,i)=>h("i",{class:i<taken?"on":""}))),
       h("small",{class:"muted mono"}, left ? `剩 ${left} 位` : "已滿")),
@@ -2611,20 +2613,27 @@ function rideSheet(){
   const sel = (id, v) => h("select",{id}, RIDE_PLACES.map(p => h("option",{selected:p===v},p)));
   const from = sel("r-from", m.from || "中央大學（後門）"), to = sel("r-to", m.to || "中壢火車站");
   const when = h("input",{type:"datetime-local",id:"r-when",value:local});
-  const seats = h("select",{id:"r-seats"}, [2,3,4,5,6].map(n => h("option",{value:n,selected:n===4}, `${n} 人（含我）`)));
-  const split = h("select",{id:"r-split"}, ["車資平分","先到先付・現場再算","我出車・每人固定費用"].map(s => h("option",{},s)));
+  const seats = h("select",{id:"r-seats"}, [2,3,4,5,6].map(n => h("option",{value:n,selected:n===(m.seats||4)}, `${n} 人（含我）`)));
+  const split = h("select",{id:"r-split"}, ["車資平分","先到先付・現場再算","我出車・每人固定費用"].map(s => h("option",{selected:s===m.split},s)));
+  // 行李與默契標籤（web/ride-ai.js）：AI 會先幫忙選好，也可以手動改
+  const lug = h("select",{id:"r-lug"}, Object.entries(RA.LUGGAGE).map(([v,l]) => h("option",{value:v,selected:(m.luggage||"none")===v},l)));
+  const tagSel = new Set(m.tags || RA.myTags());
+  const tagBox = h("div",{class:"chips"}, RA.TAGS.map(t => { const b = h("button",{type:"button",class:"chip","aria-pressed":tagSel.has(t)?"true":"false",
+    onclick:()=>{ tagSel.has(t) ? tagSel.delete(t) : tagSel.add(t); b.setAttribute("aria-pressed", tagSel.has(t)?"true":"false"); }}, t); return b; }));
   const note = h("input",{type:"text",id:"r-note",maxlength:"60",placeholder:"例：在後門 7-11 集合、有大行李",value:m.note||""});
   const btn = h("button",{class:"primary",onclick:async()=>{
     const ts = new Date(when.value).getTime();
     if (!ts || ts < Date.now()-5*60e3) return fail(err,"出發時間要在現在之後。");
     if (from.value===to.value) return fail(err,"出發地和目的地不能一樣。");
     btn.disabled = true;
-    try { await S.db.collection("rides").add({ from:from.value, to:to.value, when:ts, seats:+seats.value, split:split.value, note:note.value.trim(), nick:S.nick, uid:S.uid||"", ts:Date.now() }); closeModal(); toast("已開團"); }
+    try { await S.db.collection("rides").add({ from:from.value, to:to.value, when:ts, seats:+seats.value, split:split.value, note:note.value.trim(), luggage:lug.value, tags:[...tagSel], nick:S.nick, uid:S.uid||"", ts:Date.now() }); closeModal(); toast("已開團"); }
     catch(e){ fail(err, writeErr(e)); btn.disabled=false; } }},"開團");
   return sheet("開一團拼車",
+    m.ai ? h("div",{class:"info ra-form-ai"},"AI 已幫你填好，確認後再發布") : null,
     h("div",{class:"frow"}, h("label",{class:"f",for:"r-from"},"出發",from), h("label",{class:"f",for:"r-to"},"目的地",to)),
     h("div",{class:"frow"}, h("label",{class:"f",for:"r-when"},"出發時間",when), h("label",{class:"f",for:"r-seats"},"總人數",seats)),
-    h("label",{class:"f",for:"r-split"},"車資",split),
+    h("div",{class:"frow"}, h("label",{class:"f",for:"r-split"},"車資",split), h("label",{class:"f",for:"r-lug"},"行李",lug)),
+    h("div",{class:"f"}, h("span",{},"默契標籤", h("small",{}," 讓同車的人知道你的習慣")), tagBox),
     h("label",{class:"f",for:"r-note"},"備註（選填）",note),
     h("p",{class:"muted small",style:"margin:0"},"為了安全，請在校內或人多的地方集合；不要在公開留言區留下電話，需要時用私訊交換。"),
     err, foot(btn));

@@ -352,6 +352,151 @@
       h("button", { type: "button", class: "linkbtn", onclick: () => { rideFilter = null; A.renderKeep(); } }, "顯示全部"));
   }
 
+  /* =================================================================
+     功能二：自然語言發布與搜尋拼車（task: parse_ride）＋ 默契偏好
+     ================================================================= */
+  const TAGS = ["想安靜補眠", "可以聊天", "行李較多", "準時優先"];
+  const LUGGAGE = { none: "沒有行李", light: "小行李", heavy: "大行李" };
+  function myTags(){ try { const v = JSON.parse(localStorage.getItem("ra.tags") || "[]"); return Array.isArray(v) ? v.filter(t => TAGS.includes(t)) : []; } catch { return []; } }
+  function toggleTag(t){ const s = new Set(myTags()); s.has(t) ? s.delete(t) : s.add(t); LS.set("ra.tags", JSON.stringify([...s])); A.renderKeep(); }
+  const EXAMPLES = ["明早 8:20 後門去中壢火車站，2 人有大行李", "今晚 19:00 宵夜街出發去高鐵站", "找週五下午回台北的車"];
+  const FIELD = { from: "出發地", to: "目的地", when: "出發時間" };
+  const PS = { status: null, data: null, pending: null, text: "" };
+
+  const pad2 = n => String(n).padStart(2, "0");
+  const localISO = d => `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}T${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
+  const WK = ["日", "一", "二", "三", "四", "五", "六"];
+  // 地點分組：校內正門、後門算同一區；台北車站、松山機場算「台北」
+  const group = p => /中央大學/.test(p || "") ? "ncu" : /台北|松山/.test(p || "") ? "tpe" : (p || "");
+  const rideTags = r => Array.isArray(r.tags) ? r.tags.filter(t => TAGS.includes(t)) : [];
+  const rideLuggage = r => LUGGAGE[r.luggage] ? r.luggage : "none";
+
+  // 雙方標籤可能衝突的提醒（純規則）
+  function conflicts(r, mine, myLuggage){
+    const theirs = rideTags(r), out = [];
+    const iHeavy = myLuggage === "heavy" || mine.includes("行李較多");
+    const theyHeavy = rideLuggage(r) === "heavy" || theirs.includes("行李較多");
+    if (theirs.includes("準時優先") && iHeavy) out.push("對方準時優先，你有大行李，記得提早到集合點");
+    if (mine.includes("準時優先") && theyHeavy) out.push("對方行李較多，上車可能多花一點時間");
+    if (iHeavy && theyHeavy) out.push("兩邊都有大行李，後車廂可能放不下");
+    if ((theirs.includes("想安靜補眠") && mine.includes("可以聊天")) || (theirs.includes("可以聊天") && mine.includes("想安靜補眠")))
+      out.push("一邊想補眠、一邊想聊天，上車前先說一聲");
+    return out;
+  }
+  // 依 AI 解析出的條件篩選、排序現有的團（程式做，不靠 AI）
+  function matchRides(d){
+    const when = d.when ? new Date(d.when).getTime() : null;
+    return A.rides().filter(r => A.seatsLeft(r) > 0 && r.uid !== A.uid())
+      .filter(r => !d.to || group(r.to) === group(d.to))
+      .filter(r => !d.from || group(r.from) === group(d.from))
+      .filter(r => when == null || Math.abs(r.when - when) <= 3 * 3600e3)
+      .sort((a, b) => when == null ? a.when - b.when : Math.abs(a.when - when) - Math.abs(b.when - when))
+      .slice(0, 8);
+  }
+  function fallbackReason(r, d){
+    const parts = [];
+    if (d.to) parts.push(["同樣到 ", r.to]);
+    if (d.when){ const diff = Math.round(Math.abs(r.when - new Date(d.when).getTime()) / 60e3); parts.push(diff ? ["時間差 ", diff, " 分鐘"] : ["時間剛好"]); }
+    parts.push(["剩 ", A.seatsLeft(r), " 位"]);
+    return parts.flatMap((p, i) => i ? ["・", ...p] : p);
+  }
+
+  function formFrom(d){
+    return { from: d.from, to: d.to, when: new Date(d.when).getTime(), seats: d.seats || 4, luggage: d.luggage, tags: [...new Set([...d.tags, ...myTags()])],
+      split: d.split, note: d.luggage === "heavy" ? "有大行李" : "", ai: true };
+  }
+  async function submitNL(raw){
+    const text = String(raw || "").trim().slice(0, 200);
+    if (!text || PS.status === "loading") return;
+    const combined = PS.pending ? `${PS.pending}；${text}` : text;
+    const now = new Date();
+    const cands = A.rides().filter(r => r.uid !== A.uid()).slice(0, 15).map(r => ({ id: r.id, from: r.from, to: r.to, when: localISO(new Date(r.when)),
+      seatsLeft: A.seatsLeft(r), luggage: rideLuggage(r), tags: rideTags(r) }));
+    const payload = { text: combined, now: `${localISO(now)}（週${WK[now.getDay()]}）`, places: A.places, tagOptions: TAGS, myTags: myTags(), rides: cands };
+    PS.text = combined; PS.status = "loading"; PS.data = null; A.renderKeep();
+    const r = await callAI("parse_ride", payload, { t: combined, rides: cands.map(c => c.id + c.seatsLeft), tags: myTags(), day: localISO(now).slice(0, 13) });
+    PS.status = r.status;
+    if (r.status !== "ok"){ A.renderKeep(); return; }
+    const d = r.data; PS.data = d;
+    if (d.intent === "offer" && d.missing_fields.length){ PS.pending = combined; }
+    else { PS.pending = null; }
+    const el = document.getElementById("ra-nl");
+    if (el){ el.value = ""; el.placeholder = tr(PS.pending ? "補一句就好，例如「明天 8:20」" : "例：明早 8:20 後門去中壢火車站，2 人"); }
+    if (d.intent === "offer" && !d.missing_fields.length){
+      if (d.from === d.to){ d.missing_fields = ["to"]; PS.pending = combined; A.renderKeep(); return; }
+      A.renderKeep(); A.openRide(formFrom(d)); return;
+    }
+    A.renderKeep();
+  }
+  function resetNL(){ PS.status = null; PS.data = null; PS.pending = null; PS.text = ""; const el = document.getElementById("ra-nl"); if (el) el.placeholder = tr("例：明早 8:20 後門去中壢火車站，2 人"); A.renderKeep(); }
+
+  function rideBox(){
+    const h = A.h; if (!h) return null;
+    const mine = myTags();
+    const input = h("input", { type: "text", id: "ra-nl", maxlength: "200", autocomplete: "off", "aria-label": "用一句話描述行程",
+      placeholder: PS.pending ? "補一句就好，例如「明天 8:20」" : "例：明早 8:20 後門去中壢火車站，2 人" });
+    input.addEventListener("keydown", e => { if (e.key === "Enter" && !e.isComposing && e.keyCode !== 229) submitNL(input.value); });
+    // 輸入框以外的部分用 live() 包起來：使用者還在輸入框裡（剛按 Enter）時，網站只會更新 live 區塊，結果才看得到
+    return h("section", { class: "card ra-card" },
+      h("div", { class: "ra-head" }, h("div", {}, h("b", {}, "一句話找車・開團"), h("span", { class: "small muted" }, "用說的就好，AI 幫你填好開團表單，或從現有的團挑出適合你的"))),
+      h("div", { class: "ra-nl" }, input, h("button", { type: "button", class: "primary", onclick: () => submitNL(document.getElementById("ra-nl").value) }, "送出")),
+      A.live ? A.live("ra-nl-res", rideBoxBody) : rideBoxBody());
+  }
+  function rideBoxBody(){
+    const h = A.h, mine = myTags();
+    const loading = PS.status === "loading";
+    const out = [
+      PS.pending || PS.data ? null : h("div", { class: "ra-ex" }, EXAMPLES.map(x => h("button", { type: "button", class: "ra-sugg", onclick: () => submitNL(tr(x)) }, tr(x)))),
+      h("div", { class: "ra-prefs" }, h("span", { class: "small muted" }, "我的默契偏好"),
+        TAGS.map(t => h("button", { type: "button", class: "chip", "aria-pressed": mine.includes(t) ? "true" : "false", onclick: () => toggleTag(t) }, t))),
+    ];
+    if (loading) out.push(h("p", { class: "ra-state small", role: "status" }, h("i", { class: "ra-spin" }), "AI 正在理解你的行程…"));
+    else if (PS.status && PS.status !== "ok"){
+      out.push(h("div", { class: "ra-state small warn" }, {
+        not_configured: "AI 尚未設定，請直接按「開一團」手動填寫，或瀏覽下面的列表。",
+        rate_limited: "AI 使用太頻繁了，請等一分鐘再試；也可以直接按「開一團」手動填寫。",
+        timeout: "AI 回應逾時，請再試一次，或直接按「開一團」手動填寫。",
+        error: "AI 暫時無法使用，請直接按「開一團」手動填寫，或瀏覽下面的列表。" }[PS.status],
+        PS.status !== "not_configured" ? h("button", { type: "button", class: "linkbtn", onclick: () => { const t = PS.text; PS.pending = null; submitNL(t); } }, "再試一次") : null));
+    }
+    const d = PS.data;
+    if (!loading && PS.status === "ok" && d){
+      const got = h("p", { class: "small muted ra-got" }, "AI 理解的內容：",
+        d.from ? [" ", d.from] : null, d.to ? [" → ", d.to] : null,
+        d.when ? ["・", d.when.replace("T", " ")] : null, d.luggage !== "none" ? ["・", LUGGAGE[d.luggage]] : null,
+        d.tags.length ? ["・", d.tags.map((t, i) => i ? ["、", t] : t)] : null);
+      if (PS.pending){
+        out.push(h("div", { class: "ra-ask" }, h("b", {}, "還差一點！"),
+          h("span", {}, "還不知道 ", d.missing_fields.map((f, i) => [i ? "、" : "", FIELD[f]]), "。", "在上面補一句就好。"), got,
+          h("button", { type: "button", class: "linkbtn", onclick: resetNL }, "重新開始")));
+      } else if (d.intent === "offer"){
+        out.push(h("div", { class: "ra-ask" }, h("span", {}, "已幫你打開開團表單，確認後再發布。"), got,
+          h("button", { type: "button", class: "linkbtn", onclick: () => A.openRide(formFrom(d)) }, "再打開一次")));
+      } else {
+        const list = matchRides(d);
+        const canOpen = d.from && d.to && d.when && d.from !== d.to;
+        out.push(h("div", { class: "ra-results" },
+          h("div", { class: "ra-res-head" }, h("b", {}, list.length ? ["找到 ", list.length, " 團適合你"] : "目前沒有符合的團"),
+            h("button", { type: "button", class: "linkbtn", onclick: resetNL }, "清除")),
+          got,
+          list.map(r => { const why = d.reasons[r.id]; const warn = conflicts(r, mine, d.luggage);
+            return h("div", { class: "ra-match" },
+              h("p", { class: "ra-why1" }, h("b", {}, "為什麼適合你："), why ? h("span", { translate: "no" }, why) : h("span", {}, fallbackReason(r, d))),
+              warn.map(w => h("p", { class: "ra-conf" }, "⚠ ", w)),
+              A.rideCard(r)); }),
+          canOpen ? h("div", { class: "ra-acts" }, h("span", { class: "small muted" }, list.length ? "都不合適？" : "沒有人揪？自己開一團："),
+            h("button", { type: "button", class: "primary", disabled: !A.canPost(), onclick: () => A.openRide(formFrom(d)) }, "開一團（已幫你填好）")) : null));
+      }
+    }
+    return h("div", { class: "ra-body" }, out);
+  }
+  // 拼車卡片上顯示行李與默契標籤（舊資料沒有這兩個欄位時什麼都不顯示）
+  function rideBadges(r){
+    const h = A.h, lug = rideLuggage(r), tags = rideTags(r);
+    if (lug === "none" && !tags.length) return null;
+    return h("span", { class: "ra-badges" }, lug !== "none" ? h("span", { class: "ra-tagchip lug" }, LUGGAGE[lug]) : null, tags.map(t => h("span", { class: "ra-tagchip" }, t)));
+  }
+
   /* ---------- 樣式（只用網站的 CSS 變數） ---------- */
   const css = `
 .ra-card{display:flex;flex-direction:column;gap:12px}
@@ -400,6 +545,27 @@
 .ra-filter{display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:var(--sunk);border-radius:10px;padding:8px 12px;font-size:14px}
 .trow.ra-pick{background:var(--sunk);box-shadow:inset 3px 0 0 var(--pine);border-radius:8px}
 .ra-pick-tag{font-size:11px;font-weight:700;color:var(--pine);white-space:nowrap}
+.ra-nl{display:flex;gap:8px}
+.ra-nl input{flex:1;min-width:0}
+.ra-ex{display:flex;flex-direction:column;gap:6px;align-items:flex-start}
+.ra-sugg{background:var(--sunk);color:var(--ink);border:1px solid var(--line);border-radius:12px;padding:7px 12px;font-size:14px;text-align:left;cursor:pointer;line-height:1.35;max-width:100%}
+.ra-sugg:hover{border-color:var(--pine)}
+.ra-prefs{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.ra-prefs .chip{font-size:13px}
+.ra-ask{background:var(--sunk);border-radius:12px;padding:10px 14px;display:flex;flex-direction:column;gap:4px;align-items:flex-start;font-size:14px}
+.ra-got{margin:0;overflow-wrap:anywhere}
+.ra-results{display:flex;flex-direction:column;gap:10px}
+.ra-body{display:flex;flex-direction:column;gap:12px}
+.ra-res-head{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.ra-match{display:flex;flex-direction:column;gap:4px}
+.ra-match p{margin:0}
+.ra-why1{font-size:14px;color:var(--pine)}
+.ra-why1 b{color:var(--ink);margin-right:4px}
+.ra-conf{font-size:13px;color:var(--bus);background:var(--bus-soft);border-radius:8px;padding:4px 10px}
+.ra-badges{display:inline-flex;flex-wrap:wrap;gap:4px;margin-left:6px;vertical-align:middle}
+.ra-tagchip{font-size:11.5px;font-weight:600;border-radius:999px;padding:1px 8px;background:var(--sunk);color:var(--muted);border:1px solid var(--line);white-space:nowrap}
+.ra-tagchip.lug{color:var(--bus);border-color:var(--bus)}
+.ra-form-ai{border-left:4px solid var(--pine)}
 @media (max-width:520px){.ra-hero-t{font-size:18px}.ra-nums b{font-size:16px}}
 @media (prefers-reduced-motion:reduce){.ra-spin{animation:none}}
 `;
@@ -408,6 +574,7 @@
   window.sgRideAI = {
     init(opts){ A = { ...A, ...opts }; },
     callAI, commuteCard, isPick, filterRides, filterBar, setRideFilter,
+    TAGS, LUGGAGE, myTags, rideBox, rideBadges, _parse: PS,
     _compute: () => { CM.result = compute(); return CM.result; }, _state: CM, _payload: () => CM.result && payloadOf(CM.result),
   };
 })();
