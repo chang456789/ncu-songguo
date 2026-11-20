@@ -65,6 +65,7 @@ async function callModel(messages, opts) {
     } catch (e) {
       if (e.status === 401 || e.status === 403 || e.status === 429) throw e;
       console.error("github models primary failed, retry legacy:", e.message);
+      if (e.message === "fetch failed") throw e;
       j = await post("https://models.inference.ai.azure.com/chat/completions", auth, { ...body, model: model.replace(/^[^/]+\//, "") }, opts);
     }
   }
@@ -76,7 +77,13 @@ async function callModel(messages, opts) {
 
 // 送出請求並確認回應是模型的 JSON；不是的話丟出含狀態碼與前 200 字的錯誤（不含使用者內容）
 async function post(url, extraHeaders, body, opts) {
-  const r = await fetch(url, { method: "POST", headers: { "content-type": "application/json", accept: "application/json", ...extraHeaders }, body: JSON.stringify(body), signal: AbortSignal.timeout(opts.timeoutMs || 20000) });
+  // redirect:"manual"：fetch 遇到 301/302 會把 POST 改成 GET，打到只回「OK」的頁面；這裡自己用 POST 跟過去
+  const init = { method: "POST", redirect: "manual", headers: { "content-type": "application/json", accept: "application/json", "x-github-api-version": "2022-11-28", ...extraHeaders }, body: JSON.stringify(body), signal: AbortSignal.timeout(opts.timeoutMs || 20000) };
+  let r = await fetch(url, init);
+  for (let i = 0; i < 3 && r.status >= 300 && r.status < 400 && r.headers.get("location"); i++) {
+    url = new URL(r.headers.get("location"), url).href;
+    r = await fetch(url, init);
+  }
   const raw = await r.text();
   const host = new URL(url).host;
   if (!r.ok) {
