@@ -72,7 +72,7 @@ module.exports = async (req, res) => {
     { role: "user", content: message },
   ];
   try {
-    const r = await chat(messages, { json: true, maxTokens: 500, temperature: 0.2 });
+    const r = await chat(messages, { json: true, maxTokens: 500, temperature: 0.2, task: "chat" });
     let reply = r.json && typeof r.json.reply === "string" ? r.json.reply.trim() : "";
     // 萬一模型沒照 JSON 格式回，就直接用原始文字
     if (!reply && !r.json) reply = String(r.text || "").trim();
