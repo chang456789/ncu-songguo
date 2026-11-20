@@ -60,7 +60,18 @@ async function callModel(messages, opts) {
   if (p === "openai-compatible") {
     // 任何 OpenAI 相容服務（Groq 等）：AI_BASE_URL 例 https://api.groq.com/openai/v1
     const base = process.env.AI_BASE_URL.trim().replace(/\/+$/, "");
-    j = await post(`${base}/chat/completions`, { authorization: `Bearer ${process.env.AI_API_KEY.trim()}` }, { ...body, model: process.env.AI_MODEL.trim() }, opts);
+    const auth = { authorization: `Bearer ${process.env.AI_API_KEY.trim()}` };
+    try {
+      j = await post(`${base}/chat/completions`, auth, { ...body, model: autoModel || process.env.AI_MODEL.trim() }, opts);
+    } catch (e) {
+      // 模型名稱不能用（404／400）：向服務查詢這把金鑰能用的模型，自動挑一個再試
+      if (e.status !== 404 && e.status !== 400) throw e;
+      const m = await pickModel(base, auth, autoModel || process.env.AI_MODEL.trim());
+      if (!m) throw e;
+      console.error(`AI_MODEL 不能用，自動改用 ${m}`);
+      autoModel = m;
+      j = await post(`${base}/chat/completions`, auth, { ...body, model: m }, opts);
+    }
   } else if (p === "azure") {
     const base = process.env.AZURE_OPENAI_ENDPOINT.trim().replace(/\/+$/, "");
     const url = `${base}/openai/deployments/${encodeURIComponent(process.env.AZURE_OPENAI_DEPLOYMENT.trim())}/chat/completions?api-version=${AZURE_API_VERSION}`;
@@ -83,8 +94,21 @@ async function callModel(messages, opts) {
   return { text, json, provider: p, usage: j.usage || null };
 }
 
+// 自動挑模型（同一個伺服器實例內記住結果）
+let autoModel = null;
+async function pickModel(base, auth, failed) {
+  try {
+    const r = await fetch(`${base}/models`, { headers: auth, signal: AbortSignal.timeout(8000) });
+    const ids = ((await r.json()).data || []).map(x => x.id).filter(x => x && x !== failed);
+    console.log("可用模型：" + ids.join(", "));
+    const pref = ["llama-3.3-70b-versatile", "openai/gpt-oss-120b", "llama-3.1-8b-instant", "openai/gpt-oss-20b"];
+    return pref.find(x => ids.includes(x)) || ids.find(x => /llama|gpt|qwen|gemma|mistral/i.test(x) && !/guard|whisper|tts|embed|vision/i.test(x)) || null;
+  } catch { return null; }
+}
+
 // 送出請求並確認回應是模型的 JSON；不是的話丟出含狀態碼與前 200 字的錯誤（不含使用者內容）
 async function post(url, extraHeaders, body, opts) {
+  if (/gpt-oss/.test(body.model || "")) body = { ...body, reasoning_effort: "low" }; // 推理模型：少想一點，避免回覆被截斷
   const r = await fetch(url, { method: "POST", headers: { "content-type": "application/json", accept: "application/json", ...extraHeaders }, body: JSON.stringify(body), signal: AbortSignal.timeout(opts.timeoutMs || 20000) });
   const raw = await r.text();
   const host = new URL(url).host;
