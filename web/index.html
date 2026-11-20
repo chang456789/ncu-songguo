@@ -11,11 +11,14 @@
 <link rel="manifest" href="/manifest.webmanifest">
 <link rel="icon" type="image/png" href="/icons/icon-192.png">
 <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css">
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
 <style>body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
 <title>松果中大生活通</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<!-- 字型在背景下載，不擋住畫面：先用系統字型顯示，下載完自動換成 Noto Sans TC -->
+<link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap" onload="this.onload=null;this.rel='stylesheet'">
+<noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap"></noscript>
 <style>
 /* Social-app shell. Desktop: left menu | feed (≤620px) | right rail. Phone: top bar + full-bleed feed + bottom bar with a centre "+" button.
    One signature element: the story row, whose rings use the pinecone gradient and show live numbers (next bus, weather, next class). */
@@ -517,6 +520,8 @@ label.f small,div.f small{color:var(--muted);font-weight:400;font-size:13px}
 .map-wrap .map-hint{z-index:600}
 .lm-icon span{display:inline-block;transform:translate(-50%,-50%);white-space:nowrap;font:700 12px var(--f-body);color:var(--ink);background:var(--surface);border-radius:999px;padding:2px 8px;box-shadow:var(--shadow)}
 .leaflet-container{font:inherit;background:var(--map-bg)}
+.map-loading{display:grid;place-items:center;color:var(--muted);background:var(--sunk);font-size:14px}
+.cmt.pending{opacity:.55}
 .leaflet-tooltip{font:500 12px var(--f-body)}
 .map{position:relative;height:min(60vh,460px);min-height:300px;border-radius:var(--r);overflow:hidden;background:var(--map-bg);box-shadow:var(--shadow)}
 @media (max-width:720px){ .map{border-radius:0} }
@@ -578,7 +583,6 @@ a.ghost{color:var(--ink)}
 <body>
 <div id="app"></div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.2/dist/umd/supabase.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="/config.js"></script>
 <script src="/i18n.js"></script>
 <script src="/shim.js"></script>
@@ -1442,8 +1446,12 @@ function eventCard(e){
         mine || (e.community && S.isOwner) ? h("button",{class:"linkbtn",onclick:async()=>{ try { await S.db.doc("events/"+e.docId).delete(); toast("已刪除"); } catch(err){ toast(writeErr(err)); } }},"刪除") : null)));
 }
 async function toggleGoing(e){
+  if (!S.db || !S.uid) return;
+  const had = !!S.going[e.id]?.has(S.uid);
+  flipMine(S.going, e.id, !had); renderKeep();
   const ref = S.db.doc(`going/${e.id}__${S.uid}`);
-  try { if (S.going[e.id]?.has(S.uid)) await ref.delete(); else await ref.set({ event:e.id, uid:S.uid, ts:Date.now() }); } catch(err){ toast(writeErr(err)); }
+  try { if (had) await ref.delete(); else await ref.set({ event:e.id, uid:S.uid, ts:Date.now() }); }
+  catch(err){ flipMine(S.going, e.id, had); renderKeep(); toast(writeErr(err)); }
 }
 const EV_GROUPS = [["ongoing","展覽・進行中"],["today","今天"],["tomorrow","明天"],["week","這週"],["later","之後"]];
 function eventsPage(){
@@ -1807,16 +1815,22 @@ function postCard(p){
   if (isOpen) card.append(thread("posts/"+p.id+"/comments"));
   return card;
 }
+// 按讚、想去：先更新畫面（樂觀更新），寫入失敗再還原並提示
+function flipMine(map, key, on){ const set = (map[key] ||= new Set()); on ? set.add(S.uid) : set.delete(S.uid); }
 async function toggleLike(p){
+  if (!S.db || !S.uid) return;
+  const had = !!S.likes[p.id]?.has(S.uid);
+  flipMine(S.likes, p.id, !had); renderKeep();
   const ref = S.db.doc(`likes/${p.id}__${S.uid}`);
-  try { if (S.likes[p.id]?.has(S.uid)) await ref.delete(); else await ref.set({ post:p.id, uid:S.uid }); } catch(e){ toast(writeErr(e)); }
+  try { if (had) await ref.delete(); else await ref.set({ post:p.id, uid:S.uid }); }
+  catch(e){ flipMine(S.likes, p.id, had); renderKeep(); toast(writeErr(e)); }
 }
 function thread(path){
   const box = h("div",{class:"thread"});
   const cKey = c => "cmt:"+path+":"+c.ts+":"+(c.uid||"");
   box.append(live("cmts", () => { const trAll = S.comments.filter(c => TR.needs(c.body)); return h("div",{class:"stack",style:"gap:8px"},
     trAll.length > 1 ? h("button",{type:"button",class:"linkbtn tr-btn tr-all",onclick:()=>TR.translateItems(trAll.map(c => ({ id:cKey(c), texts:[c.body] })))},"翻譯全部留言") : null,
-    S.comments.length ? S.comments.map(c => { const tv = TR.view(cKey(c), [c.body || ""], { small:true }); return h("div",{class:"cmt"}, avatar(c.nick,"sm"),
+    S.comments.length ? S.comments.map(c => { const tv = TR.view(cKey(c), [c.body || ""], { small:true }); return h("div",{class:"cmt"+(c.pending?" pending":"")}, avatar(c.nick,"sm"),
       h("div",{style:"min-width:0"}, h("div",{class:"bubble",translate:"no"}, h("b",{}, c.nick), h("span",{}, tv.texts[0])), h("div",{class:"when"}, ago(c.ts), tv.button))); }) :
     h("p",{class:"muted small",style:"margin:0"},"還沒有留言，說點什麼吧。")); }));
   if (canPost()){
@@ -1829,8 +1843,11 @@ function thread(path){
       if (!(await MOD.guard("cmt", body, mine, () => send(true), force === true))){ cur().disabled = false; cur().focus(); return; }
       // ② 拼車討論區：發布前隱私提醒（web/privacy.js），選「回去修改」就不送出
       if (path.startsWith("rides/")){ const pv = await PRIV.review([body]); if (!pv){ cur().disabled = false; cur().focus(); return; } body = pv[0]; }
-      try { await S.db.collection(path).add({ body, nick:S.nick, uid:S.uid||"", ts:Date.now() }); cur().value=""; } catch(e){ toast(writeErr(e)); }
-      cur().disabled = false; cur().focus(); };
+      // 樂觀更新：留言先出現在列表上（半透明），寫入成功後由資料庫的即時更新取代；失敗就拿掉並把文字放回輸入框
+      const pend = { body, nick:S.nick, uid:S.uid||"", ts:Date.now(), pending:true };
+      S.comments = [...S.comments, pend]; cur().value = ""; cur().disabled = false; cur().focus(); renderKeep();
+      try { await S.db.collection(path).add({ body, nick:S.nick, uid:S.uid||"", ts:pend.ts }); }
+      catch(e){ S.comments = S.comments.filter(c => c !== pend); if (!cur().value) cur().value = body; renderKeep(); toast(writeErr(e)); } };
     inp.addEventListener("keydown", e => { if (e.key==="Enter" && !e.isComposing && e.keyCode !== 229) send(); });
     box.append(h("div",{class:"cform"}, avatar(S.nick,"sm"), inp, h("button",{class:"primary",onclick:()=>send()},"送出")), live("cmtmod", () => MOD.note("cmt")));
   }
@@ -2663,8 +2680,23 @@ function spotSheet(){
    SHARED LEAFLET MAPS (food + nav). Each map element is created once and re-attached on render.
    ===================================================================== */
 const MAPS = {};
+// 地圖套件（Leaflet，約 150 KB）只在美食、導航頁需要時才下載，其他頁面打開會比較快
+const LEAFLET = { css:"https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css", js:"https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js" };
+let leafletP = null, leafletFailed = false;
+function loadLeaflet(){
+  if (window.L) return Promise.resolve();
+  if (!leafletP) leafletP = new Promise((ok, no) => {
+    const css = document.createElement("link"); css.rel = "stylesheet"; css.href = LEAFLET.css; document.head.append(css);
+    const sc = document.createElement("script"); sc.src = LEAFLET.js; sc.onload = ok; sc.onerror = () => { leafletP = null; no(); }; document.head.append(sc);
+  });
+  return leafletP;
+}
 function leafletMap(key, opts){
-  if (!window.L) return h("div",{class:"info"},"地圖載入失敗，請檢查網路後重新整理。");
+  if (!window.L){
+    if (leafletFailed) return h("div",{class:"info"},"地圖載入失敗，請檢查網路後重新整理。");
+    loadLeaflet().then(() => renderKeep(), () => { leafletFailed = true; renderKeep(); });
+    return h("div",{class:"map lmap map-loading",role:"status"}, h("span",{},"地圖載入中…"));
+  }
   let M = MAPS[key];
   if (!M){
     const saved = LS.json("pc.map."+key, null);
