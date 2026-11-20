@@ -314,6 +314,48 @@ nav.bottom{display:none}
 .tr-btn.sm{font-size:12px;margin-left:8px}
 .tr-btn:disabled{color:var(--muted);text-decoration:none;cursor:default}
 .tr-all{align-self:flex-start}
+/* 活動 AI 亮點與空檔媒合（web/events-ai.js） */
+.ev-hl{margin:0;font-size:14px;font-weight:600;color:var(--pine);overflow-wrap:anywhere}
+.ev-hl::before{content:"✦ ";font-weight:400}
+.gap-card{display:flex;flex-direction:column;gap:10px}
+.gap-head{display:flex;flex-wrap:wrap;gap:4px 10px;align-items:baseline}
+.gap-note{margin:0;color:var(--muted)}
+.gap-loading{margin:0}
+.gap-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:10px}
+.gap-list li{display:flex;flex-direction:column;gap:2px;padding:10px 12px;border-radius:12px;background:var(--sunk);min-width:0}
+.gap-t{display:flex;gap:8px;align-items:baseline;min-width:0}
+.gap-t b{overflow-wrap:anywhere;min-width:0}
+.gap-t .tag{flex:none;background:var(--surface)}
+.gap-why{font-size:14px;color:var(--ink)}
+/* 即時大廳 AI 懶人包與破冰話題（web/chatroom-ai.js） */
+.lobby-ai{display:flex;flex-direction:column;gap:8px}
+.lobby-ai-bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.ai-chip{background:var(--pine-soft);color:var(--pine)}
+.ai-chip:disabled{background:var(--sunk);color:var(--muted);cursor:not-allowed}
+.lobby-ai-idle{margin:0;color:var(--muted)}
+.lobby-ai-card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:12px 14px;display:flex;flex-direction:column;gap:8px}
+.lobby-ai-card p{margin:0}
+.lobby-ai-head{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.lobby-ai-points{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:4px;overflow-wrap:anywhere}
+.lobby-ai-tip{font-size:14px;overflow-wrap:anywhere}
+.lobby-ai-topics{display:flex;flex-direction:column;gap:8px;align-items:flex-start}
+.lobby-ai-topics .topic{border:1px solid var(--line);background:var(--sunk);color:var(--ink);border-radius:14px;padding:8px 12px;font-size:14px;text-align:left;max-width:100%;overflow-wrap:anywhere}
+.lobby-ai-topics .topic:hover{border-color:var(--pine)}
+@media (max-width:720px){ .lobby-ai-bar,.lobby-ai-idle,.lobby-ai-card{margin-inline:12px} }
+/* 內容安全提示（web/moderation.js） */
+.mod-note{display:flex;flex-wrap:wrap;gap:6px 12px;align-items:center;font-size:13px;border-radius:12px;padding:8px 12px;background:var(--sunk);color:var(--ink);border-left:3px solid var(--muted)}
+.mod-note:empty{display:none}
+.mod-note span{flex:1 1 200px;min-width:0;overflow-wrap:anywhere}
+.mod-note.block{border-left-color:#d64545}
+.mod-note.warn{border-left-color:#d99a00}
+.mod-note .linkbtn{font-size:13px}
+@media (max-width:720px){ .wrap>.stack>.mod-note,.wrap>.stack>[data-live="lobbymod"]{margin-inline:12px} }
+/* 語音輸入（web/voice.js） */
+.mic-btn{flex:none;width:42px;height:42px;border-radius:50%;border:1px solid var(--line);background:var(--sunk);color:var(--ink);display:inline-grid;place-items:center;padding:0;cursor:pointer}
+.mic-btn:hover{border-color:var(--pine);color:var(--pine)}
+.mic-btn.on{background:var(--pine);border-color:var(--pine);color:var(--bg);animation:mic-pulse 1.2s ease-in-out infinite}
+@keyframes mic-pulse{0%,100%{box-shadow:0 0 0 0 var(--pine-soft)}50%{box-shadow:0 0 0 6px var(--pine-soft)}}
+@media (prefers-reduced-motion:reduce){.mic-btn.on{animation:none}}
 .cform{display:flex;gap:8px;align-items:center}
 .cform input{flex:1;min-width:0;border-radius:999px!important;background:var(--sunk)!important;border:0!important;padding:9px 14px!important}
 
@@ -523,6 +565,10 @@ a.ghost{color:var(--ink)}
 <script src="/shim.js"></script>
 <script src="/translate.js"></script>
 <script src="/assistant.js"></script>
+<script src="/events-ai.js"></script>
+<script src="/chatroom-ai.js"></script>
+<script src="/moderation.js"></script>
+<script src="/voice.js"></script>
 <script src="/ride-ai.js"></script>
 <script src="/privacy.js"></script>
 
@@ -633,6 +679,19 @@ const AI = window.sgAssistant || { init(){}, sync(){}, homeCard:()=>null, open()
 AI.init({ context:()=>aiContext(), lang:()=>I18N.lang, tr:s=>I18N.tr(s), translate:el=>I18N.translate(el),
   visible:()=>!!S.nick && !["food","nav"].includes(S.tab),   // 地圖頁右下角已有按鈕，避免重疊
   openRides:()=>{ S.space.transit="rides"; saveSpace(); go("transit"); } });
+// 活動空檔媒合（web/events-ai.js）。upcomingEvents／evWhen 在下面定義
+const EVAI = window.sgEventsAI || { init(){}, panel:()=>null };
+EVAI.init({ events:()=>upcomingEvents(), when:e=>evWhen(e), lang:()=>I18N.lang, onChange:()=>renderKeep() });
+// 即時大廳 AI 懶人包與破冰話題（web/chatroom-ai.js）：話題只填進輸入框，不自動送出
+const CHAI = window.sgChatroomAI || { init(){}, panel:()=>h("div") };
+CHAI.init({ lobby:()=>S.lobby, lang:()=>I18N.lang, onChange:()=>renderKeep(),
+  fill:text=>{ const el = document.getElementById("lobby-in"); if (!el || el.disabled) return; el.value = text; el.focus(); el.setSelectionRange(text.length, text.length); } });
+// 內容安全過濾（web/moderation.js）：即時大廳與留言送出前先用規則檢查
+const MOD = window.sgModeration || { init(){}, guard:async()=>true, note:()=>h("div") };
+MOD.init({ onChange:()=>renderKeep() });
+// 語音輸入（web/voice.js）：辨識結果只填進輸入框，不自動送出；瀏覽器不支援時不顯示按鈕
+const VOICE = window.sgVoice || { init(){}, button:()=>null, stop(){} };
+VOICE.init({ lang:()=>I18N.lang, toast:m=>toast(m), tr:s=>I18N.tr(s) });
 // 松果 AI 智慧交通與共乘（web/ride-ai.js）：交通精算師等功能，數字由程式計算、AI 只寫說明
 const RA = window.sgRideAI || { init(){}, commuteCard:()=>null, isPick:()=>false, filterRides:l=>l, filterBar:()=>null, setRideFilter(){},
   rideBox:()=>null, rideBadges:()=>null, TAGS:[], LUGGAGE:{}, myTags:()=>[], coordBox:()=>null };
@@ -645,13 +704,16 @@ RA.init({ h, tr:s=>I18N.tr(s), lang:()=>I18N.lang, renderKeep:()=>renderKeep(), 
   goRides:f=>{ RA.setRideFilter(f); S.space.transit="rides"; saveSpace(); go("transit"); },
   openRide:m=>openModal({ k:"ride", ...m }), rideCard:r=>rideCard(r), live:(k,fn)=>live(k,fn),
   toast:m=>toast(m), isRider:r=>!!(S.uid && S.riders[r.id]?.has(S.uid)),
-  // 行程異動通知：和一般留言一樣寫進這一團的討論串（發布前一樣做隱私提醒）
-  postComment:async (r, text)=>{ const pv = await PRIV.review([text]); if (!pv) return false;
+  // 行程異動通知：和一般留言一樣寫進這一團的討論串，一樣先跑內容安全（MOD.guard）再跑隱私提醒（PRIV.review）
+  postComment:async function post(r, text, force){
+    const mine = S.comments.filter(c => c.uid && c.uid === S.uid);
+    if (!(await MOD.guard("cmt", text, mine, () => post(r, text, true), force === true))) return false;
+    const pv = await PRIV.review([text]); if (!pv) return false;
     try { await S.db.collection("rides/"+r.id+"/comments").add({ body:pv[0], nick:S.nick, uid:S.uid||"", ts:Date.now() }); return true; } catch(e){ toast(writeErr(e)); return false; } } });
 // 發布前隱私提醒（web/privacy.js）：純規則，偵測到手機、地址等個資時提醒，但不擋發布
 const PRIV = window.sgPrivacy || { init(){}, review:async x => x };
 PRIV.init({ tr:s=>I18N.tr(s), translate:el=>I18N.translate(el) });
-function switchLang(l){ I18N.setLang(l); S.dirty = false; render(); }
+function switchLang(l){ VOICE.stop(); I18N.setLang(l); S.dirty = false; render(); }
 
 const RIDE_PLACES = ["中央大學（正門）","中央大學（後門）","中壢火車站","高鐵桃園站","台北車站","松山機場","桃園機場","大江購物中心","中原商圈・中原夜市","龍岡・忠貞市場","中壢觀光夜市","青埔","其他"];
 RA.init({ places: RIDE_PLACES.filter(p => p !== "其他") });
@@ -1193,6 +1255,7 @@ function eventCard(e){
       h("h3",{translate:"no"}, e.url ? h("a",{href:e.url,target:"_blank",rel:"noopener"}, evTitle) : evTitle),
       h("span",{class:"when"}, evWhen(e)),
       e.place ? h("span",{class:"where2",translate:tv.translated?"no":null}, evPlace) : null,
+      e.highlight ? h("p",{class:"ev-hl",translate:"no"}, I18N.lang==="en" && e.highlightEn ? e.highlightEn : e.highlight) : null,
       e.body ? h("p",{class:"small",style:"margin:0;white-space:pre-wrap;overflow-wrap:anywhere",translate:"no"}, evBody) : null,
       e.tags && e.tags.length ? h("div",{class:"tags"}, e.tags.map(t => h("span",{class:"tag "+(TAG_CLASS[t]||"")}, t))) : null,
       h("span",{class:"src"}, e.community ? `${e.nick} 分享・${ago(e.ts)}` : `來源：${e.srcLabel || "學校網站"}${e.url ? "・點標題看原公告" : ""}`),
@@ -1220,9 +1283,10 @@ function eventsPage(){
     h("div",{class:"sphead"}, h("h1",{},"校園活動"), h("p",{},"學校官網和人文藝術中心的活動會自動整理進來；你知道的活動也可以直接分享。")),
     segBar,
     h("div",{class:"bar"},
-      h("div",{class:"chips"}, [["","全部"],["有餐點","有餐點"],["可認證時數","可認證時數"],["免費","免費"]].map(([k,l]) => h("button",{class:"chip","aria-pressed":tag===k?"true":"false",onclick:()=>{S.evTag=k;render();}}, l))),
       h("span",{class:"spacer"}),
       h("button",{class:"primary",disabled:!canPost(),onclick:()=>openModal({k:"event"})},"＋ 分享活動")),
+    h("div",{class:"chips scroll-x",role:"group","aria-label":"依標籤篩選"}, ["", ...EV_FILTER_TAGS].map(k => h("button",{class:"chip","aria-pressed":tag===k?"true":"false",onclick:()=>{S.evTag=k;render();}}, k || "全部"))),
+    EVAI.panel(),
     statusBanner(),
     groups.length ? groups.map(([l, es]) => [h("p",{class:"daygroup"}, l), es.map(e => eventCard(e))]) :
       h("div",{class:"empty"}, h("h3",{}, ev.loading && !ev.data ? "正在整理學校的活動…" : tag ? `目前沒有標示「${tag}」的活動` : "近期還沒有活動"),
@@ -1230,9 +1294,11 @@ function eventsPage(){
     ev.data?.undated?.length ? h("section",{class:"stack"},
       h("div",{class:"section-title"}, h("h2",{},"其他活動公告")),
       h("div",{class:"card list"}, ev.data.undated.map(it => h("a",{class:"li news-li",href:it.url,target:"_blank",rel:"noopener"}, h("span",{class:"t",style:"white-space:normal"}, it.title), it.posted ? h("small",{}, fmtMD(it.posted)) : null)))) : null,
-    h("p",{class:"board-note"}, "學校活動的時間、地點和「有餐點」「可認證時數」標籤是程式從公告內文自動整理的，可能有誤，請以原公告為準。資料每 30 分鐘更新。", ev.err ? " 學校網站暫時連不上，先顯示上次的資料。" : ""));
+    h("p",{class:"board-note"}, "學校活動的時間、地點和標籤由程式從公告內文自動整理，亮點與部分標籤由 AI 整理，可能有誤，請以原公告為準。資料每小時更新。", ev.err ? " 學校網站暫時連不上，先顯示上次的資料。" : ""));
 }
 const EV_TAGS = ["有餐點","可認證時數","免費","有抽獎贈品","需報名"];
+// 活動頁的標籤篩選：和 api/events.js 的 AI_TAGS 一致
+const EV_FILTER_TAGS = ["免費","有餐點","可認證時數","講座","表演","展覽","社交","練英文"];
 function eventSheet(){
   const m = S.modal; const st = m.st || (m.st = { title:"", date:todayISO(), time:"", timeEnd:"", place:"", tags:[], link:"", body:"" });
   const err = h("p",{class:"err",hidden:true});
@@ -1404,9 +1470,10 @@ function rideCard(r){
   const w = fmtWhen(r.when);
   const left = Math.max(0,total-taken);
   const isOpen = S.open === "ride:"+r.id;
+  const tv = TR.view("ride:"+r.id, [r.note || ""]);
   const card = h("article",{class:"card ride"},
     h("div",{class:"clock"}, h("b",{},w.time), h("small",{},w.day)),
-    h("div",{class:"route"}, h("b",{}, r.from, " → ", r.to), h("small",{}, r.nick, "・", r.split || "車資平分", r.note ? `・${r.note}` : "", RA.rideBadges(r))),
+    h("div",{class:"route"}, h("b",{}, r.from, " → ", r.to), h("small",{}, h("span",{translate:"no"}, r.nick), "・", r.split || "車資平分", r.note ? ["・", h("span",{translate:"no"}, tv.texts[0])] : "", RA.rideBadges(r))),
     h("div",{class:"side",style:"display:flex;flex-direction:column;align-items:flex-end;gap:4px"},
       h("span",{class:"seats","aria-label":`${taken}/${total} 人`}, Array.from({length:total},(_,i)=>h("i",{class:i<taken?"on":""}))),
       h("small",{class:"muted mono"}, left ? `剩 ${left} 位` : "已滿")),
@@ -1416,6 +1483,7 @@ function rideCard(r){
         h("button",{class:"primary",disabled:!canPost()||!left,onclick:()=>joinRide(r)}, left ? "加入" : "已額滿"),
       riders.length ? h("span",{class:"muted"}, "已加入：", riders.join("、")) : null,
       h("span",{class:"spacer"}),
+      tv.button,
       h("button",{class:"linkbtn",onclick:()=>isOpen?closeThread():openThread("ride:"+r.id)}, isOpen ? "收起討論" : "討論集合點"),
       mine || S.isOwner ? h("button",{class:"linkbtn",onclick:()=>openModal({k:"delride",id:r.id})},"取消這團") : null));
   if (isOpen){ const th = thread("rides/"+r.id+"/comments"); th.style.gridColumn = "1/-1"; card.append(RA.coordBox(r) || "", th); }
@@ -1576,13 +1644,18 @@ function thread(path){
     h("p",{class:"muted small",style:"margin:0"},"還沒有留言，說點什麼吧。")); }));
   if (canPost()){
     const inp = h("input",{type:"text",id:"cmt-in",maxlength:"500",placeholder:"寫留言…","aria-label":"留言內容",autocomplete:"off"});
-    const send = async () => { let body = inp.value.trim(); if (!body) return;
-      if (path.startsWith("rides/")){ const pv = await PRIV.review([body]); if (!pv){ inp.focus(); return; } body = pv[0]; }   // 拼車討論區：發布前隱私提醒
-      inp.disabled = true;
-      try { await S.db.collection(path).add({ body, nick:S.nick, uid:S.uid||"", ts:Date.now() }); inp.value=""; } catch(e){ toast(writeErr(e)); }
-      inp.disabled = false; inp.focus(); };
+    // 重繪後輸入框會換成新的，所以每次都用 id 重新找
+    const cur = () => document.getElementById("cmt-in") || inp;
+    const send = async (force) => { let body = cur().value.trim(); if (!body) return; cur().disabled = true;
+      const mine = S.comments.filter(c => c.uid && c.uid === S.uid);
+      // ① 內容安全（web/moderation.js）
+      if (!(await MOD.guard("cmt", body, mine, () => send(true), force === true))){ cur().disabled = false; cur().focus(); return; }
+      // ② 拼車討論區：發布前隱私提醒（web/privacy.js），選「回去修改」就不送出
+      if (path.startsWith("rides/")){ const pv = await PRIV.review([body]); if (!pv){ cur().disabled = false; cur().focus(); return; } body = pv[0]; }
+      try { await S.db.collection(path).add({ body, nick:S.nick, uid:S.uid||"", ts:Date.now() }); cur().value=""; } catch(e){ toast(writeErr(e)); }
+      cur().disabled = false; cur().focus(); };
     inp.addEventListener("keydown", e => { if (e.key==="Enter" && !e.isComposing && e.keyCode !== 229) send(); });
-    box.append(h("div",{class:"cform"}, avatar(S.nick,"sm"), inp, h("button",{class:"primary",onclick:send},"送出")));
+    box.append(h("div",{class:"cform"}, avatar(S.nick,"sm"), inp, h("button",{class:"primary",onclick:()=>send()},"送出")), live("cmtmod", () => MOD.note("cmt")));
   }
   return box;
 }
@@ -2078,22 +2151,29 @@ function forumPage(){
   }
   const here = onlinePeople().filter(p => p.presence?.where === "forum").length;
   const inp = h("input",{type:"text",id:"lobby-in",autocomplete:"off",maxlength:"300",placeholder: canPost() ? `以「${S.nick}」發言…` : "目前無法發言","aria-label":"大廳訊息",disabled:!canPost()});
-  const send = async () => { const body = inp.value.trim(); if (!body) return; inp.disabled = true;
-    try { await S.db.collection("lobby").add({ body, nick:S.nick, uid:S.uid||"", ts:Date.now() }); inp.value = ""; } catch(e){ toast(writeErr(e)); }
-    inp.disabled = false; inp.focus(); };
+  // 重繪後輸入框會換成新的，所以每次都用 id 重新找
+  const cur = () => document.getElementById("lobby-in") || inp;
+  const send = async (force) => { const body = cur().value.trim(); if (!body) return; cur().disabled = true;
+    const mine = (S.lobby || []).filter(m => m.uid && m.uid === S.uid);
+    if (!(await MOD.guard("lobby", body, mine, () => send(true), force === true))){ cur().disabled = false; cur().focus(); return; }
+    try { await S.db.collection("lobby").add({ body, nick:S.nick, uid:S.uid||"", ts:Date.now() }); cur().value = ""; } catch(e){ toast(writeErr(e)); }
+    cur().disabled = false; cur().focus(); };
   inp.addEventListener("keydown", e => { if (e.key==="Enter" && !e.isComposing && e.keyCode !== 229) send(); });
   return h("div",{class:"stack"}, segBar,
     h("div",{class:"sphead"}, h("h1",{},"即時大廳"), h("p",{}, "全校共用的聊天大廳，下課無聊就進來聊。", S.room ? `現在有 ${Math.max(here,1)} 人在大廳。` : "")),
     statusBanner(),
+    live("lobbyai", () => CHAI.panel()),
     live("lobby", () => { const msgs = S.lobby || []; return h("div",{class:"card chat lobby"}, msgs.length ? msgs.map(m => {
         const mine = m.uid && m.uid === S.uid;
+        const tv = TR.view("lobby:"+m.id, [m.body || ""], { small:true });
         return h("div",{class:"lmsg"+(mine?" mine":"")}, mine ? null : avatar(m.nick,"sm"),
           h("div",{class:"col"},
             h("div",{class:"lwho"}, mine ? null : h("b",{translate:"no"}, m.nick), h("span",{class:"mono"}, fmtWhen(m.ts).time),
-              mine || S.isOwner ? h("button",{class:"linkbtn",style:"font-size:12px",onclick:async()=>{ try { await S.db.doc("lobby/"+m.id).delete(); } catch(e){ toast(writeErr(e)); } }},"刪除") : null),
-            h("div",{class:"lbody",translate:"no"}, m.body))); }) :
+              mine || S.isOwner ? h("button",{class:"linkbtn",style:"font-size:12px",onclick:async()=>{ try { await S.db.doc("lobby/"+m.id).delete(); } catch(e){ toast(writeErr(e)); } }},"刪除") : null, tv.button),
+            h("div",{class:"lbody",translate:"no"}, tv.texts[0]))); }) :
       h("p",{class:"muted small",style:"margin:0"}, S.dbState==="loading" ? "載入中…" : "大廳還很安靜，說聲嗨吧。")); }),
-    h("div",{class:"cform"}, inp, h("button",{class:"primary",disabled:!canPost(),onclick:send},"送出")),
+    h("div",{class:"cform"}, inp, canPost() ? VOICE.button("lobby", () => document.getElementById("lobby-in")) : null, h("button",{class:"primary",disabled:!canPost(),onclick:()=>send()},"送出")),
+    live("lobbymod", () => MOD.note("lobby")),
     h("p",{class:"board-note"},"請友善發言。不當內容管理員會刪除；每人每小時最多 120 則。"));
 }
 
