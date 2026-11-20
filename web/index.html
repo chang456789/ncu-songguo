@@ -314,6 +314,19 @@ nav.bottom{display:none}
 .tr-btn.sm{font-size:12px;margin-left:8px}
 .tr-btn:disabled{color:var(--muted);text-decoration:none;cursor:default}
 .tr-all{align-self:flex-start}
+/* 活動 AI 亮點與空檔媒合（web/events-ai.js） */
+.ev-hl{margin:0;font-size:14px;font-weight:600;color:var(--pine);overflow-wrap:anywhere}
+.ev-hl::before{content:"✦ ";font-weight:400}
+.gap-card{display:flex;flex-direction:column;gap:10px}
+.gap-head{display:flex;flex-wrap:wrap;gap:4px 10px;align-items:baseline}
+.gap-note{margin:0;color:var(--muted)}
+.gap-loading{margin:0}
+.gap-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:10px}
+.gap-list li{display:flex;flex-direction:column;gap:2px;padding:10px 12px;border-radius:12px;background:var(--sunk);min-width:0}
+.gap-t{display:flex;gap:8px;align-items:baseline;min-width:0}
+.gap-t b{overflow-wrap:anywhere;min-width:0}
+.gap-t .tag{flex:none;background:var(--surface)}
+.gap-why{font-size:14px;color:var(--ink)}
 .cform{display:flex;gap:8px;align-items:center}
 .cform input{flex:1;min-width:0;border-radius:999px!important;background:var(--sunk)!important;border:0!important;padding:9px 14px!important}
 
@@ -523,6 +536,7 @@ a.ghost{color:var(--ink)}
 <script src="/shim.js"></script>
 <script src="/translate.js"></script>
 <script src="/assistant.js"></script>
+<script src="/events-ai.js"></script>
 
 
 <script>
@@ -631,6 +645,9 @@ const AI = window.sgAssistant || { init(){}, sync(){}, homeCard:()=>null, open()
 AI.init({ context:()=>aiContext(), lang:()=>I18N.lang, tr:s=>I18N.tr(s), translate:el=>I18N.translate(el),
   visible:()=>!!S.nick && !["food","nav"].includes(S.tab),   // 地圖頁右下角已有按鈕，避免重疊
   openRides:()=>{ S.space.transit="rides"; saveSpace(); go("transit"); } });
+// 活動空檔媒合（web/events-ai.js）。upcomingEvents／evWhen 在下面定義
+const EVAI = window.sgEventsAI || { init(){}, panel:()=>null };
+EVAI.init({ events:()=>upcomingEvents(), when:e=>evWhen(e), lang:()=>I18N.lang, onChange:()=>renderKeep() });
 function switchLang(l){ I18N.setLang(l); S.dirty = false; render(); }
 
 const RIDE_PLACES = ["中央大學（正門）","中央大學（後門）","中壢火車站","高鐵桃園站","台北車站","松山機場","桃園機場","大江購物中心","中原商圈・中原夜市","龍岡・忠貞市場","中壢觀光夜市","青埔","其他"];
@@ -1172,6 +1189,7 @@ function eventCard(e){
       h("h3",{translate:"no"}, e.url ? h("a",{href:e.url,target:"_blank",rel:"noopener"}, evTitle) : evTitle),
       h("span",{class:"when"}, evWhen(e)),
       e.place ? h("span",{class:"where2",translate:tv.translated?"no":null}, evPlace) : null,
+      e.highlight ? h("p",{class:"ev-hl",translate:"no"}, I18N.lang==="en" && e.highlightEn ? e.highlightEn : e.highlight) : null,
       e.body ? h("p",{class:"small",style:"margin:0;white-space:pre-wrap;overflow-wrap:anywhere",translate:"no"}, evBody) : null,
       e.tags && e.tags.length ? h("div",{class:"tags"}, e.tags.map(t => h("span",{class:"tag "+(TAG_CLASS[t]||"")}, t))) : null,
       h("span",{class:"src"}, e.community ? `${e.nick} 分享・${ago(e.ts)}` : `來源：${e.srcLabel || "學校網站"}${e.url ? "・點標題看原公告" : ""}`),
@@ -1199,9 +1217,10 @@ function eventsPage(){
     h("div",{class:"sphead"}, h("h1",{},"校園活動"), h("p",{},"學校官網和人文藝術中心的活動會自動整理進來；你知道的活動也可以直接分享。")),
     segBar,
     h("div",{class:"bar"},
-      h("div",{class:"chips"}, [["","全部"],["有餐點","有餐點"],["可認證時數","可認證時數"],["免費","免費"]].map(([k,l]) => h("button",{class:"chip","aria-pressed":tag===k?"true":"false",onclick:()=>{S.evTag=k;render();}}, l))),
       h("span",{class:"spacer"}),
       h("button",{class:"primary",disabled:!canPost(),onclick:()=>openModal({k:"event"})},"＋ 分享活動")),
+    h("div",{class:"chips scroll-x",role:"group","aria-label":"依標籤篩選"}, ["", ...EV_FILTER_TAGS].map(k => h("button",{class:"chip","aria-pressed":tag===k?"true":"false",onclick:()=>{S.evTag=k;render();}}, k || "全部"))),
+    EVAI.panel(),
     statusBanner(),
     groups.length ? groups.map(([l, es]) => [h("p",{class:"daygroup"}, l), es.map(e => eventCard(e))]) :
       h("div",{class:"empty"}, h("h3",{}, ev.loading && !ev.data ? "正在整理學校的活動…" : tag ? `目前沒有標示「${tag}」的活動` : "近期還沒有活動"),
@@ -1209,9 +1228,11 @@ function eventsPage(){
     ev.data?.undated?.length ? h("section",{class:"stack"},
       h("div",{class:"section-title"}, h("h2",{},"其他活動公告")),
       h("div",{class:"card list"}, ev.data.undated.map(it => h("a",{class:"li news-li",href:it.url,target:"_blank",rel:"noopener"}, h("span",{class:"t",style:"white-space:normal"}, it.title), it.posted ? h("small",{}, fmtMD(it.posted)) : null)))) : null,
-    h("p",{class:"board-note"}, "學校活動的時間、地點和「有餐點」「可認證時數」標籤是程式從公告內文自動整理的，可能有誤，請以原公告為準。資料每 30 分鐘更新。", ev.err ? " 學校網站暫時連不上，先顯示上次的資料。" : ""));
+    h("p",{class:"board-note"}, "學校活動的時間、地點和標籤由程式從公告內文自動整理，亮點與部分標籤由 AI 整理，可能有誤，請以原公告為準。資料每小時更新。", ev.err ? " 學校網站暫時連不上，先顯示上次的資料。" : ""));
 }
 const EV_TAGS = ["有餐點","可認證時數","免費","有抽獎贈品","需報名"];
+// 活動頁的標籤篩選：和 api/events.js 的 AI_TAGS 一致
+const EV_FILTER_TAGS = ["免費","有餐點","可認證時數","講座","表演","展覽","社交","練英文"];
 function eventSheet(){
   const m = S.modal; const st = m.st || (m.st = { title:"", date:todayISO(), time:"", timeEnd:"", place:"", tags:[], link:"", body:"" });
   const err = h("p",{class:"err",hidden:true});
