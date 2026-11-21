@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>松果 像素松鼠預覽</title>
+<meta name="robots" content="noindex">
+<link rel="stylesheet" href="/ui.css">
+<style>
+  /* 這頁只給團隊預覽用。網站的顏色、按鈕樣式會從 index.html 自動複製過來，確保和正式畫面一致。 */
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--f-body,system-ui)}
+  main{max-width:720px;margin:0 auto;padding:16px 16px 140px;display:flex;flex-direction:column;gap:16px}
+  .demo-bar{display:flex;gap:8px;flex-wrap:wrap}
+  .demo-card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r,12px);padding:14px}
+  .demo-card h2{margin:0 0 10px;font-size:16px}
+  .demo-grid{display:flex;flex-wrap:wrap;gap:12px}
+  .demo-grid figure{margin:0;display:flex;flex-direction:column;align-items:center;gap:4px;font-size:12px;color:var(--muted)}
+</style>
+</head>
+<body>
+<main>
+  <h1 style="margin:0;font-size:22px">松果 像素松鼠預覽</h1>
+  <p style="margin:0;color:var(--muted);font-size:14px">團隊預覽用，還沒接到正式畫面。可以切換深色、英文，或在系統設定開「減少動態效果」看靜態版本。</p>
+  <div class="demo-bar">
+    <button class="ghost" id="t-theme" type="button">切換深色／淺色</button>
+    <button class="ghost" id="t-lang" type="button">EN / 中</button>
+    <button class="primary" id="t-pop" type="button">④ 成功：跳一下</button>
+  </div>
+  <section class="demo-card"><h2>5 種表情＋道具</h2><div class="demo-grid" id="faces"></div></section>
+  <section class="demo-card"><h2>① 載入中</h2><div id="loading"></div></section>
+  <section class="demo-card"><h2>② 問松果思考中</h2><div id="thinking"></div></section>
+  <section class="demo-card"><h2>③ 空白狀態</h2><div id="empties"></div></section>
+  <section class="demo-card"><h2>⑤ 斷線或錯誤</h2><div id="error"></div></section>
+  <section class="demo-card"><h2>⑥ 天氣卡</h2><div id="weather" style="display:flex;gap:16px;align-items:center"></div></section>
+</main>
+<script src="/i18n.js"></script>
+<script src="/pixel.js"></script>
+<script>
+(async () => {
+  // 從 index.html 複製網站的樣式（顏色變數、按鈕），預覽畫面才會和正式網站一致
+  try {
+    const html = await (await fetch("/index.html")).text();
+    const css = [...html.matchAll(/<style>([\s\S]*?)<\/style>/g)].map(m => m[1]).join("\n");
+    const st = document.createElement("style"); st.textContent = css; document.head.prepend(st);
+  } catch {}
+  const PX = window.sgPixel, I18N = window.sgI18n || { translate(){}, lang:"zh", setLang(){} };
+  const $ = id => document.getElementById(id);
+  const names = { normal:"普通", think:"思考", happy:"開心比讚", sad:"難過（斷線）", umbrella:"撐傘", search:"找東西", bus:"132 公車", stop:"站牌", bench:"長椅" };
+  for (const [k, l] of Object.entries(names)){
+    const f = document.createElement("figure"); f.append(PX.sprite(k, { size: k === "stop" ? 48 : 96 }), Object.assign(document.createElement("figcaption"), { textContent: l })); $("faces").append(f);
+  }
+  $("loading").append(PX.loading(), PX.loading({ compact: true }));
+  $("thinking").append(PX.thinking(), " ", Object.assign(document.createElement("span"), { textContent: "松果正在想…", className: "muted" }));
+  const say = m => alert(m);
+  $("empties").append(PX.empty("rides", { onAction: () => say("開一團") }), PX.empty("posts", { onAction: () => say("發一篇貼文") }), PX.empty("search", { onAction: () => say("清除搜尋") }));
+  $("error").append(PX.error({ onRetry: () => location.reload() }));
+  $("weather").append(PX.weather(true, { label:"下雨" }), "下雨：撐傘", PX.weather(false), "晴天：普通");
+  $("t-pop").onclick = () => PX.celebrate("已發布！", { translate: el => I18N.translate(el) });
+  $("t-theme").onclick = () => { const r = document.documentElement; const dark = r.dataset.theme === "dark" || (!r.dataset.theme && matchMedia("(prefers-color-scheme: dark)").matches); r.dataset.theme = dark ? "light" : "dark"; };
+  $("t-lang").onclick = () => { I18N.setLang(I18N.lang === "en" ? "zh" : "en"); location.reload(); };
+  I18N.translate(document.body);
+})();
+</script>
+</body>
+</html>

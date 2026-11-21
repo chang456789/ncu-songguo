@@ -1,0 +1,64 @@
+/* =====================================================================
+   松果 UI：像素吉祥物（web/pixel.js）與共用的小動畫
+   - 顏色全部用 CSS 變數，深色模式自動換色。
+   - 所有動畫都遵守 prefers-reduced-motion：使用者開了「減少動態效果」就只顯示靜態圖。
+   ===================================================================== */
+
+/* ---------- 像素調色盤：松綠＋公車黃＋3 個中性色 ---------- */
+:root{
+  --px-o:#3b2a1e;          /* 輪廓：深棕 */
+  --px-f:#e0a028;          /* 毛色：公車黃（比 --bus 亮一點，小圖才看得清楚） */
+  --px-c:#fbecc8;          /* 奶油色：肚子、尾巴 */
+  --px-n:#8a5a32;          /* 松果棕 */
+  --px-g:var(--pine,#17855b);      /* 松綠 */
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){ --px-o:#1c130d; --px-f:var(--bus,#f0b43a); --px-c:#f3dfb4; --px-n:#a06a3c; --px-g:var(--pine,#3fbf8a); }
+}
+:root[data-theme="dark"]{ --px-o:#1c130d; --px-f:var(--bus,#f0b43a); --px-c:#f3dfb4; --px-n:#a06a3c; --px-g:var(--pine,#3fbf8a); }
+
+.px{display:inline-block;vertical-align:middle;image-rendering:pixelated;image-rendering:crisp-edges;flex:none;overflow:visible}
+.px .px-o{fill:var(--px-o)} .px .px-f{fill:var(--px-f)} .px .px-c{fill:var(--px-c)} .px .px-n{fill:var(--px-n)} .px .px-g{fill:var(--px-g)}
+.px-sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+
+/* ---------- ① 載入中：松鼠追著 132 公車跑 ---------- */
+.px-loading{position:relative;padding:12px 0}
+.px-track{position:relative;height:64px;overflow:hidden;border-bottom:2px dashed var(--line)}
+.px-loading.compact .px-track{height:46px}
+.px-run{position:absolute;bottom:0;left:0;display:flex;align-items:flex-end;gap:10px;animation:px-run 2.6s linear infinite}
+.px-hop{display:inline-block;animation:px-hop .32s ease-in-out infinite alternate}
+.px-bus{animation:px-bob .4s steps(2) infinite}
+@keyframes px-run{from{left:-160px}to{left:100%}}
+@keyframes px-hop{from{transform:translateY(0)}to{transform:translateY(-8px)}}
+@keyframes px-bob{0%{transform:translateY(0)}50%{transform:translateY(-1px)}}
+
+/* ---------- ② 思考中 ---------- */
+.px-thinking{display:inline-flex;align-items:center;gap:6px}
+.px-thinking .px{animation:px-think 1.4s ease-in-out infinite}
+@keyframes px-think{0%,100%{transform:translateY(0)}50%{transform:translateY(-2px)}}
+
+/* ---------- ③ 空白狀態、⑤ 錯誤 ---------- */
+.px-empty{display:flex;flex-direction:column;align-items:center;text-align:center;gap:8px;padding:24px 16px}
+.px-empty h3{margin:4px 0 0;font-size:17px}
+.px-empty p{margin:0;color:var(--muted);font-size:14px;max-width:32ch}
+.px-empty .primary{margin-top:6px}
+.px-scene{display:flex;align-items:flex-end;justify-content:center;gap:2px;min-height:96px}
+.px-empty-posts .px-scene{gap:0}
+.px-empty-posts .px-art-bench{margin-right:-30px}
+.px-empty-rides .px-scene{gap:6px}
+
+/* ---------- ④ 成功：開心表情跳一下 ---------- */
+.px-celebrate{position:fixed;left:50%;bottom:calc(96px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);z-index:60;
+  display:flex;align-items:center;gap:8px;padding:6px 16px 6px 8px;border-radius:999px;background:var(--surface);color:var(--ink);
+  box-shadow:0 6px 24px rgba(0,0,0,.18);border:1px solid var(--line);pointer-events:none;transition:opacity .3s}
+.px-celebrate .px{animation:px-jump .6s cubic-bezier(.3,1.6,.5,1) 2}
+.px-celebrate.out{opacity:0}
+@keyframes px-jump{0%{transform:translateY(0)}40%{transform:translateY(-14px)}100%{transform:translateY(0)}}
+
+/* ---------- 減少動態效果：只顯示靜態圖 ---------- */
+@media (prefers-reduced-motion:reduce){
+  .px-run,.px-hop,.px-bus,.px-thinking .px,.px-celebrate .px{animation:none!important}
+  .px-run{position:static;justify-content:center}
+  .px-track{display:flex;justify-content:center;align-items:flex-end}
+  .px-celebrate{transition:none}
+}
