@@ -323,6 +323,7 @@
         h("p", { class: "ra-hero-t" }, fallbackHero(R)),
         R.noneOnTime ? h("p", { class: "ra-warn small" }, "所有方案都趕不上你希望的抵達時間，以下是最快的選擇。") : null,
         loading ? h("p", { class: "ra-state small", role: "status" }, h("i", { class: "ra-spin" }), STATE_MSG.loading) :
+        ai.status === "agent" ? h("p", { class: "ra-state small" }, "已帶入「問松果」的條件。", h("button", { type: "button", class: "linkbtn", onclick: runAI }, "請 AI 寫建議")) :
         CM.stale ? h("p", { class: "ra-state small" }, "條件已變更，數字已重新計算。", h("button", { type: "button", class: "linkbtn", onclick: runAI }, "更新 AI 建議")) :
         STATE_MSG[ai.status] ? h("p", { class: "ra-state small" + (ai.status === "not_configured" ? "" : " warn") }, STATE_MSG[ai.status],
           ai.status !== "not_configured" ? h("button", { type: "button", class: "linkbtn", onclick: runAI }, "再試一次") : null) : null);
@@ -498,93 +499,24 @@
   }
 
   /* =================================================================
-     功能四：行程異動小幫手（task: coordinate_ride）
-     程式先算出影響（新的出發時間、座位變化），AI 只把它寫成一則友善的通知；
-     使用者確認（可修改）後，一鍵發到這一團的討論區。AI 失敗時用程式寫的範本。
+     給「問松果」AI 代理人（web/agent.js）用的介面：不呼叫 AI，只用程式算
      ================================================================= */
-  const QUICK = ["我會晚 5 分鐘", "我會晚 10 分鐘", "多帶一個大行李", "下雨了，改在有遮雨的地方上車"];
-  const CO = {};   // rideId → { status, change, draft, impact, fallback }
-  function impactOf(r, change){
-    const out = { lines: [] };
-    const late = String(change).match(/晚\s*(\d{1,3})\s*分|(\d{1,3})\s*(?:min|minutes?)\s*late|late\s*(?:by\s*)?(\d{1,3})/i);
-    const lateMin = late ? +(late[1] || late[2] || late[3]) : 0;
-    const seatsLeft = A.seatsLeft(r), taken = (r.seats || 0) - seatsLeft;
-    if (lateMin){
-      const d = new Date(r.when + lateMin * 60e3);
-      out.newDepart = `${pad2(d.getHours())}:${pad2(d.getMinutes())}`; out.lateMin = lateMin;
-      out.lines.push(["出發時間可能從 ", fmtHM(r.when), " 延到 ", out.newDepart]);
-    }
-    if (/行李|luggage|suitcase/i.test(change)){
-      out.luggage = true;
-      if (seatsLeft > 0){ out.seatsAfter = seatsLeft - 1; out.lines.push(["大行李可能要占 1 個空位，占用後剩 ", seatsLeft - 1, " 位"]); }
-      else { out.carFull = true; out.lines.push(["車上已經坐滿，大行李可能放不下，需要先跟大家確認"]); }
-    }
-    if (/雨|遮雨|rain/i.test(change)){ out.meetChange = true; out.lines.push(["集合點要改到有遮雨的地方，請在討論區確認地點"]); }
-    out.taken = taken; out.seatsLeft = seatsLeft;
-    return out;
+  // 用指定條件算一次精算結果，不改變決策卡目前的狀態
+  function commuteFor(o){
+    const keep = { ...CM };
+    Object.assign(CM, { dest: o.dest, origin: o.origin || "gate", arriveBy: o.arriveBy || "", luggage: !!o.luggage, party: 1, priority: o.priority || "balanced", scenario: "real" });
+    const R = compute(); const payload = payloadOf(R);
+    Object.assign(CM, keep);
+    return { R, payload, hero: fallbackHero(R) };
   }
-  const fmtHM = ms => { const d = new Date(ms); return `${pad2(d.getHours())}:${pad2(d.getMinutes())}`; };
-  // AI 用不了時的範本（純程式）
-  function templateMsg(change, im){
-    const parts = [tr("大家好，") + change + tr("。")];
-    if (im.newDepart) parts.push(tr("出發時間可能延到 ") + im.newDepart + tr("，抱歉讓大家等！"));
-    if (im.luggage) parts.push(im.carFull ? tr("車上已經坐滿，大行李放不下的話我再想辦法，請大家告訴我。") : tr("大行李可能會占一個空位，請大家見諒。"));
-    if (im.meetChange) parts.push(tr("集合點改到有遮雨的地方，地點我們在這裡確認一下。"));
-    if (parts.length === 1) parts.push(tr("不影響出發時間和座位。"));
-    return parts.join(A.lang() === "en" ? " " : "");
+  // 把條件帶進交通分頁的決策卡（不另外呼叫 AI；要 AI 說明時使用者再按按鈕）
+  function showCommute(o){
+    Object.assign(CM, { dest: o.dest, origin: o.origin || "gate", arriveBy: o.arriveBy || "", luggage: !!o.luggage, party: 1, priority: o.priority || "balanced", scenario: "real", moreOpen: true });
+    CM.result = compute(); CM.ai = { status: "agent" }; CM.stale = false;
+    if (CM.result.pick.kind === "bus") A.goBus(o.dest); else A.goRides(null);
   }
-  async function draftFor(r, change){
-    change = String(change || "").trim().slice(0, 120); if (!change) return;
-    const im = impactOf(r, change);
-    const st = CO[r.id] = { status: "loading", change, impact: im, draft: "" }; A.renderKeep();
-    const payload = {
-      ride: { from: r.from, to: r.to, depart: localISO(new Date(r.when)), totalSeats: r.seats, joined: im.taken, seatsLeft: im.seatsLeft, luggage: rideLuggage(r), tags: rideTags(r) },
-      me: { isHost: r.uid === A.uid() }, change,
-      impact: { ...(im.newDepart ? { newDepart: im.newDepart, lateMin: im.lateMin } : {}), ...(im.luggage ? (im.carFull ? { carFull: true } : { seatsLeftAfterLuggage: im.seatsAfter }) : {}), ...(im.meetChange ? { meetingPointChange: "需要在討論區確認新的集合點" } : {}) },
-    };
-    const res = await callAI("coordinate_ride", payload, { id: r.id, change, im: im.lines.map(flat), left: im.seatsLeft, when: r.when });
-    if (CO[r.id] !== st) return;
-    st.status = res.status; st.fallback = res.status !== "ok";
-    st.draft = res.status === "ok" ? res.data.message : templateMsg(change, im);
-    A.renderKeep();
-  }
-  async function postDraft(r){
-    const st = CO[r.id]; if (!st) return;
-    const el = document.getElementById("ra-co-draft-" + r.id);
-    const text = (el ? el.value : st.draft).trim(); if (!text) return;
-    st.posting = true; A.renderKeep();
-    const ok = await A.postComment(r, text);
-    st.posting = false;
-    if (ok){ delete CO[r.id]; A.toast("已發到討論區"); }
-    A.renderKeep();
-  }
-  function coordBox(r){
-    const h = A.h; if (!h) return null;
-    const isMember = r.uid === A.uid() || A.isRider(r);
-    if (!isMember || !A.canPost()) return null;
-    const input = h("input", { type: "text", id: "ra-co-in-" + r.id, maxlength: "120", autocomplete: "off", placeholder: "或自己輸入異動，例如：我改成 8:40 才能到", "aria-label": "行程異動" });
-    input.addEventListener("keydown", e => { if (e.key === "Enter" && !e.isComposing && e.keyCode !== 229){ const v = input.value; input.value = ""; draftFor(r, v); } });
-    return h("div", { class: "ra-co" },
-      h("b", { class: "small" }, "行程異動小幫手"), h("span", { class: "small muted" }, "選一個狀況，AI 幫你寫好給團員的通知，確認後再發出"),
-      h("div", { class: "ra-co-quick" }, QUICK.map(q => h("button", { type: "button", class: "chip", onclick: () => draftFor(r, tr(q)) }, q))),
-      h("div", { class: "ra-nl" }, input, h("button", { type: "button", class: "ghost", onclick: () => { const v = input.value; input.value = ""; draftFor(r, v); } }, "產生通知")),
-      A.live ? A.live("ra-co-" + r.id, () => coordBody(r)) : coordBody(r));
-  }
-  function coordBody(r){
-    const h = A.h, st = CO[r.id];
-    if (!st) return h("div", {});
-    if (st.status === "loading") return h("div", {}, h("p", { class: "ra-state small", role: "status" }, h("i", { class: "ra-spin" }), "AI 正在寫通知…"));
-    const msg = { not_configured: "AI 尚未設定，先用範本幫你寫好了，可以直接修改。", rate_limited: "AI 使用太頻繁了，先用範本幫你寫好了，可以直接修改。",
-      timeout: "AI 回應逾時，先用範本幫你寫好了，可以直接修改。", error: "AI 暫時無法使用，先用範本幫你寫好了，可以直接修改。" }[st.status];
-    return h("div", { class: "ra-co-out" },
-      st.impact.lines.length ? h("ul", { class: "ra-notes" }, st.impact.lines.map(l => h("li", {}, l))) : h("p", { class: "small muted" }, "不影響出發時間和座位"),
-      msg ? h("p", { class: "ra-state small warn" }, msg) : h("p", { class: "small muted" }, "AI 寫的通知（可以修改）："),
-      h("textarea", { id: "ra-co-draft-" + r.id, class: "ra-co-draft", maxlength: "300", rows: "3", translate: "no" }, st.draft),
-      h("div", { class: "ra-acts" },
-        h("button", { type: "button", class: "primary", disabled: !!st.posting, onclick: () => postDraft(r) }, "發到討論區"),
-        st.status !== "ok" && st.status !== "not_configured" ? h("button", { type: "button", class: "ghost", onclick: () => draftFor(r, st.change) }, "再試一次 AI") : null,
-        h("button", { type: "button", class: "linkbtn", onclick: () => { delete CO[r.id]; A.renderKeep(); } }, "取消")));
-  }
+  const findRides = d => matchRides({ from: d.from || null, to: d.to || null, when: d.when || null });
+  const draftForm = d => formFrom({ from: d.from, to: d.to, when: d.when, seats: d.seats, luggage: d.luggage || "none", tags: [], split: null });
 
   /* ---------- 樣式（只用網站的 CSS 變數） ---------- */
   const css = `
@@ -655,12 +587,6 @@
 .ra-tagchip{font-size:11.5px;font-weight:600;border-radius:999px;padding:1px 8px;background:var(--sunk);color:var(--muted);border:1px solid var(--line);white-space:nowrap}
 .ra-tagchip.lug{color:var(--bus);border-color:var(--bus)}
 .ra-form-ai{border-left:4px solid var(--pine)}
-.ra-co{grid-column:1/-1;display:flex;flex-direction:column;gap:8px;border-top:1px solid var(--line);padding-top:10px}
-.ra-co-quick{display:flex;flex-wrap:wrap;gap:6px}
-.ra-co-quick .chip{font-size:13px}
-.ra-co-out{display:flex;flex-direction:column;gap:8px}
-.ra-co-out p{margin:0}
-textarea.ra-co-draft{min-height:76px;font-size:15px;line-height:1.5}
 @media (max-width:520px){.ra-hero-t{font-size:18px}.ra-nums b{font-size:16px}}
 @media (prefers-reduced-motion:reduce){.ra-spin{animation:none}}
 `;
@@ -669,7 +595,8 @@ textarea.ra-co-draft{min-height:76px;font-size:15px;line-height:1.5}
   window.sgRideAI = {
     init(opts){ A = { ...A, ...opts }; },
     callAI, commuteCard, isPick, filterRides, filterBar, setRideFilter,
-    TAGS, LUGGAGE, myTags, rideBox, rideBadges, _parse: PS, coordBox, _impact: impactOf, _template: templateMsg,
+    TAGS, LUGGAGE, myTags, rideBox, rideBadges, _parse: PS,
+    commuteFor, showCommute, findRides, draftForm, DESTS, ORIGINS, costText, hm,
     _compute: () => { CM.result = compute(); return CM.result; }, _state: CM, _payload: () => CM.result && payloadOf(CM.result),
   };
 })();
