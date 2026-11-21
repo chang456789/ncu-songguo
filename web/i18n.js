@@ -213,18 +213,34 @@
     "改成校內集合點":"Use campus meeting point", "改掉個資再發布":"Remove personal info and post", "仍要照原內容發布":"Post as is",
     "回去修改":"Go back and edit", "集合點":"Meeting point", "（私訊再交換）":"(will share by DM)",
     "正門警衛室公車站":"Main Gate guardhouse bus stop", "校內集合（私訊確認地點）":"On campus (confirm by DM)",
-    // ---------- AI trip change helper (web/ride-ai.js) ----------
-    "行程異動小幫手":"Trip change helper", "選一個狀況，AI 幫你寫好給團員的通知，確認後再發出":"Pick what changed — AI drafts a note for your group, you check it before sending", "我會晚 5 分鐘":"I'll be 5 min late",
-    "我會晚 10 分鐘":"I'll be 10 min late", "多帶一個大行李":"Bringing an extra big bag", "下雨了，改在有遮雨的地方上車":"It's raining — let's meet somewhere covered",
-    "或自己輸入異動，例如：我改成 8:40 才能到":"Or type your own, e.g. I can only make it by 8:40", "行程異動":"Trip change", "產生通知":"Draft message",
-    "AI 正在寫通知…":"AI is writing the message…", "不影響出發時間和座位":"No effect on departure time or seats", "AI 寫的通知（可以修改）：":"AI draft (you can edit it):",
-    "發到討論區":"Post to discussion", "再試一次 AI":"Try AI again", "已發到討論區":"Posted to the discussion",
-    "AI 尚未設定，先用範本幫你寫好了，可以直接修改。":"AI isn't set up yet — here's a template you can edit.", "AI 使用太頻繁了，先用範本幫你寫好了，可以直接修改。":"Too many AI requests — here's a template you can edit.", "AI 回應逾時，先用範本幫你寫好了，可以直接修改。":"The AI timed out — here's a template you can edit.",
-    "AI 暫時無法使用，先用範本幫你寫好了，可以直接修改。":"AI is unavailable — here's a template you can edit.", "出發時間可能從":"Departure may move from", "延到":"to",
-    "大行李可能要占 1 個空位，占用後剩":"The big bag may take 1 empty seat, leaving", "車上已經坐滿，大行李可能放不下，需要先跟大家確認":"The car is full — the big bag may not fit, check with everyone first", "集合點要改到有遮雨的地方，請在討論區確認地點":"Meeting point moves somewhere covered — confirm the spot in the discussion",
-    "大家好，":"Hi all! ", "出發時間可能延到 ":"Departure may move to ", "，抱歉讓大家等！":" — sorry to keep you waiting!",
-    "車上已經坐滿，大行李放不下的話我再想辦法，請大家告訴我。":"The car is full; if my bag doesn't fit I'll figure something out — let me know.", "大行李可能會占一個空位，請大家見諒。":"My big bag may take an empty seat — hope that's OK.", "集合點改到有遮雨的地方，地點我們在這裡確認一下。":"Let's move the meeting point somewhere covered — let's confirm the spot here.",
-    "不影響出發時間和座位。":"This doesn't affect departure time or seats.",
+    // ---------- Ask Songguo AI agent (web/agent.js) ----------
+    "我 5 點要到高鐵":"I need to be at THSR by 5", "今晚有空想吃便宜的":"Free tonight — somewhere cheap to eat?", "明早後門去中壢車站有人揪嗎":"Anyone sharing a ride from the back gate to Zhongli Station tomorrow morning?",
+    "下一堂課在哪":"Where's my next class?", "AI 尚未設定，以下是程式直接找到的結果。":"AI isn't set up yet — here's what the app found directly.", "AI 使用太頻繁了，以下是程式直接找到的結果。":"Too many AI requests — here's what the app found directly.",
+    "AI 回應逾時，以下是程式直接找到的結果。":"The AI timed out — here's what the app found directly.", "AI 暫時無法使用，以下是程式直接找到的結果。":"AI is unavailable — here's what the app found directly.", "交通精算暫時無法使用":"The commute advisor is unavailable right now",
+    "交通精算：":"Commute: ", "・來不及":" · too late", "到・":" · ",
+    "・剩":" · ", "開一團（已填好）":"Start a ride (pre-filled)", "都不合適？開一團（已填好）":"None fit? Start a ride (pre-filled)",
+    "打開已填好的開團表單":"Open the pre-filled ride form", "團符合的拼車，點下面的卡片看討論區。":"matching ride shares — tap a card to open its discussion.", "目前沒有符合的拼車團，可以自己開一團，表單已經幫你填好。":"No matching ride shares yet — start your own; the form is pre-filled.",
+    "開團表單已經幫你填好，點下面的卡片確認後再發布。":"The ride form is pre-filled — tap the card, check it, then publish.", "個符合的活動，點下面的卡片看詳情。":"matching events — tap a card for details.", "這段時間沒有找到符合的活動，可以到活動頁看看其他時間。":"No events at that time — check the Events page for other times.",
+    "間符合的店，點下面的卡片在美食地圖上看。":"matching places — tap a card to see it on the food map.", "美食地圖上沒有找到符合的店，換個條件試試。":"No matching places on the food map — try different options.", "價位未知":"price unknown",
+    "你還沒有建立課表，點下面的卡片輸入一次就好。":"You haven't set up your timetable yet — tap the card to add it once.", "輸入一次，之後就能問下一堂課":"Add it once, then just ask about your next class", "下一堂是「":"Your next class is “",
+    "」，":"”, ", "，在 ":", in ", "找教室：":"Find room: ",
+    "在校內導航上看位置":"See it on the campus map", "＋":"+", "・走路約":" · walk ~", "已帶入「問松果」的條件。":"Loaded the options from Ask Songguo.",
+    "請 AI 寫建議":"Ask AI for advice",
+    // ---------- 5-group navigation ----------
+    "社群":"Community", "我的":"Me", "設定":"Settings", "匿名使用者・不用註冊":"Anonymous · no sign-up",
+    "暱稱、系所、住處":"Nickname, department, where you live", "場今天":"today", "場近期":"upcoming", "°・降雨":"° · rain",
+    "捷徑":"Shortcuts",
+    // ---------- site search (web/search.js) ----------
+    "搜尋":"Search", "搜尋松果…":"Search Songguo…", "校內地點":"Campus places",
+    "看板與系所":"Boards & departments", "還有":"", "筆，輸入更多字縮小範圍":"more — type more to narrow it down",
+    "可以搜尋貼文、活動、美食、校內地點、看板與系所。中文、英文都可以。":"Search posts, events, food, campus places, boards and departments — in Chinese or English.", "找不到符合的結果，換個關鍵字試試。":"No results — try another keyword.", "（無標題）":"(untitled)",
+    // ---------- notification center (web/notify.js) ----------
+    "通知":"Notifications", "新":"new", "目前沒有通知。有人私訊你、加入你的拼車、留言給你，或你想去的活動快開始時，會出現在這裡。":"No notifications yet. Message requests, people joining your ride, comments on your posts and events you're going to that are about to start will show up here.",
+    "分鐘後":"min from now", "分鐘前":"min ago", "小時前":"h ago",
+    "天前":"d ago", "想私訊你":"wants to message you", "加入了你的拼車團":"joined your ride share",
+    "你想去的「":"“", "」快開始了":"” is starting soon", "留言在你的貼文「":"commented on your post “",
+    // ---------- performance ----------
+    "地圖載入中…":"Loading map…",
     // ---------- AI translation (web/translate.js) ----------
     "翻譯":"Translate", "翻譯中…":"Translating…", "顯示原文":"Show original", "翻譯全部留言":"Translate all comments",
     "用 AI 翻譯":"Translate with AI", "AI 翻譯，可能有誤":"AI translation — may contain mistakes",
@@ -489,6 +505,8 @@
     adj: ["Sleepy","Late-night","Caffeinated","Lakeside","Back-gate","Hungry","Early-bird","Guitar-playing","Plant-loving","Bus-chasing","Midnight","Studious"],
     noun: ["Squirrel","Pinecone","Owl","Neighbour","Commuter","Night Owl","Senior","Wanderer","Snacker","Cat","Roommate","Explorer"],
   };
-  window.sgI18n = { tr, translate, get lang(){ return lang; }, setLang,
+  // 不管目前介面是什麼語言，都回傳英文（全站搜尋用：中文介面下也能用英文找系所、建築）
+  function toEn(s){ const keep = lang; lang = "en"; try { return tr(s); } finally { lang = keep; } }
+  window.sgI18n = { tr, translate, toEn, get lang(){ return lang; }, setLang,
     randNick(){ const a = NICK_EN.adj, b = NICK_EN.noun; return a[Math.random()*a.length|0] + " " + b[Math.random()*b.length|0]; } };
 })();

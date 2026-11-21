@@ -51,7 +51,19 @@ function logUsage({ task, latencyMs = 0, ok = true, cached = false }) {
 // 各功能的快取命中時呼叫（沒有呼叫 AI，但留下紀錄，才看得出快取省了多少次）
 const logCached = task => logUsage({ task, latencyMs: 0, ok: true, cached: true });
 
+// 隊長可編輯的規則（api/_lib/ai-rules.js），插在功能本身的系統提示後面
+let RULES = {}; try { RULES = require("./ai-rules"); } catch {}
+function withRules(messages, task) {
+  const skipAll = /translate|moderate/.test(task || ""); // 翻譯、審查不套用通用規則
+  const extra = [skipAll ? "" : RULES.all, task && RULES[task]].map(x => String(x || "").trim()).filter(Boolean).join("\n\n");
+  if (!extra) return messages;
+  const i = messages.findIndex(m => m.role !== "system");
+  const at = i < 0 ? messages.length : i;
+  return [...messages.slice(0, at), { role: "system", content: "【必須遵守的補充規則】\n" + extra }, ...messages.slice(at)];
+}
+
 async function callModel(messages, opts) {
+  messages = withRules(messages, opts.task);
   const p = provider();
   if (!p) { const e = new Error("AI 尚未設定：請在 Vercel 環境變數加上 Azure OpenAI 或 GitHub Models 的金鑰"); e.code = "ai_not_configured"; throw e; }
   const body = { messages, max_tokens: opts.maxTokens || 600, temperature: opts.temperature ?? 0.3 };
