@@ -224,6 +224,10 @@
     "社群":"Community", "我的":"Me", "設定":"Settings", "匿名使用者・不用註冊":"Anonymous · no sign-up",
     "暱稱、系所、住處":"Nickname, department, where you live", "場今天":"today", "場近期":"upcoming", "°・降雨":"° · rain",
     "捷徑":"Shortcuts",
+    // ---------- site search (web/search.js) ----------
+    "搜尋":"Search", "搜尋松果…":"Search Songguo…", "校內地點":"Campus places",
+    "看板與系所":"Boards & departments", "還有":"", "筆，輸入更多字縮小範圍":"more — type more to narrow it down",
+    "可以搜尋貼文、活動、美食、校內地點、看板與系所。中文、英文都可以。":"Search posts, events, food, campus places, boards and departments — in Chinese or English.", "找不到符合的結果，換個關鍵字試試。":"No results — try another keyword.", "（無標題）":"(untitled)",
     // ---------- AI translation (web/translate.js) ----------
     "翻譯":"Translate", "翻譯中…":"Translating…", "顯示原文":"Show original", "翻譯全部留言":"Translate all comments",
     "用 AI 翻譯":"Translate with AI", "AI 翻譯，可能有誤":"AI translation — may contain mistakes",
@@ -488,6 +492,8 @@
     adj: ["Sleepy","Late-night","Caffeinated","Lakeside","Back-gate","Hungry","Early-bird","Guitar-playing","Plant-loving","Bus-chasing","Midnight","Studious"],
     noun: ["Squirrel","Pinecone","Owl","Neighbour","Commuter","Night Owl","Senior","Wanderer","Snacker","Cat","Roommate","Explorer"],
   };
-  window.sgI18n = { tr, translate, get lang(){ return lang; }, setLang,
+  // 不管目前介面是什麼語言，都回傳英文（全站搜尋用：中文介面下也能用英文找系所、建築）
+  function toEn(s){ const keep = lang; lang = "en"; try { return tr(s); } finally { lang = keep; } }
+  window.sgI18n = { tr, translate, toEn, get lang(){ return lang; }, setLang,
     randNick(){ const a = NICK_EN.adj, b = NICK_EN.noun; return a[Math.random()*a.length|0] + " " + b[Math.random()*b.length|0]; } };
 })();

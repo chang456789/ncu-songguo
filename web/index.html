@@ -589,6 +589,7 @@ a.ghost{color:var(--ink)}
 <script src="/ride-ai.js"></script>
 <script src="/privacy.js"></script>
 <script src="/agent.js"></script>
+<script src="/search.js"></script>
 
 
 <script>
@@ -724,6 +725,12 @@ RA.init({ h, tr:s=>I18N.tr(s), lang:()=>I18N.lang, renderKeep:()=>renderKeep(), 
 // 發布前隱私提醒（web/privacy.js）：純規則，偵測到手機、地址等個資時提醒，但不擋發布
 const PRIV = window.sgPrivacy || { init(){}, review:async x => x };
 PRIV.init({ tr:s=>I18N.tr(s), translate:el=>I18N.translate(el) });
+// 跳到某一場活動、某一間店（AI 代理人的卡片和全站搜尋都會用到）
+function goEvent(id){ go("news"); setTimeout(() => { const el = document.querySelector(`[data-ev="${CSS.escape(id)}"]`); if (el){ el.scrollIntoView({ block:"center", behavior:"smooth" }); el.classList.add("ag-flash"); } }, 150); }
+function goFood(id){ go("food"); selectFood(id, true); }
+// 全站搜尋（web/search.js）：純比對網站現有資料，不呼叫 AI
+const SEARCH = window.sgSearch || { init(){}, open(){} };
+SEARCH.init({ tr:s=>I18N.tr(s), translate:el=>I18N.translate(el), onOpen:()=>loadPlaces(), sources:()=>searchSources() });
 // 問松果 AI 代理人（web/agent.js）：AI 選工具 → 程式用網站資料算結果 → 回答下面附可以點的卡片
 const AGENT = window.sgAgent || { init(){}, ask:async()=>({ general:true }) };
 AGENT.init({ lang:()=>I18N.lang, tr:s=>I18N.tr(s), places:()=>RIDE_PLACES.filter(p => p !== "其他"),
@@ -741,8 +748,7 @@ AGENT.init({ lang:()=>I18N.lang, tr:s=>I18N.tr(s), places:()=>RIDE_PLACES.filter
     setTimeout(() => { const el = document.querySelector(".trow.ra-pick"); if (el) el.scrollIntoView({ block:"center", behavior:"smooth" }); }, 120); },
   openRide:m=>openModal({ k:"ride", ...m }),
   openRideThread:id=>{ RA.setRideFilter(null); S.space.transit="rides"; saveSpace(); go("transit"); openThread("ride:"+id); },
-  goEvent:id=>{ go("news"); setTimeout(() => { const el = document.querySelector(`[data-ev="${CSS.escape(id)}"]`); if (el){ el.scrollIntoView({ block:"center", behavior:"smooth" }); el.classList.add("ag-flash"); } }, 150); },
-  goFood:id=>{ go("food"); selectFood(id, true); },
+  goEvent:id=>goEvent(id), goFood:id=>goFood(id),
   goSchedule:()=>go("schedule"), findRoom:room=>{ S.navQ = roomBuilding(room); go("nav"); } });
 function switchLang(l){ VOICE.stop(); I18N.setLang(l); S.dirty = false; render(); }
 
@@ -832,6 +838,7 @@ const ICONS = {
   calendar:"M4 6h16v14H4zM4 10h16M9 3v4M15 3v4",
   map:"M9 4 3 6v14l6-2 6 2 6-2V4l-6 2-6-2zM9 4v14M15 6v14",
   cloud:"M7 18h10a4 4 0 0 0 .5-8 6 6 0 0 0-11.5 1.5A3.5 3.5 0 0 0 7 18z",
+  search:"M11 4a7 7 0 1 0 0 14 7 7 0 0 0 0-14zM20 20l-4.2-4.2",
   user:"M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM4 21a8 8 0 0 1 16 0",
   users:"M9 11a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7zM3 20c0-3.3 2.7-6 6-6s6 2.7 6 6M16 4.5a3.5 3.5 0 0 1 0 6.5M18 14c2 .7 3 2.8 3 5",
   grid:"M4 4h7v7H4zM13 4h7v7h-7zM4 13h7v7H4zM13 13h7v7h-7z",
@@ -1088,6 +1095,32 @@ function goCommunity(k){
   k = k || LS.get("pc.comm") || "lobby"; LS.set("pc.comm", k);
   if (k === "lobby" || k === "boards"){ S.forumSeg = k; LS.set("pc.fseg", k); go("forum"); } else go(k);
 }
+// 系所簡稱：「資訊工程學系」也能用「資工」找到（四個字的取第 1、3 字，另外加前兩個字）
+function deptAlias(sp){
+  if (sp.tab !== "campus") return "";
+  const base = sp.name.replace(/學系|研究所|學位學程|國際碩士|系$/g, "");
+  return base.length === 4 ? base[0] + base[2] + " " + base.slice(0, 2) : base.slice(0, 2);
+}
+// 全站搜尋的資料：每一筆 { group, title, sub, text（原文）, en（英文翻譯）, user（使用者寫的內容不翻譯）, action }
+function searchSources(){
+  const en = s => I18N.toEn ? I18N.toEn(s) : s;
+  const out = [];
+  for (const p of S.posts) if (visibleTo(p)) out.push({ group:"貼文", title:p.title || "（無標題）", sub:[spaceLabel(p.space), "・", ago(p.ts)].join(""),
+    text:p.body || "", user:true, action:()=>jumpToPost(p) });
+  for (const e of upcomingEvents()) out.push({ group:"活動", title:e.title, sub:[evWhen(e), e.place ? "・" + e.place : ""].join(""), userSub:true,
+    text:[e.place, e.highlight, (e.tags||[]).join(" ")].join(" "), en:[e.highlightEn, (e.tags||[]).map(en).join(" ")].join(" "), user:true, action:()=>goEvent(e.id) });
+  const seen = new Set();
+  for (const f of S.food){ seen.add(f.name); out.push({ group:"美食", title:f.name, sub:f.cat + (f.status && f.status!=="營業中" ? "・" + f.status : ""),
+    text:[f.cat, f.note].join(" "), en:en(f.cat), user:true, action:()=>goFood(f.id) }); }
+  for (const p of (PLACES && PLACES.items) || []) if (!seen.has(p.name) && !S.food.some(o => sameName(o.name, p.name)))
+    out.push({ group:"美食", title:p.name, sub:p.cat, text:[p.cat, p.cuisine].join(" "), en:[p.nameEn, en(p.cat)].join(" "), enTitle:p.nameEn, user:true, action:()=>goFood("o:"+p.osm) });
+  for (const s of allSpots()) out.push({ group:"校內地點", title:s.name, sub:s.cat, text:s.note || "", en:[en(s.name), en(s.cat)].join(" "), enTitle:en(s.name),
+    action:()=>{ S.navQ = s.name; go("nav"); } });
+  for (const sp of Object.values(SPACES)) if (sp.tab === "forum" || sp.tab === "campus" || sp.tab === "market" || sp.tab === "housing")
+    out.push({ group:"看板與系所", title:sp.name, sub:sp.group || "", text:[sp.desc || "", deptAlias(sp)].join(" "), en:[en(sp.name), en(sp.group || "")].join(" "), enTitle:en(sp.name),
+      action:()=>go(sp.tab, sp.tab === "market" ? null : sp.id) });
+  return out;
+}
 function goGroup(g){ g === "community" ? goCommunity() : go(g); }
 function communitySeg(){
   const cur = communityKey();
@@ -1108,6 +1141,7 @@ function topbar(){
       h("button",{class:"brand",onclick:()=>go("home"),"aria-label":"松果首頁"}, brandMark(), h("b",{},"松果")),
       S.room ? h("button",{class:"online-pill",title:"看看誰在線上",onclick:()=>go("online")}, h("i",{}), h("b",{},"在線 "), h("span",{class:"mono"}, online || 1)) : null,
       h("button",{class:"iconbtn lang-btn",translate:"no",title:I18N.lang==="en"?"切換成中文":"Switch to English","aria-label":I18N.lang==="en"?"切換成中文":"Switch to English",onclick:()=>switchLang(I18N.lang==="en"?"zh":"en")}, I18N.lang==="en" ? "中" : "EN"),
+      h("button",{class:"iconbtn",title:"搜尋",onclick:()=>SEARCH.open(),"aria-label":"搜尋"}, icon("search")),
       h("button",{class:"iconbtn",title:"建立",onclick:()=>openModal({k:"create"}),"aria-label":"建立"}, icon("plus")),
       h("button",{class:"iconbtn",title:"私訊",onclick:()=>go("inbox"),"aria-label":"私訊"}, icon("send"), pending ? h("span",{class:"badge"}, pending) : null),
       h("button",{class:"me-btn",onclick:()=>openModal({k:"profile"}),"aria-label":"我的設定"}, avatar(S.nick, "sm"))));
