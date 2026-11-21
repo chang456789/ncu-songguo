@@ -228,6 +228,11 @@
     "搜尋":"Search", "搜尋松果…":"Search Songguo…", "校內地點":"Campus places",
     "看板與系所":"Boards & departments", "還有":"", "筆，輸入更多字縮小範圍":"more — type more to narrow it down",
     "可以搜尋貼文、活動、美食、校內地點、看板與系所。中文、英文都可以。":"Search posts, events, food, campus places, boards and departments — in Chinese or English.", "找不到符合的結果，換個關鍵字試試。":"No results — try another keyword.", "（無標題）":"(untitled)",
+    // ---------- notification center (web/notify.js) ----------
+    "通知":"Notifications", "新":"new", "目前沒有通知。有人私訊你、加入你的拼車、留言給你，或你想去的活動快開始時，會出現在這裡。":"No notifications yet. Message requests, people joining your ride, comments on your posts and events you're going to that are about to start will show up here.",
+    "分鐘後":"min from now", "分鐘前":"min ago", "小時前":"h ago",
+    "天前":"d ago", "想私訊你":"wants to message you", "加入了你的拼車團":"joined your ride share",
+    "你想去的「":"“", "」快開始了":"” is starting soon", "留言在你的貼文「":"commented on your post “",
     // ---------- AI translation (web/translate.js) ----------
     "翻譯":"Translate", "翻譯中…":"Translating…", "顯示原文":"Show original", "翻譯全部留言":"Translate all comments",
     "用 AI 翻譯":"Translate with AI", "AI 翻譯，可能有誤":"AI translation — may contain mistakes",

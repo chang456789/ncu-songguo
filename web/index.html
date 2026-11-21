@@ -94,6 +94,8 @@ header.top{position:sticky;top:0;z-index:20;background:var(--surface);border-bot
 .snav .ico svg{width:20px;height:20px}
 .snav .badge{margin-left:auto}
 .snav hr{border:0;border-top:1px solid var(--line);margin:8px 10px}
+/* 手機：頂部只留語言、搜尋、通知、頭像（建立在底部導覽，私訊在「我的」與通知裡） */
+@media (max-width:720px){ .top .hide-phone{display:none} }
 /* 分頁重整：5 大類（首頁｜交通｜＋建立｜社群｜我的） */
 .snav .snav-create .ico{background:var(--pine);color:var(--pine-ink)}
 .cseg{overflow-x:auto;scrollbar-width:none;flex-wrap:nowrap;max-width:100%}
@@ -590,6 +592,7 @@ a.ghost{color:var(--ink)}
 <script src="/privacy.js"></script>
 <script src="/agent.js"></script>
 <script src="/search.js"></script>
+<script src="/notify.js"></script>
 
 
 <script>
@@ -728,6 +731,41 @@ PRIV.init({ tr:s=>I18N.tr(s), translate:el=>I18N.translate(el) });
 // 跳到某一場活動、某一間店（AI 代理人的卡片和全站搜尋都會用到）
 function goEvent(id){ go("news"); setTimeout(() => { const el = document.querySelector(`[data-ev="${CSS.escape(id)}"]`); if (el){ el.scrollIntoView({ block:"center", behavior:"smooth" }); el.classList.add("ag-flash"); } }, 150); }
 function goFood(id){ go("food"); selectFood(id, true); }
+// 通知中心（web/notify.js）：用現有資料計算，已讀狀態存在 LocalStorage
+const NOTIFY = window.sgNotify || { init(){}, bell:()=>null };
+NOTIFY.init({ items:()=>notifItems(), tr:s=>I18N.tr(s), translate:el=>I18N.translate(el), onChange:()=>renderKeep() });
+// 我最近 10 篇貼文的留言（只有通知中心需要；只讀既有的留言資料）
+const cmtWatch = new Map();
+function watchMyComments(){
+  if (!S.db || !S.uid) return;
+  const ids = S.posts.filter(p => p.uid === S.uid).sort((a,b) => b.ts - a.ts).slice(0, 10).map(p => p.id);
+  for (const [id, un] of cmtWatch) if (!ids.includes(id)){ un(); cmtWatch.delete(id); delete S.myCmts[id]; }
+  for (const id of ids) if (!cmtWatch.has(id))
+    cmtWatch.set(id, S.db.collection("posts/"+id+"/comments").orderBy("ts","desc").limit(20).onSnapshot(s => { S.myCmts[id] = s.docs.map(d => d.data()); renderKeep(); }, () => {}));
+}
+function notifItems(){
+  const out = [], now = Date.now();
+  // ① 私訊請求
+  for (const r of S.reqIn) if (r.status === "pending") out.push({ id:"dm:"+r.id+":"+(r.ts||0), ts:r.ts||now, kind:"dm", icon:"✉️", sticky:true,
+    text:[{ user:r.fromNick || "匿名" }, " 想私訊你"], sub: r.note ? { user:"「" + String(r.note).slice(0, 30) + "」" } : "", action:()=>go("inbox") });
+  // ② 有人加入我開的拼車團
+  const mine = new Map(S.rides.filter(r => r.uid && r.uid === S.uid).map(r => [r.id, r]));
+  for (const x of S.riderList) if (mine.has(x.ride) && x.uid !== S.uid){ const r = mine.get(x.ride);
+    out.push({ id:"join:"+x.ride+":"+x.uid, ts:x.ts||0, kind:"ride", icon:"🚕", text:[{ user:x.nick || "匿名" }, " 加入了你的拼車團"], sub:[r.from, " → ", r.to],
+      action:()=>{ RA.setRideFilter(null); S.space.transit="rides"; saveSpace(); go("transit"); openThread("ride:"+x.ride); } }); }
+  // ③ 我「想去」的活動 1 小時內開始
+  const today = todayISO();
+  if (S.uid) for (const e of upcomingEvents()) if (S.going[e.id]?.has(S.uid) && e.date <= today && today <= (e.end || e.date)){
+    const m = /^(\d{1,2}):(\d{2})/.exec(e.time || ""); if (!m) continue;
+    const d = new Date(); d.setHours(+m[1], +m[2], 0, 0); const start = d.getTime();
+    if (start >= now - 5*60e3 && start <= now + 60*60e3) out.push({ id:"ev:"+e.id+":"+today, ts:start, kind:"event", icon:"📣", sticky:true,
+      text:["你想去的「", { user:e.title }, "」快開始了"], sub: e.place ? { user:e.place } : "", action:()=>goEvent(e.id) }); }
+  // ④ 我的貼文有新留言
+  for (const [pid, list] of Object.entries(S.myCmts)){ const p = S.posts.find(x => x.id === pid); if (!p) continue;
+    for (const c of list) if (c.uid !== S.uid) out.push({ id:"cmt:"+pid+":"+c.ts+":"+(c.uid||""), ts:c.ts||0, kind:"cmt", icon:"💬",
+      text:[{ user:c.nick || "匿名" }, " 留言在你的貼文「", { user:String(p.title || "").slice(0, 20) }, "」"], sub:{ user:String(c.body || "").slice(0, 40) }, action:()=>jumpToPost(p) }); }
+  return out;
+}
 // 全站搜尋（web/search.js）：純比對網站現有資料，不呼叫 AI
 const SEARCH = window.sgSearch || { init(){}, open(){} };
 SEARCH.init({ tr:s=>I18N.tr(s), translate:el=>I18N.translate(el), onOpen:()=>loadPlaces(), sources:()=>searchSources() });
@@ -885,7 +923,7 @@ const S = {
   open:null, comments:[], unsubComments:null,
   chat:null, chatMsgs:[], unsubChat:null,
   modal:null, dirty:false,
-  timetable: LS.json("pc.tt", null), lobby:[], spots:[], events:[], going:{}, feedKind:"", forumSeg: LS.get("pc.fseg") || "lobby",
+  riderList:[], myCmts:{}, timetable: LS.json("pc.tt", null), lobby:[], spots:[], events:[], going:{}, feedKind:"", forumSeg: LS.get("pc.fseg") || "lobby",
   busCfg:null, busDest:LS.get("pc.busDest")||"zl", busDir:LS.get("pc.busDir")||"out", dayMode:LS.get("pc.dayMode")||"auto", homeDir:LS.get("pc.hdir")||"out",
   food:[], foodRates:{}, foodSel:null, foodFilter:"", foodSort:"dist", landmarks:null, map:null,
 };
@@ -1142,8 +1180,9 @@ function topbar(){
       S.room ? h("button",{class:"online-pill",title:"看看誰在線上",onclick:()=>go("online")}, h("i",{}), h("b",{},"在線 "), h("span",{class:"mono"}, online || 1)) : null,
       h("button",{class:"iconbtn lang-btn",translate:"no",title:I18N.lang==="en"?"切換成中文":"Switch to English","aria-label":I18N.lang==="en"?"切換成中文":"Switch to English",onclick:()=>switchLang(I18N.lang==="en"?"zh":"en")}, I18N.lang==="en" ? "中" : "EN"),
       h("button",{class:"iconbtn",title:"搜尋",onclick:()=>SEARCH.open(),"aria-label":"搜尋"}, icon("search")),
-      h("button",{class:"iconbtn",title:"建立",onclick:()=>openModal({k:"create"}),"aria-label":"建立"}, icon("plus")),
-      h("button",{class:"iconbtn",title:"私訊",onclick:()=>go("inbox"),"aria-label":"私訊"}, icon("send"), pending ? h("span",{class:"badge"}, pending) : null),
+      h("button",{class:"iconbtn hide-phone",title:"建立",onclick:()=>openModal({k:"create"}),"aria-label":"建立"}, icon("plus")),
+      h("button",{class:"iconbtn hide-phone",title:"私訊",onclick:()=>go("inbox"),"aria-label":"私訊"}, icon("send"), pending ? h("span",{class:"badge"}, pending) : null),
+      NOTIFY.bell(),
       h("button",{class:"me-btn",onclick:()=>openModal({k:"profile"}),"aria-label":"我的設定"}, avatar(S.nick, "sm"))));
 }
 function sideNav(){
@@ -2952,7 +2991,7 @@ setInterval(() => { if (S.nick) renderKeep(); }, 30000);
     } catch {}
   }
   const sub = (q, fn) => q.onSnapshot(s => { fn(s); renderKeep(); }, () => {});
-  sub(db.collection("posts").orderBy("ts","desc").limit(1000), s => { S.posts = s.docs.map(d => ({ id:d.id, ...d.data() })); if (S.dbState==="loading") S.dbState = "ok"; });
+  sub(db.collection("posts").orderBy("ts","desc").limit(1000), s => { S.posts = s.docs.map(d => ({ id:d.id, ...d.data() })); if (S.dbState==="loading") S.dbState = "ok"; watchMyComments(); });
   sub(db.collection("locations").limit(500), s => { S.customLocs = s.docs.map(d => { const x = d.data(); return { id:"c-"+d.id, name:x.name, zone:x.zone||"ot", lane:x.lane||"", custom:true }; }); });
   sub(db.collection("likes").limit(1000), s => { const m = {}; for (const d of s.docs){ const x = d.data(); (m[x.post] ||= new Set()).add(x.uid); } S.likes = m; });
   sub(db.collection("reports").limit(1000), s => { const m = {}; for (const d of s.docs){ const x = d.data(); (m[x.post] ||= new Set()).add(x.uid); } S.reports = m; });
@@ -2966,7 +3005,7 @@ setInterval(() => { if (S.nick) renderKeep(); }, 30000);
   sub(db.collection("food").limit(800), s => { S.food = s.docs.map(d => ({ id:d.id, ...d.data() })).filter(x => typeof x.lat==="number" && typeof x.lng==="number"); });
   sub(db.collection("foodrate").limit(2000), s => { const m = {}; for (const d of s.docs){ const x = d.data(); (m[x.food] ||= new Map()).set(x.uid, x.stars); } S.foodRates = m; });
   db.doc("config/landmarks").onSnapshot(s => { S.landmarks = s.exists && Array.isArray(s.data().items) ? s.data().items : null; renderKeep(); }, () => {});
-  sub(db.collection("riders").limit(1000), s => { const m = {}; for (const d of s.docs){ const x = d.data(); (m[x.ride] ||= new Map()).set(x.uid, x.nick); } S.riders = m; });
+  sub(db.collection("riders").limit(1000), s => { const m = {}; for (const d of s.docs){ const x = d.data(); (m[x.ride] ||= new Map()).set(x.uid, x.nick); } S.riders = m; S.riderList = s.docs.map(d => d.data()); });
   db.doc("config/bus").onSnapshot(s => { S.busCfg = s.exists && s.data().hsrMode ? s.data() : null; renderKeep(); }, () => {});
   if (S.uid){
     sub(db.collection("dmreq").where("to","==",S.uid), s => { S.reqIn = s.docs.map(d => ({ id:d.id, ...d.data() })); });
