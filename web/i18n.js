@@ -233,6 +233,8 @@
     "分鐘後":"min from now", "分鐘前":"min ago", "小時前":"h ago",
     "天前":"d ago", "想私訊你":"wants to message you", "加入了你的拼車團":"joined your ride share",
     "你想去的「":"“", "」快開始了":"” is starting soon", "留言在你的貼文「":"commented on your post “",
+    // ---------- performance ----------
+    "地圖載入中…":"Loading map…",
     // ---------- AI translation (web/translate.js) ----------
     "翻譯":"Translate", "翻譯中…":"Translating…", "顯示原文":"Show original", "翻譯全部留言":"Translate all comments",
     "用 AI 翻譯":"Translate with AI", "AI 翻譯，可能有誤":"AI translation — may contain mistakes",
