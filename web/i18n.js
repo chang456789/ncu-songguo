@@ -22,6 +22,9 @@
     "每篇最多 4 張照片":"Up to 4 photos per post", "這個檔案不是照片，請選 JPG、PNG 或 HEIC 照片。":"That file isn't a photo — choose a JPG, PNG or HEIC image.",
     "照片太大了，壓縮後還是超過 300KB，請換一張。":"That photo is still over 300KB after compression — please choose another.",
     "上傳太多照片了（每小時最多 20 張），請稍後再試。":"Too many uploads (max 20 photos per hour). Please try again later.", "照片上傳失敗，請稍後再試。":"Photo upload failed. Please try again later.",
+    "今日松果":"Today at Songguo", "松果正在整理今天…":"Songguo is putting your day together…", "下一堂":"Next class", "AI 整理・":"By AI · ",
+    "AI 還沒啟用，先用簡單版整理。":"AI isn't available yet — here's a simple summary.", "AI 使用量太多了，先用簡單版整理。":"AI is busy — here's a simple summary.",
+    "AI 回應逾時，先用簡單版整理。":"AI took too long — here's a simple summary.", "AI 暫時無法使用，先用簡單版整理。":"AI is unavailable — here's a simple summary.",
     "下拉重新整理":"Pull to refresh", "放開重新整理":"Release to refresh", "重新整理中…":"Refreshing…",
     // ---------- shell & navigation ----------
     "松果":"Songguo", "松果首頁":"Songguo home", "主選單":"Main menu", "選單":"Menu", "即時資訊":"Live info", "快速查看":"At a glance",
