@@ -15,11 +15,12 @@
   "use strict";
   const MAX_CONTEXT = 6000;   // 和 api/ai-chat.js 一致
   const MAX_INPUT = 500;
+  // 建議問題：示範 AI 代理人會自己挑的工具（交通精算、找吃的、找拼車、下一堂課）
   const SUGGEST = [
-    "下一班到中壢火車站的公車是幾點？",
-    "這週有什麼活動？有提供餐點的嗎？",
-    "評價最高的店有哪些？",
-    "我的下一堂課是什麼時候、在哪裡？",
+    "我 5 點要到高鐵",
+    "今晚有空想吃便宜的",
+    "明早後門去中壢車站有人揪嗎",
+    "下一堂課在哪",
   ];
 
   let app = { context: async () => ({}), lang: () => "zh", tr: s => s, translate: () => {}, visible: () => true, openRides: () => {} };
@@ -73,6 +74,19 @@
     msgs.push({ role: "user", content: text });
     busy = true; draw();
     let notice = null;
+    // AI 代理人（web/agent.js）：先讓它判斷要用哪個工具；不需要工具的一般問題才走下面原本的 /api/ai-chat
+    if (app.agent){
+      let out = null;
+      try { out = await app.agent(text, history); } catch (e) { console.error("agent failed", e); }
+      if (out && !out.general){
+        const AGENT_NOTE = { not_configured: "AI 尚未設定，以下是程式直接找到的結果。", rate_limited: "AI 使用太頻繁了，以下是程式直接找到的結果。",
+          timeout: "AI 回應逾時，以下是程式直接找到的結果。", error: "AI 暫時無法使用，以下是程式直接找到的結果。" };
+        msgs.push({ role: "assistant", content: out.reply, cards: out.cards, note: out.byAI ? null : AGENT_NOTE[out.status] || null });
+        busy = false; draw();
+        if (inputEl && panel && !panel.hidden) inputEl.focus({ preventScroll: true });
+        return;
+      }
+    }
     try {
       let context = {};
       try { context = fit(await app.context()); } catch { context = {}; }
@@ -102,7 +116,14 @@
     const mine = m.role === "user";
     return el("div", { class: "ai-row" + (mine ? " me" : "") },
       el("div", { class: "ai-bubble" + (m.kind === "notice" && !mine ? " notice" : ""), translate: m.kind === "notice" ? null : "no" }, m.content,
-        m.showRides ? el("div", {}, el("button", { type: "button", class: "ai-ride", onclick: () => { close(); app.openRides(); } }, t("看拼車"))) : null));
+        m.showRides ? el("div", {}, el("button", { type: "button", class: "ai-ride", onclick: () => { close(); app.openRides(); } }, t("看拼車"))) : null,
+        m.note ? el("p", { class: "ai-note" }, t(m.note)) : null,
+        // AI 代理人的結果卡片：點了就關掉視窗、跳到對應頁面並帶入條件
+        m.cards && m.cards.length ? el("div", { class: "ai-cards" }, m.cards.map(c =>
+          el("button", { type: "button", class: "ai-card-btn " + c.kind, onclick: () => { close(); c.action(); } },
+            el("span", { class: "ai-card-ico", "aria-hidden": "true" }, c.icon || "›"),
+            el("span", { class: "ai-card-txt" }, el("b", {}, c.title), c.sub ? el("small", {}, c.sub) : null),
+            el("span", { class: "ai-card-go", "aria-hidden": "true" }, "›")))) : null));
   }
   function draw(){
     if (!panel) return;
@@ -197,6 +218,16 @@
 .ai-bubble{max-width:86%;background:var(--sunk);border-radius:16px 16px 16px 4px;padding:9px 13px;font-size:15px;line-height:1.55;white-space:pre-wrap;overflow-wrap:anywhere}
 .ai-row.me .ai-bubble{background:var(--pine);color:var(--bg);border-radius:16px 16px 4px 16px}
 .ai-bubble.notice{background:var(--bus-soft);color:var(--ink);border:1px solid var(--line)}
+.card.ev.ag-flash{box-shadow:0 0 0 2px var(--pine)}
+.ai-note{margin:6px 0 0;font-size:12.5px;color:var(--muted);white-space:normal}
+.ai-cards{display:flex;flex-direction:column;gap:6px;margin-top:10px;white-space:normal}
+.ai-card-btn{display:flex;align-items:center;gap:10px;width:100%;text-align:left;background:var(--surface);color:var(--ink);border:1px solid var(--line);border-radius:12px;padding:8px 10px;cursor:pointer;font:inherit}
+.ai-card-btn:hover{border-color:var(--pine)}
+.ai-card-ico{flex:none;width:28px;height:28px;border-radius:8px;background:var(--sunk);display:grid;place-items:center;font-size:15px}
+.ai-card-txt{flex:1;min-width:0;display:flex;flex-direction:column;gap:1px}
+.ai-card-txt b{font-size:14px;line-height:1.35;overflow-wrap:anywhere}
+.ai-card-txt small{font-size:12.5px;color:var(--muted);line-height:1.35;overflow-wrap:anywhere}
+.ai-card-go{flex:none;color:var(--pine);font-size:20px;font-weight:700}
 .ai-ride{margin-top:8px;background:var(--surface);color:var(--pine);border:1px solid var(--pine);border-radius:999px;padding:5px 14px;font-weight:700;font-size:14px;cursor:pointer}
 .ai-typing{display:flex;align-items:center;gap:4px;color:var(--muted);font-size:14px}
 .ai-typing i{width:7px;height:7px;border-radius:50%;background:var(--muted);animation:ai-dot 1.2s infinite ease-in-out}

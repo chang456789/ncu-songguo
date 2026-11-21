@@ -40,6 +40,9 @@
     },
     "api/ai-ride.js": {
       "maxDuration": 30
+    },
+    "api/ai-agent.js": {
+      "maxDuration": 30
     }
   }
 }
