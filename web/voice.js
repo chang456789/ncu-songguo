@@ -22,7 +22,7 @@
     "audio-capture": "找不到麥克風。",
     network: "語音辨識需要網路連線，請稍後再試。",
   };
-  const MIC = '<svg viewBox="0 0 24 24" aria-hidden="true" width="20" height="20"><path d="M12 3a3 3 0 0 0-3 3v6a3 3 0 0 0 6 0V6a3 3 0 0 0-3-3zM6 11a6 6 0 0 0 12 0M12 17v4M9 21h6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  const MIC = '<svg viewBox="0 0 24 24" aria-hidden="true" width="20" height="20"><path d="M12 3a3 3 0 0 0-3 3v6a3 3 0 0 0 6 0V6a3 3 0 0 0-3-3zM6 11a6 6 0 0 0 12 0M12 17v4M9 21h6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 
   function sync(){
     for (const b of document.querySelectorAll(".mic-btn")){

@@ -62,3 +62,64 @@
   .px-track{display:flex;justify-content:center;align-items:flex-end}
   .px-celebrate{transition:none}
 }
+
+/* =====================================================================
+   設計規格（任務二）：圓角、陰影、間距、字級各統一成 4–5 個固定數值
+   新寫的樣式一律用這些變數；index.html 改版合併後，舊樣式也會換成這些變數（對照表見 PR）。
+   ===================================================================== */
+:root{
+  /* 圓角：小元件（標籤、小按鈕）／卡片／彈出視窗／膠囊 */
+  --radius-s:8px; --radius-m:12px; --radius-l:16px; --radius-pill:999px;
+  /* 陰影：卡片／浮動按鈕與選單／彈出視窗 */
+  --shadow-1:0 1px 2px rgba(20,30,25,.08); --shadow-2:0 4px 14px rgba(20,30,25,.16); --shadow-3:0 12px 40px rgba(20,30,25,.22);
+  /* 間距（4 的倍數） */
+  --space-1:4px; --space-2:8px; --space-3:12px; --space-4:16px; --space-5:24px;
+  /* 字級：說明文字／次要內文／內文與輸入框（iPhone 不會自動放大）／區塊標題／頁面標題 */
+  --fs-1:12px; --fs-2:14px; --fs-3:16px; --fs-4:20px; --fs-5:24px;
+  /* 圖示線條粗細 */
+  --icon-stroke:1.8;
+}
+@media (prefers-color-scheme:dark){ :root:not([data-theme="light"]){ --shadow-1:0 1px 2px rgba(0,0,0,.4); --shadow-2:0 4px 14px rgba(0,0,0,.45); --shadow-3:0 12px 40px rgba(0,0,0,.55); } }
+:root[data-theme="dark"]{ --shadow-1:0 1px 2px rgba(0,0,0,.4); --shadow-2:0 4px 14px rgba(0,0,0,.45); --shadow-3:0 12px 40px rgba(0,0,0,.55); }
+.px-celebrate{box-shadow:var(--shadow-2);border-radius:var(--radius-pill)}
+
+/* ---------- 骨架屏：灰色卡片輪廓＋閃動 ---------- */
+.sk-list{display:flex;flex-direction:column;gap:var(--space-2)}
+.sk-card{background:var(--surface);border-radius:var(--radius-m);box-shadow:var(--shadow-1);padding:var(--space-4);display:flex;gap:var(--space-3);overflow:hidden}
+.sk-post{flex-direction:column;gap:var(--space-2)}
+.sk-row{display:flex;gap:var(--space-2);align-items:center}
+.sk-col{display:flex;flex-direction:column;gap:var(--space-2);flex:1;min-width:0}
+.sk-bar,.sk-dot,.sk-box,.sk-thumb,.sk-seats{display:block;background:var(--sunk);border-radius:var(--radius-s);position:relative;overflow:hidden}
+.sk-bar{height:12px}.sk-bar.thin{height:10px}.sk-bar.thick{height:16px}.sk-bar.pill{height:20px;border-radius:var(--radius-pill)}
+.sk-dot{width:40px;height:40px;border-radius:50%;flex:none}
+.sk-box{width:56px;height:60px;flex:none}
+.sk-thumb{width:72px;height:72px;flex:none}
+.sk-seats{width:56px;height:14px;align-self:center;flex:none}
+.sk-bar::after,.sk-dot::after,.sk-box::after,.sk-thumb::after,.sk-seats::after{content:"";position:absolute;inset:0;
+  background:linear-gradient(90deg,transparent,color-mix(in srgb,var(--surface) 70%,transparent),transparent);transform:translateX(-100%);animation:sk-shine 1.3s ease-in-out infinite}
+@keyframes sk-shine{to{transform:translateX(100%)}}
+@media (max-width:720px){ .sk-card{border-radius:0;box-shadow:none} }
+
+/* ---------- 小動畫：按讚彈一下、送出成功 ---------- */
+.ui-pop svg{animation:ui-pop .45s cubic-bezier(.3,1.8,.5,1)}
+@keyframes ui-pop{0%{transform:scale(1)}35%{transform:scale(1.45)}100%{transform:scale(1)}}
+.ui-sent{position:relative}
+.ui-sent::after{content:"✓";position:absolute;inset:0;display:grid;place-items:center;border-radius:inherit;background:var(--ok);color:var(--pine-ink);font-weight:800;animation:ui-sent .9s ease-out forwards}
+@keyframes ui-sent{0%{opacity:0;transform:scale(.6)}25%{opacity:1;transform:scale(1)}75%{opacity:1}100%{opacity:0}}
+
+/* ---------- 手機下拉重新整理 ---------- */
+.ptr{position:fixed;top:0;left:50%;transform:translate(-50%,-56px);z-index:25;display:flex;align-items:center;gap:var(--space-2);
+  padding:var(--space-1) var(--space-3) var(--space-1) var(--space-1);background:var(--surface);color:var(--ink);border:1px solid var(--line);border-radius:var(--radius-pill);
+  box-shadow:var(--shadow-2);font-size:var(--fs-1);font-weight:700;opacity:0;pointer-events:none}
+.ptr.show{opacity:1}
+.ptr.ready{color:var(--pine)}
+.ptr.busy .px{animation:px-hop .32s ease-in-out infinite alternate}
+
+/* ---------- 手機鍵盤打開時：隱藏底部選單，避免蓋住輸入框 ---------- */
+body.kb-open nav.bottom{display:none!important}
+body.kb-open .ai-fab{display:none!important}
+
+@media (prefers-reduced-motion:reduce){
+  .sk-bar::after,.sk-dot::after,.sk-box::after,.sk-thumb::after,.sk-seats::after{animation:none;display:none}
+  .ui-pop svg,.ui-sent::after,.ptr.busy .px{animation:none!important}
+}
