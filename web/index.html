@@ -11,11 +11,14 @@
 <link rel="manifest" href="/manifest.webmanifest">
 <link rel="icon" type="image/png" href="/icons/icon-192.png">
 <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css">
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
 <style>body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
 <title>松果中大生活通</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<!-- 字型在背景下載，不擋住畫面：先用系統字型顯示，下載完自動換成 Noto Sans TC -->
+<link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap" onload="this.onload=null;this.rel='stylesheet'">
+<noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap"></noscript>
 <style>
 /* Social-app shell. Desktop: left menu | feed (≤620px) | right rail. Phone: top bar + full-bleed feed + bottom bar with a centre "+" button.
    One signature element: the story row, whose rings use the pinecone gradient and show live numbers (next bus, weather, next class). */
@@ -94,6 +97,25 @@ header.top{position:sticky;top:0;z-index:20;background:var(--surface);border-bot
 .snav .ico svg{width:20px;height:20px}
 .snav .badge{margin-left:auto}
 .snav hr{border:0;border-top:1px solid var(--line);margin:8px 10px}
+/* 手機：頂部只留語言、搜尋、通知、頭像（建立在底部導覽，私訊在「我的」與通知裡） */
+@media (max-width:720px){ .top .hide-phone{display:none} }
+/* 分頁重整：5 大類（首頁｜交通｜＋建立｜社群｜我的） */
+.snav .snav-create .ico{background:var(--pine);color:var(--pine-ink)}
+.cseg{overflow-x:auto;scrollbar-width:none;flex-wrap:nowrap;max-width:100%}
+.cseg::-webkit-scrollbar{display:none}
+.cseg button{flex:1 0 auto;white-space:nowrap}
+.backbar{align-self:flex-start;font-weight:600;font-size:14px;padding:2px 0}
+.shortcuts{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+.sc-card{display:flex;flex-direction:column;align-items:flex-start;gap:4px;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:12px;text-align:left;color:var(--ink);cursor:pointer;min-width:0}
+.sc-card:hover{border-color:var(--pine)}
+.sc-card b{font-size:15px}
+.sc-card span:last-child{font-size:12.5px;color:var(--muted);line-height:1.35;overflow-wrap:anywhere}
+.sc-ico{width:34px;height:34px;border-radius:10px;display:grid;place-items:center;background:var(--pine-soft);color:var(--pine)}
+.sc-ico svg{width:20px;height:20px}
+.me-card{display:flex;align-items:center;gap:12px}
+.me-who{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.me-who b{font-size:17px;overflow-wrap:anywhere}
+@media (max-width:720px){ .shortcuts{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-inline:12px} .cseg,.backbar{margin-inline:12px} }
 .side-foot{font-size:12px;color:var(--muted);padding:12px 10px}
 .rail{display:flex;flex-direction:column;gap:20px}
 .rail h3{font-size:16px;margin:0 0 8px;color:var(--muted);font-weight:700}
@@ -498,6 +520,8 @@ label.f small,div.f small{color:var(--muted);font-weight:400;font-size:13px}
 .map-wrap .map-hint{z-index:600}
 .lm-icon span{display:inline-block;transform:translate(-50%,-50%);white-space:nowrap;font:700 12px var(--f-body);color:var(--ink);background:var(--surface);border-radius:999px;padding:2px 8px;box-shadow:var(--shadow)}
 .leaflet-container{font:inherit;background:var(--map-bg)}
+.map-loading{display:grid;place-items:center;color:var(--muted);background:var(--sunk);font-size:14px}
+.cmt.pending{opacity:.55}
 .leaflet-tooltip{font:500 12px var(--f-body)}
 .map{position:relative;height:min(60vh,460px);min-height:300px;border-radius:var(--r);overflow:hidden;background:var(--map-bg);box-shadow:var(--shadow)}
 @media (max-width:720px){ .map{border-radius:0} }
@@ -559,7 +583,6 @@ a.ghost{color:var(--ink)}
 <body>
 <div id="app"></div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.2/dist/umd/supabase.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="/config.js"></script>
 <script src="/i18n.js"></script>
 <script src="/shim.js"></script>
@@ -571,6 +594,9 @@ a.ghost{color:var(--ink)}
 <script src="/voice.js"></script>
 <script src="/ride-ai.js"></script>
 <script src="/privacy.js"></script>
+<script src="/agent.js"></script>
+<script src="/search.js"></script>
+<script src="/notify.js"></script>
 
 
 <script>
@@ -676,7 +702,7 @@ const TR = window.sgTranslate || { view:(id,texts)=>({ texts, button:null }), tr
 TR.init({ db:()=>S.db, uid:()=>S.uid, lang:()=>I18N.lang, onChange:()=>renderKeep(), toast:m=>toast(m) });
 // 松果 AI 助理（web/assistant.js）：首頁卡片＋右下角「問松果」按鈕。aiContext() 在下面 BUS／EVENTS 之後定義
 const AI = window.sgAssistant || { init(){}, sync(){}, homeCard:()=>null, open(){} };
-AI.init({ context:()=>aiContext(), lang:()=>I18N.lang, tr:s=>I18N.tr(s), translate:el=>I18N.translate(el),
+AI.init({ context:()=>aiContext(), agent:(t,hist)=>AGENT.ask(t,hist), lang:()=>I18N.lang, tr:s=>I18N.tr(s), translate:el=>I18N.translate(el),
   visible:()=>!!S.nick && !["food","nav"].includes(S.tab),   // 地圖頁右下角已有按鈕，避免重疊
   openRides:()=>{ S.space.transit="rides"; saveSpace(); go("transit"); } });
 // 活動空檔媒合（web/events-ai.js）。upcomingEvents／evWhen 在下面定義
@@ -694,7 +720,7 @@ const VOICE = window.sgVoice || { init(){}, button:()=>null, stop(){} };
 VOICE.init({ lang:()=>I18N.lang, toast:m=>toast(m), tr:s=>I18N.tr(s) });
 // 松果 AI 智慧交通與共乘（web/ride-ai.js）：交通精算師等功能，數字由程式計算、AI 只寫說明
 const RA = window.sgRideAI || { init(){}, commuteCard:()=>null, isPick:()=>false, filterRides:l=>l, filterBar:()=>null, setRideFilter(){},
-  rideBox:()=>null, rideBadges:()=>null, TAGS:[], LUGGAGE:{}, myTags:()=>[], coordBox:()=>null };
+  rideBox:()=>null, rideBadges:()=>null, TAGS:[], LUGGAGE:{}, myTags:()=>[] };
 RA.init({ h, tr:s=>I18N.tr(s), lang:()=>I18N.lang, renderKeep:()=>renderKeep(), canPost:()=>canPost(), uid:()=>S.uid,
   bus:BUS, nowMin:()=>nowMin(), fromMin:m=>fromMin(m),
   trips:d=>trips(d,"out",dayCtx()).filter(x => !x.offBoard), tomorrow:d=>nextTrips(d,"out",1).tomorrow,
@@ -702,17 +728,70 @@ RA.init({ h, tr:s=>I18N.tr(s), lang:()=>I18N.lang, renderKeep:()=>renderKeep(), 
   weather:()=>{ const w = loadWeather(); return w.data ? upcomingHours(w.data)[0] || null : null; },
   goBus:d=>{ S.busDest=d; LS.set("pc.busDest",d); S.busDir="out"; LS.set("pc.busDir","out"); S.space.transit="bus"; saveSpace(); go("transit"); },
   goRides:f=>{ RA.setRideFilter(f); S.space.transit="rides"; saveSpace(); go("transit"); },
-  openRide:m=>openModal({ k:"ride", ...m }), rideCard:r=>rideCard(r), live:(k,fn)=>live(k,fn),
-  toast:m=>toast(m), isRider:r=>!!(S.uid && S.riders[r.id]?.has(S.uid)),
-  // 行程異動通知：和一般留言一樣寫進這一團的討論串，一樣先跑內容安全（MOD.guard）再跑隱私提醒（PRIV.review）
-  postComment:async function post(r, text, force){
-    const mine = S.comments.filter(c => c.uid && c.uid === S.uid);
-    if (!(await MOD.guard("cmt", text, mine, () => post(r, text, true), force === true))) return false;
-    const pv = await PRIV.review([text]); if (!pv) return false;
-    try { await S.db.collection("rides/"+r.id+"/comments").add({ body:pv[0], nick:S.nick, uid:S.uid||"", ts:Date.now() }); return true; } catch(e){ toast(writeErr(e)); return false; } } });
+  openRide:m=>openModal({ k:"ride", ...m }), rideCard:r=>rideCard(r), live:(k,fn)=>live(k,fn) });
 // 發布前隱私提醒（web/privacy.js）：純規則，偵測到手機、地址等個資時提醒，但不擋發布
 const PRIV = window.sgPrivacy || { init(){}, review:async x => x };
 PRIV.init({ tr:s=>I18N.tr(s), translate:el=>I18N.translate(el) });
+// 跳到某一場活動、某一間店（AI 代理人的卡片和全站搜尋都會用到）
+function goEvent(id){ go("news"); setTimeout(() => { const el = document.querySelector(`[data-ev="${CSS.escape(id)}"]`); if (el){ el.scrollIntoView({ block:"center", behavior:"smooth" }); el.classList.add("ag-flash"); } }, 150); }
+function goFood(id){ go("food"); selectFood(id, true); }
+// 通知中心（web/notify.js）：用現有資料計算，已讀狀態存在 LocalStorage
+const NOTIFY = window.sgNotify || { init(){}, bell:()=>null };
+NOTIFY.init({ items:()=>notifItems(), tr:s=>I18N.tr(s), translate:el=>I18N.translate(el), onChange:()=>renderKeep() });
+// 我最近 10 篇貼文的留言（只有通知中心需要；只讀既有的留言資料）
+const cmtWatch = new Map();
+function watchMyComments(){
+  if (!S.db || !S.uid) return;
+  const ids = S.posts.filter(p => p.uid === S.uid).sort((a,b) => b.ts - a.ts).slice(0, 10).map(p => p.id);
+  for (const [id, un] of cmtWatch) if (!ids.includes(id)){ un(); cmtWatch.delete(id); delete S.myCmts[id]; }
+  for (const id of ids) if (!cmtWatch.has(id))
+    cmtWatch.set(id, S.db.collection("posts/"+id+"/comments").orderBy("ts","desc").limit(20).onSnapshot(s => { S.myCmts[id] = s.docs.map(d => d.data()); renderKeep(); }, () => {}));
+}
+function notifItems(){
+  const out = [], now = Date.now();
+  // ① 私訊請求
+  for (const r of S.reqIn) if (r.status === "pending") out.push({ id:"dm:"+r.id+":"+(r.ts||0), ts:r.ts||now, kind:"dm", icon:"✉️", sticky:true,
+    text:[{ user:r.fromNick || "匿名" }, " 想私訊你"], sub: r.note ? { user:"「" + String(r.note).slice(0, 30) + "」" } : "", action:()=>go("inbox") });
+  // ② 有人加入我開的拼車團
+  const mine = new Map(S.rides.filter(r => r.uid && r.uid === S.uid).map(r => [r.id, r]));
+  for (const x of S.riderList) if (mine.has(x.ride) && x.uid !== S.uid){ const r = mine.get(x.ride);
+    out.push({ id:"join:"+x.ride+":"+x.uid, ts:x.ts||0, kind:"ride", icon:"🚕", text:[{ user:x.nick || "匿名" }, " 加入了你的拼車團"], sub:[r.from, " → ", r.to],
+      action:()=>{ RA.setRideFilter(null); S.space.transit="rides"; saveSpace(); go("transit"); openThread("ride:"+x.ride); } }); }
+  // ③ 我「想去」的活動 1 小時內開始
+  const today = todayISO();
+  if (S.uid) for (const e of upcomingEvents()) if (S.going[e.id]?.has(S.uid) && e.date <= today && today <= (e.end || e.date)){
+    const m = /^(\d{1,2}):(\d{2})/.exec(e.time || ""); if (!m) continue;
+    const d = new Date(); d.setHours(+m[1], +m[2], 0, 0); const start = d.getTime();
+    if (start >= now - 5*60e3 && start <= now + 60*60e3) out.push({ id:"ev:"+e.id+":"+today, ts:start, kind:"event", icon:"📣", sticky:true,
+      text:["你想去的「", { user:e.title }, "」快開始了"], sub: e.place ? { user:e.place } : "", action:()=>goEvent(e.id) }); }
+  // ④ 我的貼文有新留言
+  for (const [pid, list] of Object.entries(S.myCmts)){ const p = S.posts.find(x => x.id === pid); if (!p) continue;
+    for (const c of list) if (c.uid !== S.uid) out.push({ id:"cmt:"+pid+":"+c.ts+":"+(c.uid||""), ts:c.ts||0, kind:"cmt", icon:"💬",
+      text:[{ user:c.nick || "匿名" }, " 留言在你的貼文「", { user:String(p.title || "").slice(0, 20) }, "」"], sub:{ user:String(c.body || "").slice(0, 40) }, action:()=>jumpToPost(p) }); }
+  return out;
+}
+// 全站搜尋（web/search.js）：純比對網站現有資料，不呼叫 AI
+const SEARCH = window.sgSearch || { init(){}, open(){} };
+SEARCH.init({ tr:s=>I18N.tr(s), translate:el=>I18N.translate(el), onOpen:()=>loadPlaces(), sources:()=>searchSources() });
+// 問松果 AI 代理人（web/agent.js）：AI 選工具 → 程式用網站資料算結果 → 回答下面附可以點的卡片
+const AGENT = window.sgAgent || { init(){}, ask:async()=>({ general:true }) };
+AGENT.init({ lang:()=>I18N.lang, tr:s=>I18N.tr(s), places:()=>RIDE_PLACES.filter(p => p !== "其他"),
+  events:()=>upcomingEvents(), evWhen:e=>evWhen(e), seatsLeft:r=>Math.max(0, (r.seats||0) - 1 - (S.riders[r.id]?.size||0)),
+  // 美食：松果美食地圖的店（有評分、價位）＋ OpenStreetMap 上的附近店家（沒有價位與評分）
+  foods:()=>{
+    const ours = S.food.filter(f => f.status !== "已歇業").map(f => { const r = foodRating(f.id);
+      return { id:f.id, name:f.name, type:f.cat, price:f.price||0, hours:f.hours||"", note:f.note||"", stars:r ? Math.round(r.avg*10)/10 : null, ratings:r ? r.n : 0, walkMin:Math.max(1, Math.round(distM(f)/FOOD_WALK)) }; });
+    const osm = (loadPlaces().items||[]).filter(p => !S.food.some(o => sameName(o.name, p.name)))
+      .map(p => ({ id:"o:"+p.osm, name:p.name, type:p.cat, price:0, hours:p.hours||"", note:"", stars:null, ratings:0, walkMin:Math.max(1, Math.round(distM(p)/FOOD_WALK)) }));
+    return ours.concat(osm); },
+  nextClass:()=>{ const n = nextClass(); return n && { name:n.c.name, weekday:"週"+DAYN[n.c.day], start:n.c.start, end:n.c.end, room:n.c.room||"", inDays:n.inDays, ongoing:n.ongoing }; },
+  // 卡片點下去要去的地方（並帶入條件）
+  goBus:d=>{ S.busDest=d; LS.set("pc.busDest",d); S.busDir="out"; LS.set("pc.busDir","out"); S.space.transit="bus"; saveSpace(); go("transit");
+    setTimeout(() => { const el = document.querySelector(".trow.ra-pick"); if (el) el.scrollIntoView({ block:"center", behavior:"smooth" }); }, 120); },
+  openRide:m=>openModal({ k:"ride", ...m }),
+  openRideThread:id=>{ RA.setRideFilter(null); S.space.transit="rides"; saveSpace(); go("transit"); openThread("ride:"+id); },
+  goEvent:id=>goEvent(id), goFood:id=>goFood(id),
+  goSchedule:()=>go("schedule"), findRoom:room=>{ S.navQ = roomBuilding(room); go("nav"); } });
 function switchLang(l){ VOICE.stop(); I18N.setLang(l); S.dirty = false; render(); }
 
 const RIDE_PLACES = ["中央大學（正門）","中央大學（後門）","中壢火車站","高鐵桃園站","台北車站","松山機場","桃園機場","大江購物中心","中原商圈・中原夜市","龍岡・忠貞市場","中壢觀光夜市","青埔","其他"];
@@ -801,6 +880,8 @@ const ICONS = {
   calendar:"M4 6h16v14H4zM4 10h16M9 3v4M15 3v4",
   map:"M9 4 3 6v14l6-2 6 2 6-2V4l-6 2-6-2zM9 4v14M15 6v14",
   cloud:"M7 18h10a4 4 0 0 0 .5-8 6 6 0 0 0-11.5 1.5A3.5 3.5 0 0 0 7 18z",
+  search:"M11 4a7 7 0 1 0 0 14 7 7 0 0 0 0-14zM20 20l-4.2-4.2",
+  user:"M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM4 21a8 8 0 0 1 16 0",
   users:"M9 11a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7zM3 20c0-3.3 2.7-6 6-6s6 2.7 6 6M16 4.5a3.5 3.5 0 0 1 0 6.5M18 14c2 .7 3 2.8 3 5",
   grid:"M4 4h7v7H4zM13 4h7v7h-7zM4 13h7v7H4zM13 13h7v7h-7z",
   mega:"M3 10v4h3l6 4V6L6 10zM16 8.5a5 5 0 0 1 0 7M18.5 6a8.5 8.5 0 0 1 0 12",
@@ -846,7 +927,7 @@ const S = {
   open:null, comments:[], unsubComments:null,
   chat:null, chatMsgs:[], unsubChat:null,
   modal:null, dirty:false,
-  timetable: LS.json("pc.tt", null), lobby:[], spots:[], events:[], going:{}, feedKind:"", forumSeg: LS.get("pc.fseg") || "lobby",
+  riderList:[], myCmts:{}, timetable: LS.json("pc.tt", null), lobby:[], spots:[], events:[], going:{}, feedKind:"", forumSeg: LS.get("pc.fseg") || "lobby",
   busCfg:null, busDest:LS.get("pc.busDest")||"zl", busDir:LS.get("pc.busDir")||"out", dayMode:LS.get("pc.dayMode")||"auto", homeDir:LS.get("pc.hdir")||"out",
   food:[], foodRates:{}, foodSel:null, foodFilter:"", foodSort:"dist", landmarks:null, map:null,
 };
@@ -977,6 +1058,7 @@ function render(){
     bottomNav());
   renderOverlay();
   I18N.translate(app); document.title = I18N.lang==="en" ? "Songguo · NCU campus life" : "松果中大生活通";
+  syncHash(false);
   AI.sync();
 }
 function renderKeep(){
@@ -1041,6 +1123,57 @@ const TABS = [
   ["market","市集","bag",0,,"二手・免費送・徵求"],["housing","租屋","house",0,,"租屋大廳・避雷"],["campus","系所","campus",0,,"各系看板"],
   ["weather","天氣","cloud",0,,"中壢天氣預報"],["online","在線","users",0,,"現在誰在線上"],["inbox","私訊","send",0,,"加密私訊"],
 ];
+/* 分頁重整：導覽只剩 5 大類（首頁｜交通｜＋建立｜社群｜我的）。
+   舊分頁全部保留（網址 #/food、#/news… 照樣能開），GROUP_OF 決定它們歸在哪一類、導覽列亮哪一個。 */
+const GROUPS = [["home","首頁","home"],["transit","交通","bus"],["community","社群","chat"],["me","我的","user"]];
+const GROUP_OF = { home:"home", food:"home", nav:"home", weather:"home", news:"home", transit:"transit",
+  forum:"community", campus:"community", market:"community", housing:"community", community:"community",
+  me:"me", more:"me", schedule:"me", inbox:"me", online:"me" };
+const groupOf = tab => GROUP_OF[tab] || "home";
+// 社群：上方分段切換（即時大廳和看板都是 forum 分頁，用 forumSeg 區分）
+const COMMUNITY = [["lobby","即時大廳"],["boards","看板"],["campus","系所"],["market","市集"],["housing","租屋"]];
+const communityKey = () => S.tab === "forum" ? (S.forumSeg === "boards" ? "boards" : "lobby") : S.tab;
+function goCommunity(k){
+  k = k || LS.get("pc.comm") || "lobby"; LS.set("pc.comm", k);
+  if (k === "lobby" || k === "boards"){ S.forumSeg = k; LS.set("pc.fseg", k); go("forum"); } else go(k);
+}
+// 系所簡稱：「資訊工程學系」也能用「資工」找到（四個字的取第 1、3 字，另外加前兩個字）
+function deptAlias(sp){
+  if (sp.tab !== "campus") return "";
+  const base = sp.name.replace(/學系|研究所|學位學程|國際碩士|系$/g, "");
+  return base.length === 4 ? base[0] + base[2] + " " + base.slice(0, 2) : base.slice(0, 2);
+}
+// 全站搜尋的資料：每一筆 { group, title, sub, text（原文）, en（英文翻譯）, user（使用者寫的內容不翻譯）, action }
+function searchSources(){
+  const en = s => I18N.toEn ? I18N.toEn(s) : s;
+  const out = [];
+  for (const p of S.posts) if (visibleTo(p)) out.push({ group:"貼文", title:p.title || "（無標題）", sub:[spaceLabel(p.space), "・", ago(p.ts)].join(""),
+    text:p.body || "", user:true, action:()=>jumpToPost(p) });
+  for (const e of upcomingEvents()) out.push({ group:"活動", title:e.title, sub:[evWhen(e), e.place ? "・" + e.place : ""].join(""), userSub:true,
+    text:[e.place, e.highlight, (e.tags||[]).join(" ")].join(" "), en:[e.highlightEn, (e.tags||[]).map(en).join(" ")].join(" "), user:true, action:()=>goEvent(e.id) });
+  const seen = new Set();
+  for (const f of S.food){ seen.add(f.name); out.push({ group:"美食", title:f.name, sub:f.cat + (f.status && f.status!=="營業中" ? "・" + f.status : ""),
+    text:[f.cat, f.note].join(" "), en:en(f.cat), user:true, action:()=>goFood(f.id) }); }
+  for (const p of (PLACES && PLACES.items) || []) if (!seen.has(p.name) && !S.food.some(o => sameName(o.name, p.name)))
+    out.push({ group:"美食", title:p.name, sub:p.cat, text:[p.cat, p.cuisine].join(" "), en:[p.nameEn, en(p.cat)].join(" "), enTitle:p.nameEn, user:true, action:()=>goFood("o:"+p.osm) });
+  for (const s of allSpots()) out.push({ group:"校內地點", title:s.name, sub:s.cat, text:s.note || "", en:[en(s.name), en(s.cat)].join(" "), enTitle:en(s.name),
+    action:()=>{ S.navQ = s.name; go("nav"); } });
+  for (const sp of Object.values(SPACES)) if (sp.tab === "forum" || sp.tab === "campus" || sp.tab === "market" || sp.tab === "housing")
+    out.push({ group:"看板與系所", title:sp.name, sub:sp.group || "", text:[sp.desc || "", deptAlias(sp)].join(" "), en:[en(sp.name), en(sp.group || "")].join(" "), enTitle:en(sp.name),
+      action:()=>go(sp.tab, sp.tab === "market" ? null : sp.id) });
+  return out;
+}
+function goGroup(g){ g === "community" ? goCommunity() : go(g); }
+function communitySeg(){
+  const cur = communityKey();
+  return h("div",{class:"seg cseg",role:"tablist","aria-label":"社群"}, COMMUNITY.map(([k,l]) =>
+    h("button",{role:"tab","aria-selected":cur===k?"true":"false","aria-pressed":cur===k?"true":"false",onclick:()=>goCommunity(k)}, l)));
+}
+// 首頁、我的底下的頁面：上方一個「‹ 返回」
+function backBar(){
+  const g = groupOf(S.tab); if (S.tab === g || g === "transit" || g === "community") return null;
+  return h("button",{class:"linkbtn backbar",onclick:()=>go(g)}, "‹ ", g === "me" ? "我的" : "首頁");
+}
 const pendingReqs = () => S.reqIn.filter(r => r.status==="pending").length;
 function topbar(){
   const pending = pendingReqs();
@@ -1050,16 +1183,21 @@ function topbar(){
       h("button",{class:"brand",onclick:()=>go("home"),"aria-label":"松果首頁"}, brandMark(), h("b",{},"松果")),
       S.room ? h("button",{class:"online-pill",title:"看看誰在線上",onclick:()=>go("online")}, h("i",{}), h("b",{},"在線 "), h("span",{class:"mono"}, online || 1)) : null,
       h("button",{class:"iconbtn lang-btn",translate:"no",title:I18N.lang==="en"?"切換成中文":"Switch to English","aria-label":I18N.lang==="en"?"切換成中文":"Switch to English",onclick:()=>switchLang(I18N.lang==="en"?"zh":"en")}, I18N.lang==="en" ? "中" : "EN"),
-      h("button",{class:"iconbtn",title:"建立",onclick:()=>openModal({k:"create"}),"aria-label":"建立"}, icon("plus")),
-      h("button",{class:"iconbtn",title:"私訊",onclick:()=>go("inbox"),"aria-label":"私訊"}, icon("send"), pending ? h("span",{class:"badge"}, pending) : null),
+      h("button",{class:"iconbtn",title:"搜尋",onclick:()=>SEARCH.open(),"aria-label":"搜尋"}, icon("search")),
+      h("button",{class:"iconbtn hide-phone",title:"建立",onclick:()=>openModal({k:"create"}),"aria-label":"建立"}, icon("plus")),
+      h("button",{class:"iconbtn hide-phone",title:"私訊",onclick:()=>go("inbox"),"aria-label":"私訊"}, icon("send"), pending ? h("span",{class:"badge"}, pending) : null),
+      NOTIFY.bell(),
       h("button",{class:"me-btn",onclick:()=>openModal({k:"profile"}),"aria-label":"我的設定"}, avatar(S.nick, "sm"))));
 }
 function sideNav(){
-  const pending = pendingReqs();
+  const pending = pendingReqs(), cur = groupOf(S.tab);
+  const item = ([id,label,ic]) => h("button",{"aria-current":cur===id?"page":null,onclick:()=>goGroup(id),title:label},
+    h("span",{class:"ico"}, icon(ic)), h("span",{class:"lbl"}, label), id==="me" && pending ? h("span",{class:"badge"}, pending) : null);
   return h("nav",{class:"snav"},
     h("button",{onclick:()=>openModal({k:"profile"})}, avatar(S.nick, "sm"), h("span",{class:"lbl"}, S.nick)),
-    TABS.map(([id,label,ic]) => h("button",{"aria-current":S.tab===id?"page":null,onclick:()=>go(id),title:label},
-      h("span",{class:"ico"}, icon(ic)), h("span",{class:"lbl"}, label), id==="inbox" && pending ? h("span",{class:"badge"}, pending) : null)),
+    item(GROUPS[0]), item(GROUPS[1]),
+    h("button",{class:"snav-create",onclick:()=>openModal({k:"create"}),title:"建立"}, h("span",{class:"ico"}, icon("plus")), h("span",{class:"lbl"},"建立")),
+    item(GROUPS[2]), item(GROUPS[3]),
     h("hr",{}),
     h("button",{onclick:()=>openModal({k:"install"}),title:"安裝到手機"}, h("span",{class:"ico"}, icon("phone")), h("span",{class:"lbl"},"安裝到手機")),
     h("div",{class:"lang-row",translate:"no"}, h("span",{class:"ico"}, icon("globe")),
@@ -1068,14 +1206,12 @@ function sideNav(){
     h("p",{class:"side-foot"},"松果是中央學生自己做的生活網站，資料來自學校公開資訊與大家的分享。"));
 }
 function bottomNav(){
-  const pending = pendingReqs();
-  const onBar = TABS.filter(t => t[3]).map(t => t[0]);
-  const btn = (id, label, ic, cur, extra) => h("button",{class:"tab"+(extra||""),"aria-current":cur?"page":null,onclick:()=> id==="create" ? openModal({k:"create"}) : go(id),"aria-label":label}, icon(ic), h("span",{},label),
-    id==="more" && pending ? h("span",{class:"badge"}, pending) : null);
+  const pending = pendingReqs(), cur = groupOf(S.tab);
+  const btn = (id, label, ic, extra) => h("button",{class:"tab"+(extra||""),"aria-current":cur===id?"page":null,
+    onclick:()=> id==="create" ? openModal({k:"create"}) : goGroup(id),"aria-label":label}, icon(ic), h("span",{},label),
+    id==="me" && pending ? h("span",{class:"badge"}, pending) : null);
   return h("nav",{class:"bottom","aria-label":"主選單"},
-    btn("home","首頁","home",S.tab==="home"), btn("transit","交通","bus",S.tab==="transit"),
-    btn("create","建立","plus",false," create"),
-    btn("forum","論壇","chat",S.tab==="forum"), btn("more","更多","grid",!onBar.includes(S.tab)));
+    btn("home","首頁","home"), btn("transit","交通","bus"), btn("create","建立","plus"," create"), btn("community","社群","chat"), btn("me","我的","user"));
 }
 function rightRail(){
   const nexts = ["zl","hsr"].map(d => ({ d, x: nextTrips(d, "out", 1).list[0] })).filter(o => o.x);
@@ -1100,13 +1236,31 @@ function rightRail(){
         return h("button",{class:"rrow",disabled:p.by===S.uid,onclick:()=>openModal({k:"dmreq",to:p.by,toNick:nick,from:p.presence?.where||"online"})},
           avatar(nick, "sm", true), h("span",{class:"t"}, h("b",{}, nick, p.by===S.uid ? "（你）" : ""), h("span",{}, whereLabel(p.presence?.where)))); }))) : null);
 }
-function go(tab, space){
+/* 網址：#/food、#/news、#/lobby… 每個分頁都有自己的網址，舊連結點了照樣能打開；
+   手機的「上一頁」也能回到前一個分頁。首頁不加 #。 */
+const ROUTE_TABS = ["home","transit","news","forum","schedule","food","nav","market","housing","campus","weather","online","inbox","me","more"];
+function routeFromHash(){
+  const k = decodeURIComponent((location.hash || "").replace(/^#\/?/, "")).split(/[/?]/)[0];
+  if (k === "lobby" || k === "boards" || k === "community") return { tab:"forum", seg: k === "boards" ? "boards" : "lobby" };
+  return ROUTE_TABS.includes(k) ? { tab:k } : null;
+}
+const hashOf = () => S.tab === "home" ? "" : "#/" + (S.tab === "forum" ? (S.forumSeg === "boards" ? "boards" : "lobby") : S.tab);
+function syncHash(push){
+  const want = hashOf(); if ((location.hash || "") === want) return;
+  try { history[push ? "pushState" : "replaceState"](null, "", want || location.pathname + location.search); } catch {}
+}
+// 打開網站時，網址上的分頁優先（例如別人分享的 …/#/food）
+{ const r = routeFromHash(); if (r){ S.tab = r.tab; LS.set("pc.tab", r.tab); if (r.seg){ S.forumSeg = r.seg; LS.set("pc.fseg", r.seg); } } }
+window.addEventListener("popstate", () => { const r = routeFromHash() || { tab:"home" };
+  if (r.seg){ S.forumSeg = r.seg; LS.set("pc.fseg", r.seg); } if (S.modal) S.modal = null; go(r.tab, null, true); });
+function go(tab, space, fromPop){
   S.tab = tab; LS.set("pc.tab", tab); S.filter = ""; closeThread();
   if (space){ S.space[tab] = space; saveSpace();
     if (tab==="housing"){ S.housingSeg = space.startsWith("hb:") ? "boards" : "off"; LS.set("pc.hseg",S.housingSeg); }
     if (tab==="forum"){ S.forumSeg = "boards"; LS.set("pc.fseg","boards"); } }
   if (tab !== "inbox") closeChat();
   ensureLobby(tab==="forum");
+  if (!fromPop) syncHash(true);
   presence(); render(); window.scrollTo({top:0});
 }
 function presence(){ if (S.room) S.room.presence({ nick:S.nick, where: currentSpaceId() || S.tab }).catch(()=>{}); }
@@ -1117,8 +1271,12 @@ function currentSpaceId(){
 }
 function page(){
   const P = { transit:transitPage, market:()=>spaceView("m:all"), housing:housingPage, campus:campusPage, inbox:inboxPage, food:foodPage,
-    schedule:schedulePage, forum:forumPage, news:eventsPage, weather:weatherPage, online:onlinePage, nav:navPage, more:morePage };
-  return (P[S.tab] || homePage)();
+    schedule:schedulePage, forum:forumPage, news:eventsPage, weather:weatherPage, online:onlinePage, nav:navPage,
+    me:mePage, more:mePage, community:forumPage };
+  const body = (P[S.tab] || homePage)();
+  if (groupOf(S.tab) === "community") return h("div",{class:"stack"}, communitySeg(), body);
+  const back = backBar();
+  return back ? h("div",{class:"stack"}, back, body) : body;
 }
 function statusBanner(){
   if (S.dbState==="none") return h("div",{class:"info"},"目前連不上伺服器，所以看不到也無法發布內容。請檢查網路後重新整理。");
@@ -1167,7 +1325,7 @@ function homePage(){
   const items = feedItems(f);
   const evs = upcomingEvents().slice(0, 2);
   return h("div",{class:"stack"},
-    stories(), statusBanner(), AI.homeCard(), composer(),
+    stories(), statusBanner(), AI.homeCard(), shortcuts(), composer(),
     h("div",{class:"only-phone stack"}, homeBusBoard()),
     evs.length ? h("section",{class:"stack"},
       h("div",{class:"section-title"}, h("h2",{},"近期活動"), h("button",{class:"linkbtn",onclick:()=>go("news")},"查看全部")),
@@ -1182,13 +1340,36 @@ function homePage(){
 function qbtn(ic, title, sub, onclick){ return h("button",{class:"qbtn",onclick}, icon(ic), h("div",{}, h("b",{},title), h("span",{},sub))); }
 function spaceLabel(id){ const s = spaceById(id); return s ? (s.short && s.zone ? ZONES.find(z=>z.id===s.zone).name : s.name) : "已移除的版"; }
 function jumpToPost(p){ const sp = spaceById(p.space); if (!sp) return; go(sp.tab, sp.id); openThread(p.id); }
-function morePage(){
-  const pending = pendingReqs();
+// 「我的」：課表、私訊、設定、語言、安裝到手機
+function mePage(){
+  const pending = pendingReqs(), n = nextClass();
+  const row = (ic, title, sub, onclick, badge) => h("button",{class:"qbtn",onclick}, icon(ic),
+    h("div",{}, h("b",{}, title, badge ? h("span",{class:"badge",style:"margin-left:6px"}, badge) : null), h("span",{}, sub||"")));
   return h("div",{class:"stack"},
-    h("div",{class:"sphead"}, h("h1",{},"所有功能")),
-    h("div",{class:"quick"}, TABS.filter(t => !t[3]).map(([id,label,ic,,, sub]) =>
-      h("button",{class:"qbtn",onclick:()=>go(id)}, icon(ic), h("div",{}, h("b",{}, label, id==="inbox" && pending ? h("span",{class:"badge",style:"margin-left:6px"},pending) : null), h("span",{}, sub||""))))),
-    h("div",{class:"quick"}, h("button",{class:"qbtn",onclick:()=>openModal({k:"install"})}, icon("phone"), h("div",{}, h("b",{},"安裝到手機"), h("span",{},"加到主畫面當 App 用")))));
+    h("section",{class:"card me-card"}, avatar(S.nick),
+      h("div",{class:"me-who"}, h("b",{translate:"no"}, S.nick), h("span",{class:"small muted"}, S.dept && spaceById(S.dept) ? spaceById(S.dept).name : "匿名使用者・不用註冊")),
+      h("button",{class:"ghost",onclick:()=>openModal({k:"profile"})},"設定")),
+    h("div",{class:"quick"},
+      row("calendar","課表", n ? [n.c.name, "・", n.ongoing ? "上課中" : n.c.start] : "我的課表與提醒", ()=>go("schedule")),
+      row("send","私訊","加密私訊", ()=>go("inbox"), pending),
+      row("users","在線","現在誰在線上", ()=>go("online")),
+      row("user","設定","暱稱、系所、住處", ()=>openModal({k:"profile"})),
+      row("phone","安裝到手機","加到主畫面當 App 用", ()=>openModal({k:"install"}))),
+    h("section",{class:"card bar"}, h("span",{class:"sc-ico"}, icon("globe")), h("b",{style:"flex:1"},"語言"),
+      h("div",{class:"lang-row",translate:"no"},
+        h("button",{"aria-pressed":I18N.lang!=="en"?"true":"false",onclick:()=>switchLang("zh")},"中文"),
+        h("button",{"aria-pressed":I18N.lang==="en"?"true":"false",onclick:()=>switchLang("en")},"English"))));
+}
+// 首頁捷徑：美食、導航、天氣、活動（原本的分頁和網址都還在）
+function shortcuts(){
+  const w = loadWeather(); const wd = w.data && upcomingHours(w.data)[0];
+  const evs = upcomingEvents(); const todayN = evs.filter(e => evDayKey(e) === "today").length;
+  const card = (ic, title, sub, tab) => h("button",{class:"sc-card",onclick:()=>go(tab)}, h("span",{class:"sc-ico"}, icon(ic)), h("b",{}, title), h("span",{}, sub));
+  return h("section",{class:"shortcuts","aria-label":"捷徑"},
+    card("mega","活動", todayN ? [todayN, " 場今天"] : evs.length ? [evs.length, " 場近期"] : "近期活動・學校公告", "news"),
+    card("pin","美食","共同編輯的美食地圖","food"),
+    card("map","導航","校內建築・步行導航","nav"),
+    card("cloud","天氣", wd ? [Math.round(wd.temp), "°・降雨 ", wd.pop ?? "—", "%"] : "中壢天氣預報","weather"));
 }
 function createSheet(){
   const pick = fn => () => { S.modal = null; fn(); };
@@ -1249,7 +1430,7 @@ function eventCard(e){
   const ranged = !!e.end; const [,m,d] = (ranged && e.date < todayISO() ? e.end : e.date).split("-").map(Number);
   const mine = e.community && e.uid && e.uid === S.uid;
   const tv = TR.view("ev:"+e.id, [e.title, e.place || "", e.body || ""]); const [evTitle, evPlace, evBody] = tv.texts;
-  return h("article",{class:"card ev"},
+  return h("article",{class:"card ev","data-ev":e.id},
     h("div",{class:"cal"+(ranged?" range":"")}, h("i",{}, ranged ? (e.date < todayISO() ? "展期至" : "開始") : `${m}月`), h("b",{}, d), h("small",{}, ranged ? `${m}月` : "週"+wkOf(e.date))),
     h("div",{class:"body"},
       h("h3",{translate:"no"}, e.url ? h("a",{href:e.url,target:"_blank",rel:"noopener"}, evTitle) : evTitle),
@@ -1265,8 +1446,12 @@ function eventCard(e){
         mine || (e.community && S.isOwner) ? h("button",{class:"linkbtn",onclick:async()=>{ try { await S.db.doc("events/"+e.docId).delete(); toast("已刪除"); } catch(err){ toast(writeErr(err)); } }},"刪除") : null)));
 }
 async function toggleGoing(e){
+  if (!S.db || !S.uid) return;
+  const had = !!S.going[e.id]?.has(S.uid);
+  flipMine(S.going, e.id, !had); renderKeep();
   const ref = S.db.doc(`going/${e.id}__${S.uid}`);
-  try { if (S.going[e.id]?.has(S.uid)) await ref.delete(); else await ref.set({ event:e.id, uid:S.uid, ts:Date.now() }); } catch(err){ toast(writeErr(err)); }
+  try { if (had) await ref.delete(); else await ref.set({ event:e.id, uid:S.uid, ts:Date.now() }); }
+  catch(err){ flipMine(S.going, e.id, had); renderKeep(); toast(writeErr(err)); }
 }
 const EV_GROUPS = [["ongoing","展覽・進行中"],["today","今天"],["tomorrow","明天"],["week","這週"],["later","之後"]];
 function eventsPage(){
@@ -1486,7 +1671,7 @@ function rideCard(r){
       tv.button,
       h("button",{class:"linkbtn",onclick:()=>isOpen?closeThread():openThread("ride:"+r.id)}, isOpen ? "收起討論" : "討論集合點"),
       mine || S.isOwner ? h("button",{class:"linkbtn",onclick:()=>openModal({k:"delride",id:r.id})},"取消這團") : null));
-  if (isOpen){ const th = thread("rides/"+r.id+"/comments"); th.style.gridColumn = "1/-1"; card.append(RA.coordBox(r) || "", th); }
+  if (isOpen){ const th = thread("rides/"+r.id+"/comments"); th.style.gridColumn = "1/-1"; card.append(th); }
   return card;
 }
 async function joinRide(r){ try { await S.db.doc(`riders/${r.id}__${S.uid}`).set({ ride:r.id, uid:S.uid, nick:S.nick, ts:Date.now() }); toast("已加入，記得到討論區約集合點"); } catch(e){ toast(writeErr(e)); } }
@@ -1630,16 +1815,22 @@ function postCard(p){
   if (isOpen) card.append(thread("posts/"+p.id+"/comments"));
   return card;
 }
+// 按讚、想去：先更新畫面（樂觀更新），寫入失敗再還原並提示
+function flipMine(map, key, on){ const set = (map[key] ||= new Set()); on ? set.add(S.uid) : set.delete(S.uid); }
 async function toggleLike(p){
+  if (!S.db || !S.uid) return;
+  const had = !!S.likes[p.id]?.has(S.uid);
+  flipMine(S.likes, p.id, !had); renderKeep();
   const ref = S.db.doc(`likes/${p.id}__${S.uid}`);
-  try { if (S.likes[p.id]?.has(S.uid)) await ref.delete(); else await ref.set({ post:p.id, uid:S.uid }); } catch(e){ toast(writeErr(e)); }
+  try { if (had) await ref.delete(); else await ref.set({ post:p.id, uid:S.uid }); }
+  catch(e){ flipMine(S.likes, p.id, had); renderKeep(); toast(writeErr(e)); }
 }
 function thread(path){
   const box = h("div",{class:"thread"});
   const cKey = c => "cmt:"+path+":"+c.ts+":"+(c.uid||"");
   box.append(live("cmts", () => { const trAll = S.comments.filter(c => TR.needs(c.body)); return h("div",{class:"stack",style:"gap:8px"},
     trAll.length > 1 ? h("button",{type:"button",class:"linkbtn tr-btn tr-all",onclick:()=>TR.translateItems(trAll.map(c => ({ id:cKey(c), texts:[c.body] })))},"翻譯全部留言") : null,
-    S.comments.length ? S.comments.map(c => { const tv = TR.view(cKey(c), [c.body || ""], { small:true }); return h("div",{class:"cmt"}, avatar(c.nick,"sm"),
+    S.comments.length ? S.comments.map(c => { const tv = TR.view(cKey(c), [c.body || ""], { small:true }); return h("div",{class:"cmt"+(c.pending?" pending":"")}, avatar(c.nick,"sm"),
       h("div",{style:"min-width:0"}, h("div",{class:"bubble",translate:"no"}, h("b",{}, c.nick), h("span",{}, tv.texts[0])), h("div",{class:"when"}, ago(c.ts), tv.button))); }) :
     h("p",{class:"muted small",style:"margin:0"},"還沒有留言，說點什麼吧。")); }));
   if (canPost()){
@@ -1652,8 +1843,11 @@ function thread(path){
       if (!(await MOD.guard("cmt", body, mine, () => send(true), force === true))){ cur().disabled = false; cur().focus(); return; }
       // ② 拼車討論區：發布前隱私提醒（web/privacy.js），選「回去修改」就不送出
       if (path.startsWith("rides/")){ const pv = await PRIV.review([body]); if (!pv){ cur().disabled = false; cur().focus(); return; } body = pv[0]; }
-      try { await S.db.collection(path).add({ body, nick:S.nick, uid:S.uid||"", ts:Date.now() }); cur().value=""; } catch(e){ toast(writeErr(e)); }
-      cur().disabled = false; cur().focus(); };
+      // 樂觀更新：留言先出現在列表上（半透明），寫入成功後由資料庫的即時更新取代；失敗就拿掉並把文字放回輸入框
+      const pend = { body, nick:S.nick, uid:S.uid||"", ts:Date.now(), pending:true };
+      S.comments = [...S.comments, pend]; cur().value = ""; cur().disabled = false; cur().focus(); renderKeep();
+      try { await S.db.collection(path).add({ body, nick:S.nick, uid:S.uid||"", ts:pend.ts }); }
+      catch(e){ S.comments = S.comments.filter(c => c !== pend); if (!cur().value) cur().value = body; renderKeep(); toast(writeErr(e)); } };
     inp.addEventListener("keydown", e => { if (e.key==="Enter" && !e.isComposing && e.keyCode !== 229) send(); });
     box.append(h("div",{class:"cform"}, avatar(S.nick,"sm"), inp, h("button",{class:"primary",onclick:()=>send()},"送出")), live("cmtmod", () => MOD.note("cmt")));
   }
@@ -2140,9 +2334,7 @@ function ensureLobby(on){
 }
 function forumPage(){
   const seg = S.forumSeg || "lobby";
-  const segBar = h("div",{class:"seg"},
-    h("button",{"aria-pressed":seg==="lobby"?"true":"false",onclick:()=>{S.forumSeg="lobby";LS.set("pc.fseg","lobby");render();}},"即時大廳"),
-    h("button",{"aria-pressed":seg==="boards"?"true":"false",onclick:()=>{S.forumSeg="boards";LS.set("pc.fseg","boards");render();}},"看板"));
+  const segBar = null;   // 「即時大廳／看板」的切換改由上方的「社群」分段列負責（communitySeg）
   if (seg === "boards"){
     const sel = S.space.forum && SPACES[S.space.forum] ? S.space.forum : "g:chat";
     return h("div",{class:"stack"}, segBar,
@@ -2488,8 +2680,23 @@ function spotSheet(){
    SHARED LEAFLET MAPS (food + nav). Each map element is created once and re-attached on render.
    ===================================================================== */
 const MAPS = {};
+// 地圖套件（Leaflet，約 150 KB）只在美食、導航頁需要時才下載，其他頁面打開會比較快
+const LEAFLET = { css:"https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css", js:"https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js" };
+let leafletP = null, leafletFailed = false;
+function loadLeaflet(){
+  if (window.L) return Promise.resolve();
+  if (!leafletP) leafletP = new Promise((ok, no) => {
+    const css = document.createElement("link"); css.rel = "stylesheet"; css.href = LEAFLET.css; document.head.append(css);
+    const sc = document.createElement("script"); sc.src = LEAFLET.js; sc.onload = ok; sc.onerror = () => { leafletP = null; no(); }; document.head.append(sc);
+  });
+  return leafletP;
+}
 function leafletMap(key, opts){
-  if (!window.L) return h("div",{class:"info"},"地圖載入失敗，請檢查網路後重新整理。");
+  if (!window.L){
+    if (leafletFailed) return h("div",{class:"info"},"地圖載入失敗，請檢查網路後重新整理。");
+    loadLeaflet().then(() => renderKeep(), () => { leafletFailed = true; renderKeep(); });
+    return h("div",{class:"map lmap map-loading",role:"status"}, h("span",{},"地圖載入中…"));
+  }
   let M = MAPS[key];
   if (!M){
     const saved = LS.json("pc.map."+key, null);
@@ -2816,7 +3023,7 @@ setInterval(() => { if (S.nick) renderKeep(); }, 30000);
     } catch {}
   }
   const sub = (q, fn) => q.onSnapshot(s => { fn(s); renderKeep(); }, () => {});
-  sub(db.collection("posts").orderBy("ts","desc").limit(1000), s => { S.posts = s.docs.map(d => ({ id:d.id, ...d.data() })); if (S.dbState==="loading") S.dbState = "ok"; });
+  sub(db.collection("posts").orderBy("ts","desc").limit(1000), s => { S.posts = s.docs.map(d => ({ id:d.id, ...d.data() })); if (S.dbState==="loading") S.dbState = "ok"; watchMyComments(); });
   sub(db.collection("locations").limit(500), s => { S.customLocs = s.docs.map(d => { const x = d.data(); return { id:"c-"+d.id, name:x.name, zone:x.zone||"ot", lane:x.lane||"", custom:true }; }); });
   sub(db.collection("likes").limit(1000), s => { const m = {}; for (const d of s.docs){ const x = d.data(); (m[x.post] ||= new Set()).add(x.uid); } S.likes = m; });
   sub(db.collection("reports").limit(1000), s => { const m = {}; for (const d of s.docs){ const x = d.data(); (m[x.post] ||= new Set()).add(x.uid); } S.reports = m; });
@@ -2830,7 +3037,7 @@ setInterval(() => { if (S.nick) renderKeep(); }, 30000);
   sub(db.collection("food").limit(800), s => { S.food = s.docs.map(d => ({ id:d.id, ...d.data() })).filter(x => typeof x.lat==="number" && typeof x.lng==="number"); });
   sub(db.collection("foodrate").limit(2000), s => { const m = {}; for (const d of s.docs){ const x = d.data(); (m[x.food] ||= new Map()).set(x.uid, x.stars); } S.foodRates = m; });
   db.doc("config/landmarks").onSnapshot(s => { S.landmarks = s.exists && Array.isArray(s.data().items) ? s.data().items : null; renderKeep(); }, () => {});
-  sub(db.collection("riders").limit(1000), s => { const m = {}; for (const d of s.docs){ const x = d.data(); (m[x.ride] ||= new Map()).set(x.uid, x.nick); } S.riders = m; });
+  sub(db.collection("riders").limit(1000), s => { const m = {}; for (const d of s.docs){ const x = d.data(); (m[x.ride] ||= new Map()).set(x.uid, x.nick); } S.riders = m; S.riderList = s.docs.map(d => d.data()); });
   db.doc("config/bus").onSnapshot(s => { S.busCfg = s.exists && s.data().hsrMode ? s.data() : null; renderKeep(); }, () => {});
   if (S.uid){
     sub(db.collection("dmreq").where("to","==",S.uid), s => { S.reqIn = s.docs.map(d => ({ id:d.id, ...d.data() })); });
