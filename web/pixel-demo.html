@@ -26,6 +26,28 @@
     <button class="ghost" id="t-lang" type="button">EN / 中</button>
     <button class="primary" id="t-pop" type="button">④ 成功：跳一下</button>
   </div>
+  <h2 style="margin:8px 0 0">松果 2.0 美術</h2>
+  <section class="demo-card"><h2>分頁圖示（24×24）</h2>
+    <div class="demo-grid" id="v2-icons"></div>
+    <p class="muted" style="margin:8px 0 0">輪廓跟著文字顏色：下面一排模擬「選中」的分頁（松綠）。</p>
+    <div class="demo-grid" id="v2-icons-on" style="color:var(--pine);margin-top:6px"></div></section>
+  <section class="demo-card"><h2>分頁頂部橫幅（全寬、高 96px）</h2><div id="v2-banners" style="display:flex;flex-direction:column;gap:10px"></div></section>
+  <section class="demo-card"><h2>首頁大松鼠 PIXEL.mount("#hero")</h2>
+    <div id="hero"></div>
+    <div class="demo-bar" style="margin-top:8px"><button class="ghost" type="button" id="h-think">問松果思考中</button><button class="ghost" type="button" id="h-happy">回答完</button><button class="ghost" type="button" id="h-normal">回到普通</button></div>
+    <p class="muted" style="margin:8px 0 0">會自己眨眼（減少動態效果時不眨）；依時段說早安／午安／晚安。</p></section>
+  <section class="demo-card"><h2>問松果的 AI 頭像與思考中</h2>
+    <p class="muted" style="margin:0 0 8px">模擬「問松果」的畫面：圖示會自動換成小松鼠，思考中的三個點換成思考松鼠，首頁大松鼠也會跟著變。</p>
+    <div class="ai-panel" style="position:static;display:block;border:1px solid var(--line);border-radius:12px;padding:10px">
+      <div class="ai-head" style="display:flex;align-items:center;gap:8px"><svg class="ai-ico" viewBox="0 0 24 24" width="22" height="22"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor"/></svg><b>松果 AI 助理</b></div>
+      <div id="v2-ai-list" style="margin-top:8px"></div></div>
+    <div class="demo-bar" style="margin-top:8px"><button class="ghost" type="button" id="ai-ask">模擬發問</button></div></section>
+  <section class="demo-card"><h2>統一風格：一種卡片、兩種按鈕、四種字級</h2>
+    <div class="card" style="display:flex;flex-direction:column;gap:8px">
+      <b style="font-size:var(--fs-4)">標題 22px（--fs-4）</b><span style="font-size:var(--fs-3)">內文 16px（--fs-3）</span>
+      <span style="font-size:var(--fs-2)" class="muted">次要文字 14px（--fs-2）</span><small class="muted">說明 12px（--fs-1）</small>
+      <div class="demo-bar"><button class="primary" type="button">主要按鈕</button><button class="ghost" type="button">次要按鈕</button><button class="chip" type="button">篩選</button><button class="chip" aria-pressed="true" type="button">已選</button></div></div></section>
+  <h2 style="margin:8px 0 0;font-size:20px">任務一：像素松鼠</h2>
   <section class="demo-card"><h2>5 種表情＋道具</h2><div class="demo-grid" id="faces"></div></section>
   <section class="demo-card"><h2>① 載入中</h2><div id="loading"></div></section>
   <section class="demo-card"><h2>② 問松果思考中</h2><div id="thinking"></div></section>
@@ -76,6 +98,22 @@
   $("t-pop").onclick = () => PX.celebrate("已發布！", { translate: el => I18N.translate(el) });
   $("t-theme").onclick = () => { const r = document.documentElement; const dark = r.dataset.theme === "dark" || (!r.dataset.theme && matchMedia("(prefers-color-scheme: dark)").matches); r.dataset.theme = dark ? "light" : "dark"; };
   $("t-lang").onclick = () => { I18N.setLang(I18N.lang === "en" ? "zh" : "en"); location.reload(); };
+  // ---------- 松果 2.0 ----------
+  const IC = [["home","首頁"],["transit","交通"],["map","地圖"],["community","社群"],["me","我的"]];
+  for (const [k, l] of IC){
+    const f = document.createElement("figure"); f.append(PX.icon(k, { size: 24 }), PX.icon(k, { size: 48 }), Object.assign(document.createElement("figcaption"), { textContent: l })); $("v2-icons").append(f);
+    const g = document.createElement("figure"); g.append(PX.icon(k, { size: 24 }), Object.assign(document.createElement("figcaption"), { textContent: l, style: "color:var(--pine);font-weight:700" })); $("v2-icons-on").append(g);
+  }
+  for (const [k, l] of [["home","首頁：湖邊松鼠"],["transit","交通：站牌與公車"],["map","地圖：小地圖與美食"],["community","社群：松鼠們聊天"],["me","我的：松鼠書桌"]]){
+    $("v2-banners").append(Object.assign(document.createElement("small"), { textContent: l, className: "muted" }), PX.banner(k, { title: l }));
+  }
+  PX.mount("#hero", { nick: () => "熬夜的松鼠", translate: el => I18N.translate(el) });
+  $("h-think").onclick = () => PX.mood("think"); $("h-happy").onclick = () => PX.mood("happy"); $("h-normal").onclick = () => PX.mood("normal");
+  $("ai-ask").onclick = () => {
+    const row = document.createElement("div"); row.className = "ai-bubble ai-typing"; row.innerHTML = "<i></i><i></i><i></i><span>松果正在想…</span>"; I18N.translate(row);
+    $("v2-ai-list").replaceChildren(row);
+    setTimeout(() => { $("v2-ai-list").replaceChildren(Object.assign(document.createElement("div"), { className: "ai-bubble", textContent: "下一班 132 是 08:20，從前門警衛室上車。" })); }, 2500);
+  };
   const UI = window.sgUI;
   for (const k of ["post","event","ride","shop"]) $("skeletons").append(UI.skeleton(k, 1));
   $("t-like").innerHTML = '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/></svg> 讚';

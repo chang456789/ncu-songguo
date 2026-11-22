@@ -13,6 +13,9 @@
 
   const EN = {
     // ---------- pixel squirrel mascot (web/pixel.js) ----------
+    "早安":"Good morning", "午安":"Good afternoon", "晚安":"Good evening", "讓我想想…":"Let me think…", "幫你找到了！":"Found it for you!",
+    "首頁：湖邊松鼠":"Home: squirrel by the lake", "交通：站牌與公車":"Transit: bus stop and bus", "地圖：小地圖與美食":"Map: little map and food",
+    "社群：松鼠們聊天":"Community: squirrels chatting", "我的：松鼠書桌":"Me: squirrel at a desk",
     "還沒有人開團":"No rides yet", "松鼠在站牌下等了好久…開一團，順路的同學就會加入！":"The squirrel has been waiting at the bus stop forever… Start a ride and classmates heading the same way will join!",
     "這裡還空空的":"Nothing here yet", "大廳只剩松鼠一個。發第一篇貼文，打破沉默吧！":"It's just the squirrel in here. Write the first post and break the silence!", "發一篇貼文":"Write a post",
     "找不到符合的結果":"No matches found", "松鼠翻遍了松果堆也沒找到，換個關鍵字試試？":"The squirrel dug through the whole pinecone pile and found nothing. Try another keyword?", "清除搜尋":"Clear search",
