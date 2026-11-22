@@ -11,7 +11,7 @@
 const { chat, rateLimit } = require("./_lib/ai");
 
 const MAX_MESSAGE = 500;      // 問題最多幾個字
-const MAX_CONTEXT = 6000;     // context 轉成文字後最多幾個字（前端會先裁到這個長度以內）
+const MAX_CONTEXT = 24000;     // context 轉成文字後最多幾個字（前端會先裁到這個長度以內）
 const MAX_HISTORY = 6;        // 最多帶幾則先前的對話
 const MAX_HISTORY_CHARS = 600;
 
@@ -43,7 +43,7 @@ function systemPrompt(lang) {
   const replyLang = lang === "en" ? "English" : "繁體中文（台灣用語）";
   return [
     "你是「松果 AI 助理」，服務國立中央大學（中大、NCU）學生的校園生活網站「松果」。",
-    "你會收到一段 <context> 資料，是網站此刻整理出的即時資訊：現在時間、往中壢火車站／高鐵桃園站／台北（松山機場）的下一班公車、近期校園活動、美食地圖評分最高的店家、使用者的下一堂課、目前的拼車團數。",
+    "你會收到一段 <context> 資料，是網站此刻整理出的即時資訊（還有 timetable 整週課表、rides 拼車團、posts 各看板貼文、lobby 大廳留言、campusPlaces 校內地點）：現在時間、往中壢火車站／高鐵桃園站／台北（松山機場）的下一班公車、近期校園活動、美食地圖評分最高的店家、使用者的下一堂課、目前的拼車團數。",
     "",
     "規則（一定要遵守）：",
     "1. 即時、只有網站才知道的事實——公車班次、活動的日期時間地點、店家、使用者的課、天氣數字——只能用 <context> 和 <server> 的資料；資料裡沒有就說網站目前沒有這筆資料，並建議到網站對應頁面查看，絕對不能編造。",
@@ -94,7 +94,7 @@ module.exports = async (req, res) => {
     { role: "user", content: message },
   ];
   try {
-    const r = await chat(messages, { json: true, maxTokens: 500, temperature: 0.2, task: "chat" });
+    const r = await chat(messages, { json: true, maxTokens: 1000, temperature: 0.3, task: "chat" });
     let reply = r.json && typeof r.json.reply === "string" ? r.json.reply.trim() : "";
     // 萬一模型沒照 JSON 格式回，就直接用原始文字
     if (!reply && !r.json) reply = String(r.text || "").trim();

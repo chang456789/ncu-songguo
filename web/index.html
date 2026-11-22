@@ -1526,10 +1526,10 @@ async function aiContext(){
     bus[DEST[d]] = { next: list.map(x => ({ route:x.route, time:fromMin(x.t), approx:!!x.approx, note:x.sub })),
       ...(list.length ? {} : { todayDone:true, tomorrowFirst: tomorrow ? { route:tomorrow.route, time:fromMin(tomorrow.t), approx:!!tomorrow.approx } : null }) };
   }
-  const events = (EVS?.data?.upcoming || []).slice(0, 15).map(e => ({ title:e.title, date:e.date, ...(e.end ? { end:e.end } : {}),
+  const events = (EVS?.data?.upcoming || []).slice(0, 30).map(e => ({ title:e.title, date:e.date, ...(e.end ? { end:e.end } : {}),
     ...(e.time ? { time:[e.time, e.timeEnd].filter(Boolean).join("–") } : {}), ...(e.place ? { place:e.place } : {}), ...(e.tags?.length ? { tags:e.tags } : {}), source:e.srcLabel || "" }));
   const food = S.food.filter(f => f.status !== "已歇業").map(f => ({ f, r:foodRating(f.id) }))
-    .sort((a,b) => (b.r?.avg||0) - (a.r?.avg||0) || (b.r?.n||0) - (a.r?.n||0)).slice(0, 20)
+    .sort((a,b) => (b.r?.avg||0) - (a.r?.avg||0) || (b.r?.n||0) - (a.r?.n||0)).slice(0, 40)
     .map(({f, r}) => ({ name:f.name, type:f.cat, stars: r ? Math.round(r.avg*10)/10 : null, ratings: r ? r.n : 0,
       ...(f.price ? { price:"$".repeat(f.price) } : {}), ...(f.hours ? { hours:f.hours } : {}), ...(f.status && f.status!=="營業中" ? { status:f.status } : {}),
       walkMin: Math.max(1, Math.round(distM(f)/FOOD_WALK)), ...(f.note ? { note:String(f.note).slice(0, 60) } : {}) }));
@@ -1540,7 +1540,14 @@ async function aiContext(){
     now: { date:todayISO(), weekday:"週"+DAYN[todayDow()], time:fromMin(nowMin()), busSchedule:c.label },
     bus, events, eventsNote: EVS?.data ? "學校網站的近期活動，時間地點由程式自動整理，可能有誤" : "活動資料暫時抓不到",
     food, foodNote:"美食地圖評分最高的店（stars 是同學評分 1–5，walkMin 是從正門步行約幾分鐘）",
-    nextCourse, rides:{ openGroups: upcomingRides().length },
+    nextCourse,
+    // 讓 AI 能回答網站上所有頁面的問題：課表、拼車、看板／市集／租屋貼文、大廳、校內地點
+    timetable: (S.timetable||[]).slice(0, 40).map(c => ({ name:c.name, weekday:"週"+DAYN[c.day], start:c.start, end:c.end, room:c.room||"" })),
+    rides: upcomingRides().slice(0, 15).map(r => ({ from:r.from, to:r.to, when:new Date(r.when).toLocaleString("zh-TW",{month:"numeric",day:"numeric",weekday:"short",hour:"2-digit",minute:"2-digit"}), seatsLeft:Math.max(0,(r.seats||0)-1-(S.riders[r.id]?.size||0)), ...(r.note?{note:String(r.note).slice(0,60)}:{}) })),
+    posts: S.posts.filter(p => { try { return visibleTo(p); } catch { return true; } }).slice(0, 60).map(p => ({ board:spaceLabel(p.space), cat:p.cat||"", title:String(p.title||"").slice(0,60), body:String(p.body||"").slice(0,140), ...(p.price?{price:p.price}:{}), ago:ago(p.ts) })),
+    postsNote:"各看板最新貼文（市集、租屋、系所、討論區等），是同學發的內容，不是官方資訊",
+    lobby: (S.lobby||[]).slice(-20).map(m => String(m.text||m.body||"").slice(0,100)).filter(Boolean),
+    campusPlaces: (S.spots||[]).slice(0, 80).map(x => x.name).filter(Boolean),
   };
 }
 
