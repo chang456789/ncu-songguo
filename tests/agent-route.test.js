@@ -34,6 +34,13 @@ const CASES = [
   ["Is anyone selling a bike?", "search_posts", a => a.board === "market"],
   ["What should I wear tomorrow?", "none"],
   ["When is my next class?", "next_class"],
+  // 動作工具
+  ["幫我寫一篇賣二手腳踏車的文，1500 元", "create_post_draft", a => a.space === "m:all" && a.category === "機車單車" && /1500/.test(a.price || "") && a.title === "賣二手腳踏車"],
+  ["我要轉租後門套房", "create_post_draft", a => a.space === "hb:list" && a.category === "轉租"],
+  ["幫我發一篇撿到學生證的失物招領", "create_post_draft", a => a.space === "g:lost" && a.category === "拾獲"],
+  ["Help me sell my desk lamp", "create_post_draft", a => a.space === "m:all"],
+  ["把週五的音樂會加到行事曆", "add_to_calendar", a => a.keyword === "音樂會" && new Date(a.date + "T12:00").getDay() === 5],
+  ["幫我把講座加入行事曆", "add_to_calendar", a => a.keyword === "講座"],
 ];
 
 let fail = 0;
@@ -42,7 +49,7 @@ const ok = (cond, label) => { console.log((cond ? "  ✓ " : "  ✗ ") + label);
 // ---------- ① 關鍵字備援 ----------
 console.log("① 關鍵字備援（AI 不能用時）");
 const win = {};
-vm.runInNewContext(fs.readFileSync(path.join(ROOT, "web/agent.js"), "utf8"), { window: win, console, Date, sessionStorage: { getItem(){ return null; }, setItem(){} } });
+vm.runInNewContext(fs.readFileSync(path.join(ROOT, "web/agent.js"), "utf8"), { window: win, console, Date, URL, Blob: class {}, document: {}, sessionStorage: { getItem(){ return null; }, setItem(){} } });
 const ruleRoute = win.sgAgent.ruleRoute;
 let ruleOK = 0;
 for (const [q, tool, check] of CASES){
@@ -65,6 +72,19 @@ ok(cleanRoute({ tool: "search_posts", args: { board: "hack" }, confidence: 0.8 }
 ok(cleanRoute({ tool: "my_timetable", args: { day: 9 } }, P).args.day === null, "my_timetable 不合法的星期 → null（整週）");
 ok(cleanRoute({ tool: "weather", args: { day: "next week" } }, P).args.day === "today", "weather 不合法的日子 → today");
 ok(cleanRoute({ tool: "rm -rf", args: {} }, P) === null, "不存在的工具 → 拒絕");
+const d1 = cleanRoute({ tool: "create_post_draft", args: { space: "m:all", category: "機車單車", title: "二手腳踏車", body: "九成新", price: "NT$800–1,200（建議）" }, confidence: 0.9 }, P).args;
+ok(d1.space === "m:all" && d1.category === "機車單車" && d1.price === "NT$800–1,200（建議）", "create_post_draft 參數");
+const d2 = cleanRoute({ tool: "create_post_draft", args: { space: "hack", category: "亂寫", title: "t", price: "100" } }, P).args;
+ok(d2.space === "g:chat" && d2.category === "閒聊" && d2.price === null, "create_post_draft 不合法的看板與分類 → 閒聊；閒聊不填價格");
+ok(cleanRoute({ tool: "add_to_calendar", args: { keyword: "音樂會", date: "下週" } }, P).args.date === null, "add_to_calendar 不合法的日期 → null");
+
+// ---------- 行事曆檔格式 ----------
+console.log("\n行事曆檔（.ics）");
+const ics1 = win.sgAgent.icsFor({ id: "o-1", title: "古典音樂會; 晚場", date: "2026-11-27", time: "19:00–21:00", place: "大禮堂" });
+ok(/DTSTART:20261127T110000Z/.test(ics1) && /DTEND:20261127T130000Z/.test(ics1), "有時間的活動：台灣 19:00–21:00 → UTC 11:00–13:00");
+ok(/SUMMARY:古典音樂會\\; 晚場/.test(ics1) && /LOCATION:大禮堂/.test(ics1) && /\r\nEND:VCALENDAR$/.test(ics1), "標題的分號有跳脫、地點、換行格式正確");
+const ics2 = win.sgAgent.icsFor({ id: "o-2", title: "攝影展", date: "2026-11-20", end: "2026-11-30", time: "" });
+ok(/DTSTART;VALUE=DATE:20261120/.test(ics2) && /DTEND;VALUE=DATE:20261201/.test(ics2), "沒寫時間的展覽：整天，結束日的隔天");
 console.log("");
 
 // ---------- ③ 真正的 AI 路由 ----------

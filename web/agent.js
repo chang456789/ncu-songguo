@@ -8,6 +8,7 @@
      不需要工具的一般問題（tool:"none"）交回 web/assistant.js，照舊呼叫 /api/ai-chat。
    工具：commute 交通精算／find_rides 找拼車團／draft_ride 預填開團表單／find_events 找活動／
          find_food 找店家／next_class 下一堂課／my_timetable 整週課表／search_posts 搜尋貼文／weather 天氣
+   動作工具（使用者確認後才會真的做）：draft_ride 預填開團表單／create_post_draft 預填貼文草稿／add_to_calendar 活動加入行事曆
    不需要工具（穿搭、讀書、英文、生活建議、閒聊）或沒把握 → none；工具結果是空的 → 也交給一般回答
    index.html 用法：AGENT.init({ ... })；assistant.js 呼叫 AGENT.ask(message, history)
    ===================================================================== */
@@ -70,9 +71,35 @@
   const NONE_TOPICS = /讀書|念書|唸書|考試|期中|期末|複習|報告怎麼|英文|英語|多益|雅思|托福|生活建議|建議|怎麼辦|心情|壓力|焦慮|難過|失眠|室友相處|聊聊|無聊|你好|哈囉|嗨|謝謝|你是誰|\b(hi|hello|hey|thanks|study|exam|english|essay|advice|stress|bored|who are you)\b/i;
   // 句子裡明確提到網站的功能時，才不算一般問題（例如「有練英文的活動嗎」）
   const SITE_NOUNS = /活動|講座|課表|下一堂|拼車|揪|公車|高鐵|火車站|吃|店|美食|貼文|市集|二手|租屋|套房|看板|天氣|下雨|帶傘|event|ride|bus|food|market|housing|weather/i;
+  // 只要日期：今天、明天、後天、週五（最近的那一天）；沒提到就 null
+  function dateIn(t, now){
+    const d = new Date(now);
+    if (/後天|day after tomorrow/i.test(t)) d.setDate(d.getDate() + 2);
+    else if (/明天|明早|明晚|tomorrow/i.test(t)) d.setDate(d.getDate() + 1);
+    else { const wd = /(?:週|星期|禮拜)([一二三四五六日天])/.exec(t);
+      if (wd){ const target = "日一二三四五六".indexOf(wd[1] === "天" ? "日" : wd[1]); d.setDate(d.getDate() + ((target - d.getDay() + 7) % 7)); }
+      else if (!/今天|today|tonight|今晚/i.test(t)) return null; }
+    return dayISO(d);
+  }
   function ruleRoute(t){
     const now = new Date(), P = placesIn(t);
     if (NONE_ALWAYS.test(t) || (NONE_TOPICS.test(t) && !SITE_NOUNS.test(t))) return { tool: "none", args: {} };
+    // 動作：加入行事曆、擬貼文草稿（要放在「找活動」「找貼文」前面）
+    if (/行事曆|日曆|加到.{0,3}曆|calendar|\.ics/i.test(t)){
+      const kw = t.replace(/幫我|把|加到|加入|放進|行事曆|日曆|提醒我|那場|這場|的|活動|calendar|add|to my|please|\.ics/gi, " ").replace(/(?:這|下)?(?:週|星期|禮拜)[一二三四五六日天]|今天|明天|後天/g, " ").trim().split(/\s+/).filter(w => w.length >= 2)[0] || null;
+      return { tool: "add_to_calendar", args: { keyword: kw, date: dateIn(t, now) } };
+    }
+    if (/幫我(?:寫|發|po|PO|貼|擬)|我要(?:賣|發文|po|PO|出租|轉租|招租|徵|找室友)|想(?:賣|轉租|出租|徵室友)|發一篇|寫一篇|help me (?:post|write|sell)|i want to sell/i.test(t)){
+      const space = /轉租|出租|招租|sublet|rent out/i.test(t) ? "hb:list" : /室友|roommate/i.test(t) ? "hb:mate" : /失物|撿到|遺失|掉了|lost|found/i.test(t) ? "g:lost"
+        : /賣|二手|出清|送|徵|收|sell|for sale/i.test(t) ? "m:all" : /課|老師|選課/.test(t) ? "g:course" : "g:chat";
+      const category = space === "m:all" ? (/書|講義|課本|book/i.test(t) ? "書籍講義" : /腳踏車|單車|機車|bike|scooter/i.test(t) ? "機車單車" : /冰箱|電風扇|桌|椅|床|櫃|fridge|desk|chair/i.test(t) ? "家具家電"
+          : /手機|電腦|筆電|耳機|平板|螢幕|phone|laptop/i.test(t) ? "3C" : /免費送|送人|贈送|free/i.test(t) ? "免費送" : /徵|收購|want to buy/i.test(t) ? "徵求" : "生活用品")
+        : space === "hb:list" ? (/轉租|sublet/i.test(t) ? "轉租" : "招租") : space === "hb:mate" ? "徵室友" : space === "g:lost" ? (/撿到|found/i.test(t) ? "拾獲" : "遺失") : space === "g:course" ? "評價" : "閒聊";
+      const title = t.replace(/^(?:請)?幫我(?:寫|發|po|PO|貼|擬)(?:一篇|一則)?|^我要|^我想|一篇/g, "").replace(/的(?:貼)?文(?=[，,。]|$)/g, "")
+        .replace(/[，,]\s*(?:NT\$?|\$)?\s?\d[\d,]*\s?元?\s*$/, "").replace(/[，。！？,.!?]+$/g, "").trim().slice(0, 30) || null;
+      const price = /(?:NT\$?|\$)\s?\d[\d,]*|\d[\d,]*\s?元/.exec(t);
+      return { tool: "create_post_draft", args: { space, category, title, body: t.slice(0, 150), price: price ? price[0] : null } };
+    }
     if (/下一堂|下堂|next class|教室在哪|在哪.{0,4}上課/i.test(t)) return { tool: "next_class", args: {} };
     const DAYS = "一二三四五六日";
     const dm = /(?:週|星期|禮拜)([一二三四五六日天])/.exec(t);
@@ -164,6 +191,24 @@
           sub: [f.type, f.price ? "・" + "$".repeat(f.price) : "", "・走路約 ", f.walkMin, " 分鐘", f.stars ? "・★" + f.stars : ""], action: () => A.goFood(f.id) })),
         summary: list.length ? ["找到 ", list.length, " 間符合的店，點下面的卡片在美食地圖上看。"] : ["美食地圖上沒有找到符合的店，換個條件試試。"] };
     },
+    // 動作：擬好貼文草稿，使用者在表單確認後自己按發布
+    create_post_draft(a){
+      const SPACE_NAME = { "m:all": "二手市集", "hb:list": "招租・轉租", "hb:mate": "徵室友", "g:lost": "失物招領", "g:course": "課程評價", "g:help": "求助問答", "g:club": "社團活動", "g:food": "美食", "g:chat": "閒聊" };
+      return { result: { draft: { board: SPACE_NAME[a.space] || a.space, category: a.category, title: a.title, body: a.body, priceSuggestion: a.price } },
+        cards: [{ kind: "draft", icon: "📝", title: ["打開已填好的貼文草稿"], sub: [SPACE_NAME[a.space] || "", a.category ? "・" : "", a.category || "", a.price ? ["・", a.price] : ""],
+          action: () => A.openPostDraft(a) }],
+        summary: ["貼文草稿已經幫你填好（", SPACE_NAME[a.space] || "", "），點下面的卡片確認內容後再發布。"] };
+    },
+    // 動作：把活動加入行事曆（在瀏覽器產生 .ics 檔下載，手機、Google 日曆都能匯入）
+    add_to_calendar(a){
+      const kw = (a.keyword || "").toLowerCase();
+      const list = A.events().filter(e => (!a.date || (e.date <= a.date && a.date <= (e.end || e.date)))
+        && (!kw || `${e.title} ${e.place || ""}`.toLowerCase().includes(kw))).slice(0, 3);
+      return { empty: !list.length,
+        result: { events: list.map(e => ({ title: e.title, date: e.date, time: e.time || "", place: e.place || "" })) },
+        cards: list.map(e => ({ kind: "calendar", icon: "🗓️", title: ["加入行事曆：", e.title], userTitle: true, sub: [A.evWhen(e), e.place ? "・" + e.place : ""], action: () => downloadIcs(e) })),
+        summary: list.length ? ["找到 ", list.length, " 個活動，點卡片就會下載行事曆檔（.ics），手機或 Google 日曆都能加入。"] : ["沒有找到這個活動。"] };
+    },
     my_timetable(a){
       const cs = A.timetable();
       const DAYN = ["", "週一", "週二", "週三", "週四", "週五", "週六", "週日"];
@@ -200,6 +245,34 @@
     },
   };
 
+  /* ---------- 行事曆檔（.ics） ---------- */
+  function icsFor(e){
+    const esc = v => String(v || "").replace(/[\\;,]/g, m => "\\" + m).replace(/\n/g, "\\n");
+    const stamp = d => d.toISOString().replace(/[-:]/g, "").replace(/\.\d{3}/, "");
+    const m = /^(\d{1,2}):(\d{2})(?:\s*[–~-]\s*(\d{1,2}):(\d{2}))?/.exec(e.time || "");
+    let when;
+    if (m){   // 有時間：台灣時間換成 UTC
+      const start = new Date(`${e.date}T${pad(+m[1])}:${m[2]}:00+08:00`);
+      const end = m[3] ? new Date(`${e.date}T${pad(+m[3])}:${m[4]}:00+08:00`) : new Date(start.getTime() + 2 * 3600e3);
+      when = [`DTSTART:${stamp(start)}`, `DTEND:${stamp(end)}`];
+    } else {  // 沒寫時間（展覽等）：整天
+      const next = new Date(`${e.end || e.date}T12:00:00+08:00`); next.setDate(next.getDate() + 1);
+      when = [`DTSTART;VALUE=DATE:${e.date.replace(/-/g, "")}`, `DTEND;VALUE=DATE:${dayISO(next).replace(/-/g, "")}`];
+    }
+    return ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//Songguo NCU//EN", "CALSCALE:GREGORIAN", "BEGIN:VEVENT",
+      `UID:${(e.id || e.title).replace(/[^\w-]/g, "")}-${e.date}@ncu-songguo`, `DTSTAMP:${stamp(new Date())}`, ...when,
+      `SUMMARY:${esc(e.title)}`, e.place ? `LOCATION:${esc(e.place)}` : null, e.url ? `URL:${e.url}` : null,
+      `DESCRIPTION:${esc((e.highlight ? e.highlight + "\n" : "") + "松果 中大生活通")}`, "END:VEVENT", "END:VCALENDAR"].filter(Boolean).join("\r\n");
+  }
+  function downloadIcs(e){
+    const blob = new Blob([icsFor(e)], { type: "text/calendar;charset=utf-8" });
+    const a = document.createElement("a"); a.href = URL.createObjectURL(blob);
+    // 檔名用英數字：中文或全形標點的檔名在部分瀏覽器會被換成「download」，連 .ics 副檔名都不見，手機就認不出是行事曆檔
+    a.download = `songguo-event-${e.date}.ics`;
+    document.body.append(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+    if (A.toast) A.toast("已下載行事曆檔，打開它就能加入行事曆");
+  }
+
   /* ---------- 主流程 ---------- */
   async function ask(message, history){
     const now = new Date();
@@ -223,5 +296,5 @@
     return { reply: reply || say(out.summary), byAI: !!reply, cards, status, tool: route.tool, args: route.args };
   }
 
-  window.sgAgent = { init(o){ A = { ...A, ...o }; }, ask, ruleRoute, TOOLS };
+  window.sgAgent = { init(o){ A = { ...A, ...o }; }, ask, ruleRoute, TOOLS, icsFor };
 })();
