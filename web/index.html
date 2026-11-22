@@ -791,6 +791,12 @@ AGENT.init({ lang:()=>I18N.lang, tr:s=>I18N.tr(s), places:()=>RIDE_PLACES.filter
   openRide:m=>openModal({ k:"ride", ...m }),
   openRideThread:id=>{ RA.setRideFilter(null); S.space.transit="rides"; saveSpace(); go("transit"); openThread("ride:"+id); },
   goEvent:id=>goEvent(id), goFood:id=>goFood(id),
+  // 第二版新增的工具：整週課表、搜尋貼文、天氣
+  timetable:()=>tt().courses,
+  posts:()=>S.posts.filter(p => visibleTo(p)).map(p => { const sp = spaceById(p.space);
+    return { id:p.id, tab:sp ? sp.tab : "", spaceName:spaceLabel(p.space), title:p.title || "", body:p.body || "", cat:p.cat || "", price:p.price || "", rent:p.rent || "", ts:p.ts || 0 }; }),
+  openPost:id=>{ const p = S.posts.find(x => x.id === id); if (p) jumpToPost(p); },
+  weather:()=>{ const w = loadWeather(); return w.data ? upcomingHours(w.data)[0] || null : null; }, goWeather:()=>go("weather"),
   goSchedule:()=>go("schedule"), findRoom:room=>{ S.navQ = roomBuilding(room); go("nav"); } });
 function switchLang(l){ VOICE.stop(); I18N.setLang(l); S.dirty = false; render(); }
 

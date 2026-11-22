@@ -249,6 +249,14 @@
     "你想去的「":"“", "」快開始了":"” is starting soon", "留言在你的貼文「":"commented on your post “",
     // ---------- performance ----------
     "地圖載入中…":"Loading map…",
+    // ---------- AI agent v2 (web/agent.js) ----------
+    "整週":"Whole week", "堂課":"classes", "有":"has",
+    "堂課，點下面的卡片看完整課表。":"classes — tap the card for the full timetable.", "那天沒有課。":"No classes that day.", "篇相關的貼文，點下面的卡片看內容。":"related posts — tap a card to read it.",
+    "目前沒有相關的貼文，可以自己發一篇。":"No related posts yet — you can post one yourself.", "天氣預報":"Weather forecast", "中壢・逐時與一週預報":"Zhongli · hourly & weekly forecast",
+    "現在約":"Now about", "°，降雨機率":"°, rain chance", "%。點下面的卡片看完整預報。":"% — tap the card for the full forecast.",
+    "點下面的卡片看中壢的天氣預報。":"Tap the card for Zhongli's forecast.", "週一":"Mon", "週二":"Tue",
+    "週三":"Wed", "週四":"Thu", "週五":"Fri",
+    "週六":"Sat", "週日":"Sun",
     // ---------- AI translation (web/translate.js) ----------
     "翻譯":"Translate", "翻譯中…":"Translating…", "顯示原文":"Show original", "翻譯全部留言":"Translate all comments",
     "用 AI 翻譯":"Translate with AI", "AI 翻譯，可能有誤":"AI translation — may contain mistakes",
