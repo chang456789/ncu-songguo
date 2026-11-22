@@ -13,7 +13,7 @@
    ===================================================================== */
 (() => {
   "use strict";
-  const MAX_CONTEXT = 6000;   // 和 api/ai-chat.js 一致
+  const MAX_CONTEXT = 24000;   // 和 api/ai-chat.js 一致
   const MAX_INPUT = 500;
   // 建議問題：示範 AI 代理人會自己挑的工具（交通精算、找吃的、找拼車、下一堂課）
   const SUGGEST = [
@@ -55,6 +55,8 @@
     const c = JSON.parse(JSON.stringify(ctx || {}));
     const size = () => JSON.stringify(c).length;
     if (size() <= MAX_CONTEXT) return c;
+    // 先縮減次要資料：大廳、校內地點、貼文
+    for (const k of ["lobby", "campusPlaces", "posts"]) while (size() > MAX_CONTEXT && Array.isArray(c[k]) && c[k].length) c[k].pop();
     for (const f of c.food || []) delete f.note;
     for (const e of c.events || []) delete e.source;
     while (size() > MAX_CONTEXT && ((c.events && c.events.length > 3) || (c.food && c.food.length > 5))){
