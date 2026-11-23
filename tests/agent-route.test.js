@@ -83,6 +83,7 @@ ok(d2.space === "g:chat" && d2.category === "閒聊" && d2.price === null, "crea
 ok(cleanRoute({ tool: "add_to_calendar", args: { keyword: "音樂會", date: "下週" } }, P).args.date === null, "add_to_calendar 不合法的日期 → null");
 ok(cleanRoute({ tool: "find_rides", args: { to: "台北車站", when: "2026-11-27T15:00" }, confidence: 0.9 }, P, "幫我揪週五下午回台北的車").tool === "draft_ride", "「幫我揪」被選成找車 → 改成開團（draft_ride）");
 ok(cleanRoute({ tool: "create_post_draft", args: { space: "g:lost", category: "遺失", title: "撿到學生證" }, confidence: 0.9 }, P, "幫我發一篇撿到學生證的失物招領").args.category === "拾獲", "失物招領「撿到」→ 拾獲");
+ok(cleanRoute({ tool: "create_post_draft", args: { space: "m:all", category: "機車單車", title: "賣二手腳踏車", price: null }, confidence: 0.9 }, P, "幫我寫一篇賣二手腳踏車的文，1500 元").args.price === "NT$1500", "使用者說了 1500 元 → 價格一定是 NT$1500");
 
 // ---------- 行事曆檔格式 ----------
 console.log("\n行事曆檔（.ics）");
