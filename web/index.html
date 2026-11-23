@@ -114,7 +114,20 @@ header.top{position:sticky;top:0;z-index:20;background:var(--surface);border-bot
 .ask-sugs{display:flex;flex-wrap:wrap;gap:8px}
 .ask-sugs .chip{white-space:normal;text-align:left;line-height:1.35}
 .shortcuts.sc3{grid-template-columns:repeat(3,minmax(0,1fr))}
-@media (max-width:720px){ .chead,.mlayer,.ask-hero,#today{margin-inline:12px} .shortcuts.sc3{grid-template-columns:repeat(3,minmax(0,1fr))} .sc3 .sc-card{padding:10px} .sc3 .sc-card b{font-size:14px} }
+/* 首頁③ 今天的校園：橫向滑動卡片 */
+.ct-strip{display:flex;gap:10px;overflow-x:auto;scroll-snap-type:x mandatory;padding:2px 2px 8px;scrollbar-width:thin;overscroll-behavior-x:contain}
+.ct-card{flex:0 0 min(220px,64vw);scroll-snap-align:start;display:flex;flex-direction:column;gap:6px;text-align:left;background:var(--surface);color:var(--ink);border:1px solid var(--line);border-radius:16px;padding:12px 14px;font:inherit;cursor:pointer;min-height:118px}
+.ct-card:hover{border-color:var(--pine)}
+.ct-kind{display:flex;align-items:center;gap:5px;font-size:12px;font-weight:700;color:var(--pine)}
+.ct-kind svg{width:16px;height:16px}
+.ct-card.post .ct-kind{color:var(--muted)}
+.ct-card b{font-size:15px;line-height:1.4;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;overflow-wrap:anywhere}
+.ct-sub{margin-top:auto;font-size:12.5px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+/* 電腦版：右欄已經有常駐的問松果，首頁的回答改顯示在右欄，首頁不重複 */
+@media (min-width:1181px){ .home-thread{display:none} }
+.rail .ai-dock{margin-bottom:4px}
+.rail-today .card{margin:0}
+@media (max-width:720px){ .chead,.mlayer,.ask-hero,#today{margin-inline:12px} .ct-strip{padding-inline:12px;scroll-padding-inline:12px} .shortcuts.sc3{grid-template-columns:repeat(3,minmax(0,1fr))} .sc3 .sc-card{padding:10px} .sc3 .sc-card b{font-size:14px} }
 /* 松果 AI 數據頁 */
 .ais-tiles{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
 .ais-tile{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:12px;display:flex;flex-direction:column;gap:4px;min-width:0}
@@ -1337,7 +1350,15 @@ function bottomNav(){
   return h("nav",{class:"bottom","aria-label":"主選單"},
     GROUPS.map(([id,label,ic]) => btn(id, label, ic)));
 }
+// 電腦版右欄（松果 2.0）：常駐的問松果對話框＋今日松果（首頁本身已有今日松果，右欄就不重複）
 function rightRail(){
+  if (!AI.dock) return rightRailV1();
+  return h("div",{class:"rail"},
+    AI.dock(),
+    S.tab !== "home" && TODAY ? h("div",{class:"rail-today"}, TODAY.card()) : null);
+}
+// 舊右欄（下一班公車、下一堂課、天氣、近期活動、在線）：先藏起來不刪
+function rightRailV1(){
   const nexts = ["zl","hsr"].map(d => ({ d, x: nextTrips(d, "out", 1).list[0] })).filter(o => o.x);
   const n = nextClass(); const w = loadWeather(); const wd = w.data && upcomingHours(w.data)[0];
   const evs = upcomingEvents().slice(0, 3);
@@ -1458,9 +1479,12 @@ function feedItems(kind){
   if (!kind || kind==="events") for (const e of S.events) if ((e.end || e.date) >= todayISO()) items.push({ ts:e.ts, el:() => eventCard(normEvent(e)) });
   return items.sort((a,b) => b.ts - a.ts).slice(0, 40);
 }
-// 首頁（松果 2.0，以 AI 為主）：#hero（像素松鼠，在橫幅裡）→ 問松果大輸入框＋4 個建議問題 → #today → 3 個捷徑
+// 首頁（松果 2.0，以 AI 為主）只有 4 塊：
+//   ① #hero（像素松鼠，在橫幅裡，由 page() 加在最上面）＋問松果大輸入框＋3 個建議問題；回答直接在下面展開（AI.thread），不開視窗
+//   ② #today 今日松果　③ 今天的校園（活動＋熱門貼文，橫向滑動）　④ 動態
 function homePage(){
-  const ask = v => { v = String(v || "").trim(); if (!v) return; const el = document.getElementById("home-ask"); if (el) el.value = ""; AI.open(v); };
+  const ask = v => { v = String(v || "").trim(); if (!v) return; const el = document.getElementById("home-ask"); if (el) el.value = "";
+    if (AI.ask) AI.ask(v, { inline:true }); else AI.open(v); };
   const input = h("input",{type:"text",id:"home-ask",maxlength:"500",autocomplete:"off",enterkeyhint:"send",placeholder:"問松果：公車、拼車、活動、美食、課表…","aria-label":"問松果"});
   input.addEventListener("keydown", e => { if (e.key === "Enter" && !e.isComposing && e.keyCode !== 229) ask(input.value); });
   const sugs = AI.suggestions ? AI.suggestions() : [];
@@ -1469,11 +1493,47 @@ function homePage(){
     h("section",{class:"card ask-hero"},
       h("div",{class:"ask-row"}, input, VOICE.button ? VOICE.button("home-ask", () => document.getElementById("home-ask")) : null,
         h("button",{class:"primary",onclick:()=>ask(document.getElementById("home-ask").value)},"問")),
-      sugs.length ? h("div",{class:"ask-sugs"}, sugs.slice(0, 4).map(q => h("button",{class:"chip",onclick:()=>ask(tr(q))}, q))) : null),
+      sugs.length ? h("div",{class:"ask-sugs"}, sugs.slice(0, 3).map(q => h("button",{class:"chip",onclick:()=>ask(tr(q))}, q))) : null,
+      AI.thread ? h("div",{class:"home-thread"}, AI.thread()) : null),
     h("div",{id:"today"}, TODAY ? TODAY.card() : null),
-    homeShortcuts());
+    campusToday(),
+    homeFeed());
 }
-// 首頁 3 個捷徑：下一班 132、今天活動、附近吃什麼
+// ③ 今天的校園：近期活動（今天的優先）＋一週內的熱門貼文，橫向滑動
+function campusToday(){
+  const evs = upcomingEvents().slice(0, 4);
+  const week = Date.now() - 7*864e5;
+  const hot = S.posts.filter(p => visibleTo(p) && (p.ts || 0) >= week && spaceById(p.space))
+    .sort((a,b) => likeCount(b.id) - likeCount(a.id) || b.ts - a.ts).slice(0, 4);
+  if (!evs.length && !hot.length) return null;
+  const evCard = e => { const k = evDayKey(e);
+    return h("button",{class:"ct-card evc",onclick:()=>goEvent(e.id)},
+      h("span",{class:"ct-kind"}, icon("mega"), k === "today" ? "今天" : k === "ongoing" ? "進行中" : k === "tomorrow" ? "明天" : "活動"),
+      h("b",{translate:"no"}, e.title), h("span",{class:"ct-sub"}, evWhen(e), e.place ? ["・", h("span",{translate:"no"}, e.place)] : null)); };
+  const postC = p => { const n = likeCount(p.id);
+    return h("button",{class:"ct-card post",onclick:()=>jumpToPost(p)},
+      h("span",{class:"ct-kind"}, icon("chat"), spaceLabel(p.space)),
+      h("b",{translate:"no"}, p.title || String(p.body || "").slice(0, 40) || "（無標題）"),
+      h("span",{class:"ct-sub"}, n ? ["♥ ", n, "・"] : null, ago(p.ts))); };
+  return h("section",{class:"stack campus-today"},
+    h("div",{class:"section-title"}, h("h2",{},"今天的校園"), h("button",{class:"linkbtn",onclick:()=>goCommunity("news")},"查看全部")),
+    h("div",{class:"ct-strip",role:"list"}, [...evs.map(evCard), ...hot.map(postC)].map(el => (el.setAttribute("role","listitem"), el))));
+}
+// ④ 動態：貼文、拼車、活動依時間排列（和舊首頁同一份）
+function homeFeed(){
+  const f = S.feedKind || "";
+  const items = feedItems(f);
+  return h("section",{class:"stack"},
+    h("div",{class:"section-title"}, h("h2",{},"動態"),
+      h("div",{class:"chips"}, [["","全部"],["posts","貼文"],["rides","拼車"],["events","活動"]].map(([k,l]) =>
+        h("button",{class:"chip","aria-pressed":f===k?"true":"false",onclick:()=>{S.feedKind=k;render();}}, l)))),
+    items.length ? h("div",{class:"feed"}, items.map(x => x.el())) :
+      S.dbState==="loading" ? skeleton("post", 3) :
+      PX ? h("div",{class:"empty"}, PX.empty("posts", { onAction: canPost() ? ()=>openModal({k:"create"}) : null, action:"建立" })) :
+      h("div",{class:"empty"}, h("h3",{}, "還沒有動態"), h("p",{},"發一篇貼文、開一團拼車，或分享你知道的校園活動，大家就會在這裡看到。"),
+        h("button",{class:"primary",disabled:!canPost(),onclick:()=>openModal({k:"create"})},"建立")));
+}
+// 松果 2.0 第一版的 3 個捷徑（下一班 132、今天活動、附近吃什麼）：首頁已拿掉，先藏起來不刪
 function homeShortcuts(){
   const cur = nowMin();
   const b132 = trips("zl","out",dayCtx()).filter(x => !x.offBoard && x.route === "132" && x.t >= cur)[0];

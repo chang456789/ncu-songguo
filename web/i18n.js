@@ -179,6 +179,8 @@
     "可以問我公車、活動、美食和你的課表。我只會根據松果網站上的資料回答。":"Ask me about buses, events, food and your timetable. I only answer from data on Songguo.",
     "下一班到中壢火車站的公車是幾點？":"When is the next bus to Zhongli Station?", "這週有什麼活動？有提供餐點的嗎？":"What events are on this week? Any with free food?",
     "評價最高的店有哪些？":"Which places are rated highest?", "我的下一堂課是什麼時候、在哪裡？":"When and where is my next class?",
+  // 松果 2.0 首頁精簡、右欄問松果、交通膠囊按鈕
+  "現在出發去":"Leave now for", "今天的校園":"Campus today", "AI 可能出錯，重要資訊請以網站頁面與學校公告為準。":"AI can make mistakes. Check the site pages and official school notices for anything important.",
     "輸入問題…":"Type a question…", "清除對話":"Clear chat", "松果正在想…":"Songguo is thinking…", "看拼車":"See ride shares",
     "AI 可能出錯，重要資訊請以網站頁面與學校公告為準。你的下一堂課會一起送出，但不會被保存。":"AI can make mistakes — check the site's pages and official notices for anything important. Your next class is sent along with your question but never stored.",
     "松果 AI 助理還在準備中（尚未設定 AI 金鑰），先用網站上的各個頁面查詢吧。":"The Songguo AI assistant isn't set up yet (no AI key configured). Please use the site's pages for now.",
