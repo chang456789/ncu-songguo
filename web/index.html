@@ -888,7 +888,7 @@ function topBanner(tab){
   if (kind !== "home") return PX.banner(kind);
   const b = PX.banner("home", { hide:["normal"], sky:true }); b.classList.add("has-hero"); b.append(HERO_EL);
   // 橫幅下方：問松果輸入框（顯示大松鼠的問候與心情，點了打開問松果）
-  if (!heroMounted){ heroMounted = true; PX.mount(HERO_EL, { nick:()=>S.nick, size:88, translate:el=>I18N.translate(el), askHost:HERO_ASK, onAsk:()=>AI.open() }); }
+  if (!heroMounted){ heroMounted = true; PX.mount(HERO_EL, { nick:()=>S.nick, size:88, translate:el=>I18N.translate(el), askHost:HERO_ASK, onAsk:()=>{ const el=document.getElementById("home-ask"); if (el) el.focus(); else AI.open(); } }); }
   return [b, HERO_ASK];
 }
 // 載入中：骨架屏；空白：松鼠畫面（沒載入新檔案時用原本的文字）
