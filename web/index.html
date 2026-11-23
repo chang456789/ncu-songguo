@@ -591,6 +591,8 @@ a.primary,a.ghost{display:inline-flex;align-items:center;text-decoration:none}
 a.ghost{color:var(--ink)}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 </style>
+<!-- 松果 2.0 美術（陳奕晴）：像素松鼠、統一風格（一種卡片、兩種按鈕、四種字級）。放在主要樣式之後，才能統一全站。 -->
+<link rel="stylesheet" href="/ui.css">
 
 </head>
 <body>
@@ -611,6 +613,10 @@ a.ghost{color:var(--ink)}
 <script src="/agent.js"></script>
 <script src="/search.js"></script>
 <script src="/notify.js"></script>
+<script src="/pixel.js"></script>
+<script src="/ui.js"></script>
+<script src="/photos.js"></script>
+<script src="/today.js"></script>
 
 
 <script>
@@ -764,7 +770,7 @@ function aistatsPage(){
   const tile = (label, value) => h("div",{class:"ais-tile"}, h("span",{}, label), h("b",{}, value));
   return h("div",{class:"stack"},
     h("div",{class:"sphead"}, h("h1",{},"松果 AI 數據"), h("p",{},"每次網站呼叫 AI 都會記一筆：功能名稱、成功與否、花了多久。不記錄任何問題或回答的內容。")),
-    st.status === "loading" ? h("p",{class:"muted"},"載入中…") :
+    st.status === "loading" ? pxLoading() :
     st.status === "error" ? h("div",{class:"info"},"讀不到數據，請檢查網路後再試一次。", " ", h("button",{class:"linkbtn",onclick:()=>AISTATS.load()},"再試一次")) :
     !st.total ? h("div",{class:"empty"}, h("h3",{},"還沒有數據"), h("p",{},"大家開始使用問松果、交通精算、AI 翻譯之後，這裡就會出現統計。")) :
     [h("div",{class:"ais-tiles"}, tile("總呼叫次數", String(st.total)), tile("成功率", pct(st.rate)), tile("平均回應時間", sec(st.avg))),
@@ -844,6 +850,34 @@ AGENT.init({ lang:()=>I18N.lang, tr:s=>I18N.tr(s), places:()=>RIDE_PLACES.filter
   toast:m=>toast(m),
   weather:()=>{ const w = loadWeather(); return w.data ? upcomingHours(w.data)[0] || null : null; }, goWeather:()=>go("weather"),
   goSchedule:()=>go("schedule"), findRoom:room=>{ S.navQ = roomBuilding(room); go("nav"); } });
+// ---------- 松果 2.0 美術（web/pixel.js、ui.js、photos.js、today.js）：沒載入時全部退回原本的畫面 ----------
+const PX = window.sgPixel || null, UIX = window.sgUI || null, PH = window.sgPhotos || null, TODAY = window.sgToday || null;
+if (PH) PH.init({ toast:m=>toast(m), tr:s=>I18N.tr(s), translate:el=>I18N.translate(el) });
+// 分頁圖示：首頁、交通、社群、我的換成像素圖；其他（＋建立、舊分頁）照舊
+const navIcon = (id, ic) => PX && ["home","transit","community","me"].includes(id) ? PX.icon(id, { size:24 }) : icon(ic);
+// 分頁頂部橫幅：現有分頁先這樣對應
+const BANNER_OF = { home:"home", transit:"transit", food:"map", nav:"map", forum:"community", community:"community", campus:"community", market:"community", housing:"community", schedule:"me", me:"me", more:"me" };
+// 首頁大松鼠：同一個元素跨重繪沿用，眨眼、思考、開心的狀態才不會被重設
+const HERO_EL = h("div",{id:"hero"}); let heroMounted = false;
+function topBanner(tab){
+  const kind = PX && BANNER_OF[tab]; if (!kind) return null;
+  if (kind !== "home") return PX.banner(kind);
+  const b = PX.banner("home", { hide:["normal"] }); b.classList.add("has-hero"); b.append(HERO_EL);
+  if (!heroMounted){ heroMounted = true; PX.mount(HERO_EL, { nick:()=>S.nick, size:88, translate:el=>I18N.translate(el) }); }
+  return b;
+}
+// 載入中：骨架屏；空白：松鼠畫面（沒載入新檔案時用原本的文字）
+const skeleton = (kind, n, fallback) => UIX ? UIX.skeleton(kind, n || 3) : h("div",{class:"empty"}, h("h3",{}, fallback || "載入中…"));
+const pxLoading = fallback => PX ? PX.loading({ compact:true }) : h("p",{class:"muted"}, fallback || "載入中…");
+const celebrate = text => { if (PX) PX.celebrate(text, { translate:el=>I18N.translate(el) }); };
+// 今日松果需要的資料（web/today.js）
+async function todayContext(){
+  loadWeather(); loadEvents();
+  for (let i = 0; i < 25 && ((WX && WX.loading) || (EVS && EVS.loading)); i++) await new Promise(r => setTimeout(r, 200));
+  const bus = ["zl","hsr","tpe"].map(d => { const x = nextTrips(d, "out", 1).list[0]; return x && { to:DEST[d], route:x.route, time:fromMin(x.t) }; }).filter(Boolean);
+  return { weather: WX && WX.data, courses: tt().courses, bus, events: upcomingEvents() };
+}
+if (TODAY) TODAY.init({ context:todayContext, lang:()=>I18N.lang, onChange:()=>renderKeep(), translate:el=>I18N.translate(el) });
 function switchLang(l){ VOICE.stop(); I18N.setLang(l); S.dirty = false; render(); }
 
 const RIDE_PLACES = ["中央大學（正門）","中央大學（後門）","中壢火車站","高鐵桃園站","台北車站","松山機場","桃園機場","大江購物中心","中原商圈・中原夜市","龍岡・忠貞市場","中壢觀光夜市","青埔","其他"];
@@ -1244,7 +1278,7 @@ function topbar(){
 function sideNav(){
   const pending = pendingReqs(), cur = groupOf(S.tab);
   const item = ([id,label,ic]) => h("button",{"aria-current":cur===id?"page":null,onclick:()=>goGroup(id),title:label},
-    h("span",{class:"ico"}, icon(ic)), h("span",{class:"lbl"}, label), id==="me" && pending ? h("span",{class:"badge"}, pending) : null);
+    h("span",{class:"ico"}, navIcon(id, ic)), h("span",{class:"lbl"}, label), id==="me" && pending ? h("span",{class:"badge"}, pending) : null);
   return h("nav",{class:"snav"},
     h("button",{onclick:()=>openModal({k:"profile"})}, avatar(S.nick, "sm"), h("span",{class:"lbl"}, S.nick)),
     item(GROUPS[0]), item(GROUPS[1]),
@@ -1260,7 +1294,7 @@ function sideNav(){
 function bottomNav(){
   const pending = pendingReqs(), cur = groupOf(S.tab);
   const btn = (id, label, ic, extra) => h("button",{class:"tab"+(extra||""),"aria-current":cur===id?"page":null,
-    onclick:()=> id==="create" ? openModal({k:"create"}) : goGroup(id),"aria-label":label}, icon(ic), h("span",{},label),
+    onclick:()=> id==="create" ? openModal({k:"create"}) : goGroup(id),"aria-label":label}, navIcon(id, ic), h("span",{},label),
     id==="me" && pending ? h("span",{class:"badge"}, pending) : null);
   return h("nav",{class:"bottom","aria-label":"主選單"},
     btn("home","首頁","home"), btn("transit","交通","bus"), btn("create","建立","plus"," create"), btn("community","社群","chat"), btn("me","我的","user"));
@@ -1326,12 +1360,16 @@ function page(){
     schedule:schedulePage, forum:forumPage, news:eventsPage, weather:weatherPage, online:onlinePage, nav:navPage,
     me:mePage, more:mePage, community:forumPage, aistats:aistatsPage };
   const body = (P[S.tab] || homePage)();
-  if (groupOf(S.tab) === "community") return h("div",{class:"stack"}, communitySeg(), body);
+  const banner = topBanner(P[S.tab] ? S.tab : "home");
+  if (groupOf(S.tab) === "community") return h("div",{class:"stack"}, banner, communitySeg(), body);
+  // 橫幅放在分頁內容的最上面（內容本身是 .stack 就直接放進去，手機版的滿版樣式才不會跑掉）
+  let main = body;
+  if (banner){ if (body.classList && body.classList.contains("stack")) body.prepend(banner); else main = h("div",{class:"stack"}, banner, body); }
   const back = backBar();
-  return back ? h("div",{class:"stack"}, back, body) : body;
+  return back ? h("div",{class:"stack"}, back, main) : main;
 }
 function statusBanner(){
-  if (S.dbState==="none") return h("div",{class:"info"},"目前連不上伺服器，所以看不到也無法發布內容。請檢查網路後重新整理。");
+  if (S.dbState==="none") return h("div",{class:"info px-offline"}, PX ? PX.sprite("sad", { size:40 }) : null, h("span",{},"目前連不上伺服器，所以看不到也無法發布內容。請檢查網路後重新整理。"));
   if (S.canWrite===false) return h("div",{class:"info"},"你目前是唯讀身分：可以瀏覽，但無法發文、留言或私訊。");
   return null;
 }
@@ -1377,7 +1415,7 @@ function homePage(){
   const items = feedItems(f);
   const evs = upcomingEvents().slice(0, 2);
   return h("div",{class:"stack"},
-    stories(), statusBanner(), AI.homeCard(), shortcuts(), composer(),
+    stories(), statusBanner(), TODAY ? TODAY.card() : null, AI.homeCard(), shortcuts(), composer(),
     h("div",{class:"only-phone stack"}, homeBusBoard()),
     evs.length ? h("section",{class:"stack"},
       h("div",{class:"section-title"}, h("h2",{},"近期活動"), h("button",{class:"linkbtn",onclick:()=>go("news")},"查看全部")),
@@ -1386,7 +1424,9 @@ function homePage(){
       h("div",{class:"chips"}, [["","全部"],["posts","貼文"],["rides","拼車"],["events","活動"]].map(([k,l]) =>
         h("button",{class:"chip","aria-pressed":f===k?"true":"false",onclick:()=>{S.feedKind=k;render();}}, l)))),
     items.length ? h("div",{class:"feed"}, items.map(x => x.el())) :
-      h("div",{class:"empty"}, h("h3",{}, S.dbState==="loading" ? "載入中…" : "還沒有動態"), h("p",{},"發一篇貼文、開一團拼車，或分享你知道的校園活動，大家就會在這裡看到。"),
+      S.dbState==="loading" ? skeleton("post", 3) :
+      PX ? h("div",{class:"empty"}, PX.empty("posts", { onAction: canPost() ? ()=>openModal({k:"create"}) : null, action:"建立" })) :
+      h("div",{class:"empty"}, h("h3",{}, "還沒有動態"), h("p",{},"發一篇貼文、開一團拼車，或分享你知道的校園活動，大家就會在這裡看到。"),
         h("button",{class:"primary",disabled:!canPost(),onclick:()=>openModal({k:"create"})},"建立")));
 }
 function qbtn(ic, title, sub, onclick){ return h("button",{class:"qbtn",onclick}, icon(ic), h("div",{}, h("b",{},title), h("span",{},sub))); }
@@ -1527,7 +1567,11 @@ function eventsPage(){
     EVAI.panel(),
     statusBanner(),
     groups.length ? groups.map(([l, es]) => [h("p",{class:"daygroup"}, l), es.map(e => eventCard(e))]) :
-      h("div",{class:"empty"}, h("h3",{}, ev.loading && !ev.data ? "正在整理學校的活動…" : tag ? `目前沒有標示「${tag}」的活動` : "近期還沒有活動"),
+      ev.loading && !ev.data ? skeleton("event", 3, "正在整理學校的活動…") :
+      PX ? h("div",{class:"empty"}, PX.empty(tag ? "search" : "posts", { title: tag ? `目前沒有標示「${tag}」的活動` : "近期還沒有活動",
+        text:"看到海報、社團宣傳或系上活動？分享到這裡，大家就看得到。", action: tag ? "清除篩選" : "分享活動",
+        onAction: tag ? ()=>{ S.evTag=""; render(); } : canPost() ? ()=>openModal({k:"event"}) : null })) :
+      h("div",{class:"empty"}, h("h3",{}, tag ? `目前沒有標示「${tag}」的活動` : "近期還沒有活動"),
         h("p",{},"看到海報、社團宣傳或系上活動？分享到這裡，大家就看得到。"), h("button",{class:"primary",disabled:!canPost(),onclick:()=>openModal({k:"event"})},"分享活動")),
     ev.data?.undated?.length ? h("section",{class:"stack"},
       h("div",{class:"section-title"}, h("h2",{},"其他活動公告")),
@@ -1704,7 +1748,7 @@ function transitPage(){
     statusBanner(), RA.rideBox(), RA.filterBar(),
     h("div",{class:"bar"}, h("span",{class:"muted small"}, `${rides.length} 團即將出發`), h("span",{class:"spacer"}), h("button",{class:"primary",disabled:!canPost(),onclick:()=>openModal({k:"ride"})},"開一團")),
     rides.length ? h("div",{class:"stack"}, rides.map(rideCard)) :
-      h("div",{class:"empty"}, h("h3",{},"目前沒有人揪車"), h("p",{},"週五下午回家、週日晚上回學校最常有人一起搭。開第一團吧。"),
+      h("div",{class:"empty"}, PX ? PX.empty("rides", { title:"目前沒有人揪車", text:"" }) : h("h3",{},"目前沒有人揪車"), h("p",{},"週五下午回家、週日晚上回學校最常有人一起搭。開第一團吧。"),
         h("div",{class:"ideas"}, [["中央大學（後門）","中壢火車站"],["中央大學（正門）","高鐵桃園站"],["高鐵桃園站","中央大學（正門）"]].map(([a,b]) => h("button",{disabled:!canPost(),onclick:()=>openModal({k:"ride",from:a,to:b})},`${a} → ${b}`)))));
 }
 function rideCard(r){
@@ -1829,7 +1873,7 @@ function spaceView(id){
   if (S.sort==="hot") shown = [...shown].sort((a,b) => likeCount(b.id)-likeCount(a.id) || b.ts-a.ts);
   if (!shown.length){
     const ideas = IDEAS[id] || (sp.hub ? IDEAS.hub : IDEAS.default);
-    out.append(h("div",{class:"empty"}, h("h3",{}, list.length ? `「${S.filter}」分類還沒有貼文` : "這裡還沒有人發文"),
+    out.append(h("div",{class:"empty"}, PX ? PX.empty(list.length ? "search" : "posts", { title: list.length ? `「${S.filter}」分類還沒有貼文` : "這裡還沒有人發文", text:"" }) : h("h3",{}, list.length ? `「${S.filter}」分類還沒有貼文` : "這裡還沒有人發文"),
       h("p",{},"當第一個開口的人。點一個開頭直接開始寫："),
       h("div",{class:"ideas"}, ideas.map(t => h("button",{disabled:!canPost(),onclick:()=>openModal({k:"post",space:id,prefill:t})},t)))));
     return out;
@@ -1859,6 +1903,7 @@ function postCard(p){
   if (p.rent) card.append(h("div",{class:"price"}, p.rent, p.htype ? h("span",{class:"muted small",style:"font-weight:400"},"　"+p.htype) : null));
   if (p.ratings) card.append(h("div",{class:"scores"}, [["隔音",p.ratings.sound],["房東態度",p.ratings.landlord],["CP 值",p.ratings.cp]].map(([k,n]) => h("div",{class:"score"},k,dots(n)))));
   card.append(h("p",{class:"body",translate:"no"},tv.texts[1]));
+  if (PH && p.photos && p.photos.length && !hidden){ const th = PH.thumbs(p.photos); if (th) card.append(h("div",{class:"post-photos"}, th)); }
   const isOpen = S.open===p.id;
   const liked = S.uid && S.likes[p.id]?.has(S.uid);
   const n = likeCount(p.id);
@@ -2190,7 +2235,8 @@ function oursList(list, closedN){
         h("i",{class:"cdot",style:`background:var(${catVar(x.cat)})`}),
         h("span",{class:"t"}, h("b",{translate:"no"}, x.name), h("small",{class:"muted"}, x.cat, x.price ? " ・ " + "$".repeat(x.price) : "", x.status && x.status!=="營業中" ? " ・ " + x.status : "")),
         h("small",{class:"mono"}, r ? `★ ${r.avg.toFixed(1)}  ` : "", fmtDist(x.d))); })) :
-      h("div",{class:"empty"}, h("h3",{}, S.dbState==="loading" ? "載入中…" : "還沒有人加入店家"),
+      S.dbState==="loading" ? skeleton("shop", 3) :
+      h("div",{class:"empty"}, PX ? PX.empty("search", { title:"還沒有人加入店家", text:"" }) : h("h3",{}, "還沒有人加入店家"),
         h("p",{}, "點地圖上的任何一間餐廳，按「加入松果」就能評分和留言；地圖上沒有的店，按「＋ 新增店家」。")));
 }
 function osmList(list){
@@ -2265,6 +2311,7 @@ function foodDetail(f){
       h("span",{class:"spacer"}), h("span",{class:"small muted"}, mine ? "你的評分" : "給個評分"), stars),
     f.hours ? h("div",{class:"small muted"}, "營業時間 ", f.hours) : null,
     f.note ? h("p",{style:"margin:0;white-space:pre-wrap",translate:"no"}, f.note) : null,
+    PH && f.photos && f.photos.length ? PH.thumbs(f.photos) : null,
     h("div",{class:"bar"},
       h("a",{class:"primary",href:gNav(f),target:"_blank",rel:"noopener"},"步行導航"),
       h("button",{class:"ghost",onclick:()=>isOpen?closeThread():openThread("food:"+f.id)}, isOpen ? "收起留言" : "留言・必點"),
@@ -2306,12 +2353,16 @@ function foodSheet(){
   const posLine = h("span",{}, posText());
   const note = h("textarea",{id:"fd-note",maxlength:"600",style:"min-height:70px",placeholder:"必點、份量、要不要排隊（選填）",oninput:e=>st.note=e.target.value}, st.note);
   const hours = h("input",{type:"text",id:"fd-hours",maxlength:"40",value:st.hours,placeholder:"例：17:00–02:00，週一休",oninput:e=>st.hours=e.target.value});
+  if (!st.photos) st.photos = ed && Array.isArray(ed.photos) ? ed.photos.slice() : [];
+  const photoPick = PH ? PH.picker({ max:4, value:st.photos, onChange:urls=>{ st.photos = urls; } }) : null;
   const btn = h("button",{class:"primary wide",onclick:async()=>{
     if ((st.name||"").trim().length < 1) return fail(err,"請填店名。");
     if (!st.pos) return fail(err,"請先在地圖上選位置。");
     if (distM(st.pos) > 15000) return fail(err,"這個位置離中大超過 15 公里，請確認位置。");
     const fields = { name:st.name.trim(), cat:st.cat, price:st.price||0, lat:st.pos.lat, lng:st.pos.lng, note:(st.note||"").trim(), hours:(st.hours||"").trim(), status:st.status||"營業中" };
     if (st.osm) fields.osm = st.osm;
+    if (photoPick && photoPick.busy()) return fail(err,"照片還在上傳中，請稍等一下。");
+    if (photoPick) fields.photos = (st.photos || []).slice(0, 4);
     btn.disabled = true;
     try {
       if (ed){ await S.db.doc("food/"+ed.id).update({ ...fields, editedBy:S.nick, editedAt:Date.now() }); S.foodSel = ed.id; }
@@ -2323,6 +2374,7 @@ function foodSheet(){
     h("label",{class:"f",for:"fd-name"},"店名",name), sug,
     h("div",{class:"f"},"類型", catW),
     h("div",{class:"f"},"營業狀態", chipPick(FOOD_STATUS.map(s => [s,s]), st.status, v => st.status = v)),
+    photoPick ? h("div",{class:"f"},"照片", h("small",{},"菜單、招牌菜都可以，最多 4 張。"), photoPick) : null,
     h("details",{class:"more-fields"}, h("summary",{},"更多資訊（選填）"),
       h("div",{class:"stack",style:"gap:12px;padding-top:10px"},
         h("div",{class:"f"},"價位", chipPick([[1,"$ 百元內"],[2,"$$ 100–250"],[3,"$$$ 250 以上"]], st.price, v => st.price = v)),
@@ -2588,7 +2640,7 @@ function loadNews(cat){
 }
 function newsList(cat, n){
   const c = loadNews(cat);
-  if (c.loading && !c.items.length) return h("p",{class:"muted small",style:"margin:0"},"載入中…");
+  if (c.loading && !c.items.length) return pxLoading();
   if (!c.items.length) return h("p",{class:"muted small",style:"margin:0"}, c.err ? "暫時抓不到學校網站的資料，" : "目前沒有資料，", h("a",{href:NEWS_SRC[cat],target:"_blank",rel:"noopener"},"到學校網站看"), "。");
   return h("div",{class:"list"}, c.items.slice(0, n||40).map(it => h("a",{class:"li news-li",href:it.url,target:"_blank",rel:"noopener"},
     h("span",{class:"t",style:"white-space:normal"}, it.title), it.date ? h("small",{class:"mono"}, it.date.slice(5)) : null)));
@@ -2623,7 +2675,7 @@ function weatherMini(){
   const w = loadWeather(); const d = w.data;
   if (!d) return h("section",{class:"card wx-mini"}, h("span",{class:"muted small"}, w.err ? "天氣暫時抓不到" : "天氣載入中…"));
   const hs = upcomingHours(d); const now = hs[0]; const rainy = hs.slice(0,4).some(x => (x.pop||0) >= 50);
-  return h("button",{class:"card wx-mini",onclick:()=>go("weather")},
+  return h("button",{class:"card wx-mini",onclick:()=>go("weather")}, PX ? PX.weather(rainy, { size:40 }) : null,
     h("span",{class:"wx-temp mono"}, now ? `${Math.round(now.temp)}°` : "—"),
     h("span",{class:"stack",style:"gap:0;align-items:flex-start"}, h("b",{}, "中壢・", now?.wx || ""), h("span",{class:"small muted"}, rainy ? "接下來可能下雨，記得帶傘" : `降雨機率 ${now?.pop ?? "—"}%`)));
 }
@@ -2631,7 +2683,7 @@ function weatherPage(){
   const w = loadWeather(); const d = w.data;
   return h("div",{class:"stack"},
     h("div",{class:"sphead"}, h("h1",{},"中壢天氣"), h("p",{}, "中央大學所在的桃園市中壢區。")),
-    !d ? h("div",{class:"info"}, w.err ? "天氣資料暫時抓不到，稍後再試。" : "載入中…") : [
+    !d ? (w.err ? (PX ? h("div",{class:"empty"}, PX.error({ title:"天氣暫時抓不到", text:"天氣資料暫時抓不到，稍後再試。" })) : h("div",{class:"info"}, "天氣資料暫時抓不到，稍後再試。")) : pxLoading()) : [
       h("section",{class:"card stack",style:"gap:10px"}, h("b",{},"接下來 36 小時"),
         h("div",{class:"wx-hours"}, upcomingHours(d).slice(0,12).map(x => { const t = new Date(x.t);
           return h("div",{class:"wx-h"}, h("span",{class:"mono small muted"}, `${pad(t.getHours())}:00`), h("b",{class:"mono"}, `${Math.round(x.temp)}°`), h("span",{class:"small"}, x.wx||""), h("span",{class:"small mono",style:(x.pop||0)>=50?"color:var(--plate);font-weight:700":""}, `☂ ${x.pop ?? "—"}%`)); }))),
@@ -2928,6 +2980,8 @@ function postSheet(){
   const price = sp.price ? h("input",{type:"text",id:"p-price",maxlength:"20",placeholder:"例：NT$300、免費",value:m.price||""}) : null;
   const rent = sp.rent ? h("input",{type:"text",id:"p-rent",maxlength:"24",placeholder:"例：月租 6,500（含水）",value:m.price||""}) : null;
   const htype = sp.rent ? h("select",{id:"p-htype"}, HOUSE_TYPES.map(t => h("option",{},t))) : null;
+  // 照片（web/photos.js）：市集、招租可以放 4 張；網址暫存在 S.modal，重繪也不會不見
+  const photoPick = PH && (sp.price || sp.rent) ? PH.picker({ max:4, value:m.photos||[], onChange:urls=>{ m.photos = urls; } }) : null;
   const about = sp.review || sp.rent ? h("select",{id:"p-about"}, h("option",{value:""},"（不指定）"), homeOptions().filter(g => g.group.startsWith("校外")).map(g => h("optgroup",{label:g.group.replace("校外・","")}, g.items.map(it => h("option",{value:it.id,selected:S.home===it.id},it.name))))) : null;
   const nickLabel = h("span",{class:"mono"}, S.nick);
   const ident = h("div",{class:"radios",role:"radiogroup","aria-label":"發文身分"},
@@ -2950,8 +3004,10 @@ function postSheet(){
     if (price && price.value.trim()) doc.price = price.value.trim();
     if (rent && rent.value.trim()) doc.rent = rent.value.trim();
     if (htype) doc.htype = htype.value;
+    if (photoPick && photoPick.busy()) return fail(err,"照片還在上傳中，請稍等一下。");
+    if (m.photos && m.photos.length) doc.photos = m.photos.slice(0, 4);
     btn.disabled = true;
-    try { await S.db.collection("posts").add(doc); LS.del(draftKey); closeModal(); toast("已發布"); }
+    try { await S.db.collection("posts").add(doc); LS.del(draftKey); closeModal(); toast("已發布"); celebrate("已發布！"); }
     catch(e){ fail(err, writeErr(e)); btn.disabled = false; } }},"發布");
   return sheet(m.pick ? "建立貼文" : "發文到「"+sp.name+"」", picker,
     m.ai ? h("div",{class:"info ra-form-ai"},"問松果已經幫你擬好草稿，價格只是建議。請確認或修改後再按發布。") : null,
@@ -2961,6 +3017,7 @@ function postSheet(){
     price ? h("label",{class:"f",for:"p-price"},"價格",price) : null,
     rent ? h("div",{class:"frow"}, h("label",{class:"f",for:"p-rent"},"租金",rent), h("label",{class:"f",for:"p-htype"},"房型",htype)) : null,
     h("label",{class:"f",for:"p-body"},"內容", h("small",{},"打到一半關掉也沒關係，草稿會自動保留。"), body),
+    photoPick ? h("div",{class:"f"},"照片", h("small",{},"最多 4 張，上傳前會自動壓縮。"), photoPick) : null,
     sp.review ? h("div",{class:"frow"}, rate("sound","隔音"), rate("landlord","房東態度"), rate("cp","CP 值")) : null,
     h("div",{class:"f"}, h("span",{},"發文身分　", nickLabel), ident),
     agree, err, foot(btn));
@@ -2987,7 +3044,7 @@ function rideSheet(){
     if (from.value===to.value) return fail(err,"出發地和目的地不能一樣。");
     btn.disabled = true;
     const pv = await PRIV.review([note.value.trim()]); if (!pv){ btn.disabled = false; return; }
-    try { await S.db.collection("rides").add({ from:from.value, to:to.value, when:ts, seats:+seats.value, split:split.value, note:pv[0], luggage:lug.value, tags:[...tagSel], nick:S.nick, uid:S.uid||"", ts:Date.now() }); closeModal(); toast("已開團"); }
+    try { await S.db.collection("rides").add({ from:from.value, to:to.value, when:ts, seats:+seats.value, split:split.value, note:pv[0], luggage:lug.value, tags:[...tagSel], nick:S.nick, uid:S.uid||"", ts:Date.now() }); closeModal(); toast("已開團"); celebrate("已開團！"); }
     catch(e){ fail(err, writeErr(e)); btn.disabled=false; } }},"開團");
   return sheet("開一團拼車",
     m.ai ? h("div",{class:"info ra-form-ai"},"AI 已幫你填好，確認後再發布") : null,

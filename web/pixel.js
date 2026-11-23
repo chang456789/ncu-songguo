@@ -773,7 +773,7 @@
     return el("div", { class: "px-empty px-empty-" + kind },
       el("div", { class: "px-scene" }, c.art.map(a => sprite(a, { size: 84, cls: "px-art-" + a }))),
       el("h3", {}, opts.title || c.title),
-      el("p", {}, opts.text || c.text),
+      opts.text === "" ? null : el("p", {}, opts.text || c.text),   // text:"" ＝不要預設的提示（原本畫面已經有說明時）
       opts.onAction ? el("button", { type: "button", class: "primary", onclick: opts.onAction }, opts.action || c.action) : null);
   }
 
@@ -819,20 +819,21 @@
     me:        [["normal", 58, 13], ["desk", 44, 30], ["lamp", 44, 18], ["laptop", 90, 23], ["books", 104, 23], ["tree", 170, 8]],                       // 松鼠書桌
   };
   const BW = 200, BH = 48, BSCALE = 2;
-  function bannerSVG(name){
+  function bannerSVG(name, hide = []){
     const svg = document.createElementNS(SVGNS, "svg");
     svg.setAttribute("viewBox", `0 0 ${BW} ${BH}`); svg.setAttribute("width", String(BW * BSCALE)); svg.setAttribute("height", String(BH * BSCALE));
     svg.setAttribute("shape-rendering", "crispEdges"); svg.setAttribute("class", "px px-scene-svg"); svg.setAttribute("aria-hidden", "true");
     let s = `<rect class="px-l" x="0" y="44" width="${BW}" height="1"/><rect class="px-g" x="0" y="45" width="${BW}" height="3"/>`;
     for (const [k, x, y, flip, sc] of SCENES[name] || []){
-      const rows = G[k]; if (!rows) continue; const w = rows[0].length, z = sc || 1;
+      const rows = G[k]; if (!rows || hide.includes(k)) continue; const w = rows[0].length, z = sc || 1;
       const t = flip ? `translate(${x + w * z} ${y}) scale(${-z} ${z})` : `translate(${x} ${y}) scale(${z})`;
       s += `<g transform="${t}">${markup(k)}</g>`;
     }
     svg.innerHTML = s; return svg;
   }
   function banner(name, opts = {}){
-    return el("div", { class: "px-banner px-banner-" + name, role: opts.title ? "img" : null, "aria-label": opts.title || null }, bannerSVG(name));
+    // opts.hide：不畫某些小圖（首頁把場景裡的松鼠換成會動的大松鼠 #hero）
+    return el("div", { class: "px-banner px-banner-" + name, role: opts.title ? "img" : null, "aria-label": opts.title || null }, bannerSVG(name, opts.hide || []));
   }
 
   /* ---------- 首頁大松鼠：PIXEL.mount("#hero") ---------- */
@@ -889,7 +890,12 @@
       t.prepend(sprite("think", { size: 36, cls: "px-think-mini" }));
     }
     const busy = !!document.querySelector(".ai-panel:not([hidden]) .ai-typing");
-    if (busy !== aiBusy){ aiBusy = busy; mood(busy ? "think" : "happy"); }
+    if (busy !== aiBusy){
+      aiBusy = busy;
+      // 回答完才開心；如果最後是錯誤提示（例如 AI 尚未設定），就回到普通
+      const last = [...document.querySelectorAll(".ai-panel .ai-bubble")].pop();
+      mood(busy ? "think" : last && last.classList.contains("notice") ? "normal" : "happy");
+    }
   }
   let aiObs = null;
   function watchAI(){
