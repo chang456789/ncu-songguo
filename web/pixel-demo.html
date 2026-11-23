@@ -14,6 +14,21 @@
   .demo-card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r,12px);padding:14px}
   .demo-card h2{margin:0 0 10px;font-size:16px}
   .demo-grid{display:flex;flex-wrap:wrap;gap:12px}
+  /* 問松果泡泡與卡片的樣式（從 web/assistant.js 複製，只給這個預覽頁用） */
+  .ai-list{flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:10px;overscroll-behavior:contain}
+  .ai-row{display:flex}
+  .ai-row.me{justify-content:flex-end}
+  .ai-bubble{max-width:86%;background:var(--sunk);border-radius:16px 16px 16px 4px;padding:9px 13px;font-size:15px;line-height:1.55;white-space:pre-wrap;overflow-wrap:anywhere}
+  .ai-row.me .ai-bubble{background:var(--pine);color:var(--bg);border-radius:16px 16px 4px 16px}
+  .ai-bubble.notice{background:var(--bus-soft);color:var(--ink);border:1px solid var(--line)}
+  .ai-cards{display:flex;flex-direction:column;gap:6px;margin-top:10px;white-space:normal}
+  .ai-card-btn{display:flex;align-items:center;gap:10px;width:100%;text-align:left;background:var(--surface);color:var(--ink);border:1px solid var(--line);border-radius:12px;padding:8px 10px;cursor:pointer;font:inherit}
+  .ai-card-btn:hover{border-color:var(--pine)}
+  .ai-card-ico{flex:none;width:28px;height:28px;border-radius:8px;background:var(--sunk);display:grid;place-items:center;font-size:15px}
+  .ai-card-txt{flex:1;min-width:0;display:flex;flex-direction:column;gap:1px}
+  .ai-card-txt b{font-size:14px;line-height:1.35;overflow-wrap:anywhere}
+  .ai-card-txt small{font-size:12.5px;color:var(--muted);line-height:1.35;overflow-wrap:anywhere}
+  .ai-card-go{flex:none;color:var(--pine);font-size:20px;font-weight:700}
   .demo-grid figure{margin:0;display:flex;flex-direction:column;align-items:center;gap:4px;font-size:12px;color:var(--muted)}
 </style>
 </head>
@@ -40,8 +55,11 @@
     <p class="muted" style="margin:0 0 8px">模擬「問松果」的畫面：圖示會自動換成小松鼠，思考中的三個點換成思考松鼠，首頁大松鼠也會跟著變。</p>
     <div class="ai-panel" style="position:static;display:block;border:1px solid var(--line);border-radius:12px;padding:10px">
       <div class="ai-head" style="display:flex;align-items:center;gap:8px"><svg class="ai-ico" viewBox="0 0 24 24" width="22" height="22"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor"/></svg><b>松果 AI 助理</b></div>
-      <div id="v2-ai-list" style="margin-top:8px"></div></div>
-    <div class="demo-bar" style="margin-top:8px"><button class="ghost" type="button" id="ai-ask">模擬發問</button></div></section>
+      <div class="ai-list" id="v2-ai-list" style="margin-top:8px;max-height:320px;overflow:auto"></div></div>
+    <div class="demo-bar" style="margin-top:8px"><button class="ghost" type="button" id="ai-ask">模擬發問</button>
+      <button class="ghost" type="button" data-demo="bus">公車回答</button><button class="ghost" type="button" data-demo="food">美食回答</button>
+      <button class="ghost" type="button" data-demo="event">活動回答</button><button class="ghost" type="button" data-demo="ride">拼車回答</button></div>
+    <p class="muted" style="margin:8px 0 0">松果 2.0：回答一字一字打出來（減少動態效果時直接顯示），卡片依類型上色，上方松鼠頭像依回答類型換表情。</p></section>
   <section class="demo-card"><h2>統一風格：一種卡片、兩種按鈕、四種字級</h2>
     <div class="card" style="display:flex;flex-direction:column;gap:8px">
       <b style="font-size:var(--fs-4)">標題 22px（--fs-4）</b><span style="font-size:var(--fs-3)">內文 16px（--fs-3）</span>
@@ -75,6 +93,7 @@
 <script src="/shim.js"></script>
 <script src="/photos.js"></script>
 <script src="/today.js"></script>
+<script src="/ai-look.js"></script>
 <script>
 (async () => {
   // 從 index.html 複製網站的樣式（顏色變數、按鈕），預覽畫面才會和正式網站一致
@@ -113,6 +132,23 @@
     const row = document.createElement("div"); row.className = "ai-bubble ai-typing"; row.innerHTML = "<i></i><i></i><i></i><span>松果正在想…</span>"; I18N.translate(row);
     $("v2-ai-list").replaceChildren(row);
     setTimeout(() => { $("v2-ai-list").replaceChildren(Object.assign(document.createElement("div"), { className: "ai-bubble", textContent: "下一班 132 是 08:20，從前門警衛室上車。" })); }, 2500);
+  };
+  // 模擬問松果的回答（和 web/assistant.js 一樣的結構），測試打字效果、卡片顏色、頭像表情
+  const DEMO = {
+    bus: ["下一班往中壢火車站的 133 是 10:05，從前門警衛室上車；後面還有 10:20 的 132。", [["bus","🚌","133・前門警衛室 上車 10:05","約 10:35 到・18 元"],["commute","⇄","交通精算：中大 → 中壢火車站","公車最划算"]]],
+    food: ["後門走路 5 分鐘內有三間評價高的宵夜，第一名是鹽酥雞。", [["food","🍜","後門鹽酥雞","小吃・$・走路約 3 分鐘・★4.6"],["food","🍜","阿嬤鍋燒意麵","正餐・$・走路約 5 分鐘・★4.4"]]],
+    event: ["今天中午羅家倫講堂有附餐盒的 AI 講座，12:10 開始。", [["event","📣","AI 應用講座（附餐盒）","今天 12:10–13:30・羅家倫講堂"],["calendar","🗓️","加入行事曆：AI 應用講座","今天 12:10"]]],
+    ride: ["現在有一團 15:30 從後門出發往高鐵，還有 2 個位子。", [["ride","🚕","中央大學（後門）→ 高鐵桃園站","今天 15:30・剩 2 位"],["draft","＋","都不合適？開一團拼車（已填好）","後門 → 高鐵"]]],
+  };
+  for (const b of document.querySelectorAll("[data-demo]")) b.onclick = () => {
+    const [text, cards] = DEMO[b.dataset.demo];
+    const mk = (t, c, kids) => Object.assign(document.createElement(t), { className: c }), row = mk("div", "ai-row"), bub = mk("div", "ai-bubble");
+    bub.setAttribute("translate", "no"); bub.append(text);
+    const list = mk("div", "ai-cards");
+    for (const [kind, ico, title, sub] of cards){ const btn = mk("button", "ai-card-btn " + kind); btn.type = "button";
+      btn.innerHTML = `<span class="ai-card-ico" aria-hidden="true">${ico}</span><span class="ai-card-txt"><b></b><small></small></span><span class="ai-card-go" aria-hidden="true">›</span>`;
+      btn.querySelector("b").textContent = title; btn.querySelector("small").textContent = sub; list.append(btn); }
+    bub.append(list); row.append(bub); $("v2-ai-list").append(row);
   };
   const UI = window.sgUI;
   for (const k of ["post","event","ride","shop"]) $("skeletons").append(UI.skeleton(k, 1));

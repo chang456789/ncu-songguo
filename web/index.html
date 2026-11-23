@@ -618,6 +618,8 @@ a.ghost{color:var(--ink)}
 <script src="/photos.js"></script>
 <script src="/today.js"></script>
 <script src="/post-ai.js"></script>
+<script src="/ai-look.js"></script>
+<script src="/welcome.js"></script>
 <script src="/rai.js"></script>
 
 
@@ -863,13 +865,14 @@ const navIcon = (id, ic) => PX && ["home","transit","community","me"].includes(i
 // 分頁頂部橫幅：現有分頁先這樣對應
 const BANNER_OF = { home:"home", transit:"transit", food:"map", nav:"map", forum:"community", community:"community", campus:"community", market:"community", housing:"community", schedule:"me", me:"me", more:"me" };
 // 首頁大松鼠：同一個元素跨重繪沿用，眨眼、思考、開心的狀態才不會被重設
-const HERO_EL = h("div",{id:"hero"}); let heroMounted = false;
+const HERO_EL = h("div",{id:"hero"}), HERO_ASK = h("div",{class:"px-ask-wrap"}); let heroMounted = false;
 function topBanner(tab){
   const kind = PX && BANNER_OF[tab]; if (!kind) return null;
   if (kind !== "home") return PX.banner(kind);
-  const b = PX.banner("home", { hide:["normal"] }); b.classList.add("has-hero"); b.append(HERO_EL);
-  if (!heroMounted){ heroMounted = true; PX.mount(HERO_EL, { nick:()=>S.nick, size:88, translate:el=>I18N.translate(el) }); }
-  return b;
+  const b = PX.banner("home", { hide:["normal"], sky:true }); b.classList.add("has-hero"); b.append(HERO_EL);
+  // 橫幅下方：問松果輸入框（顯示大松鼠的問候與心情，點了打開問松果）
+  if (!heroMounted){ heroMounted = true; PX.mount(HERO_EL, { nick:()=>S.nick, size:88, translate:el=>I18N.translate(el), askHost:HERO_ASK, onAsk:()=>AI.open() }); }
+  return [b, HERO_ASK];
 }
 // 載入中：骨架屏；空白：松鼠畫面（沒載入新檔案時用原本的文字）
 const skeleton = (kind, n, fallback) => UIX ? UIX.skeleton(kind, n || 3) : h("div",{class:"empty"}, h("h3",{}, fallback || "載入中…"));
@@ -1193,8 +1196,10 @@ function gate(){
   const input = h("input",{type:"text",id:"nick-in",maxlength:"16",value:val,"aria-label":"匿名暱稱",oninput:e=>val=e.target.value});
   const err = h("p",{class:"err",hidden:true});
   const enter = () => { const v = val.trim();
-    if (v.length < 2){ err.textContent=tr("暱稱至少要 2 個字。"); err.hidden=false; return; }
-    S.nick = v; LS.set("pc.nick", v); saveProfile(); render(); };
+    if (v.length < 2){ err.textContent=tr("暱稱至少要 2 個字。"); err.hidden=false; return false; }
+    S.nick = v; LS.set("pc.nick", v); saveProfile(); render(); return true; };
+  // 松果 2.0 首次進站（web/welcome.js）：大松鼠＋自我介紹＋示範問題；點問題＝用這個暱稱進站並打開問松果
+  const welcome = window.sgWelcome ? window.sgWelcome.block({ tr:s=>I18N.tr(s), translate:el=>I18N.translate(el), onAsk:q=>{ if (enter()) setTimeout(()=>AI.open(q), 0); } }) : null;
   input.addEventListener("keydown", e => { if (e.key==="Enter" && !e.isComposing) enter(); });
   const logo = brandMark(); logo.setAttribute("class","logo");
   return h("div",{class:"gate"},
@@ -1202,8 +1207,8 @@ function gate(){
       h("button",{"aria-pressed":I18N.lang!=="en"?"true":"false",onclick:()=>switchLang("zh")},"中文"),
       h("button",{"aria-pressed":I18N.lang==="en"?"true":"false",onclick:()=>switchLang("en")},"English")),
     h("div",{class:"gate-card"},
-    logo, h("h1",{},"松果"),
-    h("p",{},"中央人的生活圈。看公車、揪拼車、找活動、聊天，打開就能用。"),
+    welcome || logo, welcome ? null : h("h1",{},"松果"),
+    welcome ? null : h("p",{},"中央人的生活圈。看公車、揪拼車、找活動、聊天，打開就能用。"),
     h("label",{class:"f",for:"nick-in"},"取一個暱稱", h("small",{},"不用註冊，也不用學號。暱稱之後隨時可以改。")),
     h("div",{class:"nick-row"}, input, h("button",{class:"ghost",onclick:()=>{val=randNick();input.value=val;}},"換一個")), err,
     h("button",{class:"primary",onclick:enter},"開始使用")));
@@ -1369,10 +1374,11 @@ function page(){
     me:mePage, more:mePage, community:forumPage, aistats:aistatsPage, "responsible-ai":()=>h("div",{class:"stack"}, RAI.view()) };
   const body = (P[S.tab] || homePage)();
   const banner = topBanner(P[S.tab] ? S.tab : "home");
-  if (groupOf(S.tab) === "community") return h("div",{class:"stack"}, banner, communitySeg(), body);
+  if (groupOf(S.tab) === "community") return h("div",{class:"stack"}, [].concat(banner || []), communitySeg(), body);
   // 橫幅放在分頁內容的最上面（內容本身是 .stack 就直接放進去，手機版的滿版樣式才不會跑掉）
   let main = body;
-  if (banner){ if (body.classList && body.classList.contains("stack")) body.prepend(banner); else main = h("div",{class:"stack"}, banner, body); }
+  const bn = [].concat(banner || []);
+  if (bn.length){ if (body.classList && body.classList.contains("stack")) body.prepend(...bn); else main = h("div",{class:"stack"}, bn, body); }
   const back = backBar();
   return back ? h("div",{class:"stack"}, back, main) : main;
 }
