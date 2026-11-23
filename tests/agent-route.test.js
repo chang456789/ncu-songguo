@@ -118,6 +118,8 @@ console.log("");
         { setHeader(){}, status(c){ this.c = c; return this; }, json(j){ done(j.ok ? j.data : { error: j.code }); } }));
     };
     const BATCH = 9, WAIT = 65000;   // 網站每個 IP 每分鐘有上限；每批 9 句、批次間等 65 秒
+    // WAIT_FIRST=1：先等 65 秒再開始（剛剛才打過網站時，避免第一批就超過每分鐘上限）
+    if (BASE && process.env.WAIT_FIRST){ console.log("  （先等 65 秒…）"); await new Promise(r => setTimeout(r, WAIT)); }
     let aiOK = 0; const wrong = [];
     for (let i = 0; i < CASES.length; i++){
       if (BASE && i && i % BATCH === 0){ console.log(`  （等 ${WAIT / 1000} 秒，避免超過每分鐘上限…）`); await new Promise(r => setTimeout(r, WAIT)); }
