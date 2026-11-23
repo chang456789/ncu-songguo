@@ -185,7 +185,9 @@
       if (wasOpen){ panel.hidden = false; draw(); }
     }
     const show = !!app.visible();
-    fab.hidden = !show || !panel.hidden;
+    // fabVisible：右下角按鈕要不要出現（首頁有大輸入框、地圖有自己的按鈕時不顯示）；不影響聊天視窗本身
+    const fabOk = app.fabVisible ? !!app.fabVisible() : true;
+    fab.hidden = !show || !fabOk || !panel.hidden;
     if (!show && !panel.hidden) close();
   }
 
@@ -262,5 +264,6 @@
   window.sgAssistant = {
     init(opts){ app = { ...app, ...opts }; },
     open, close, sync, homeCard, fit,
+    suggestions: () => SUGGEST.slice(),   // 首頁大輸入框下面的建議問題
   };
 })();

@@ -99,6 +99,22 @@ header.top{position:sticky;top:0;z-index:20;background:var(--surface);border-bot
 .snav hr{border:0;border-top:1px solid var(--line);margin:8px 10px}
 /* 手機：頂部只留語言、搜尋、通知、頭像（建立在底部導覽，私訊在「我的」與通知裡） */
 @media (max-width:720px){ .top .hide-phone{display:none} }
+/* 松果 2.0 結構：社群標題列（篩選標籤＋右上角建立）、地圖圖層、首頁大輸入框與 3 個捷徑 */
+.chead{display:flex;align-items:center;gap:10px}
+.chead .chips.cchips{flex:1;min-width:0;flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;padding-bottom:2px}
+.chead .cchips::-webkit-scrollbar{display:none}
+.chead .cchips .chip{flex:none;white-space:nowrap}
+.ccreate{flex:none;display:inline-flex;align-items:center;gap:4px;padding:8px 14px;border-radius:999px}
+.ccreate svg{width:18px;height:18px}
+.mlayer button{flex:1}
+.ask-hero{display:flex;flex-direction:column;gap:12px}
+.ask-row{display:flex;gap:8px;align-items:center}
+.ask-row input{flex:1;min-width:0;font-size:17px;padding:14px 18px;border-radius:999px}
+.ask-row .primary{padding:12px 20px;border-radius:999px;font-size:16px}
+.ask-sugs{display:flex;flex-wrap:wrap;gap:8px}
+.ask-sugs .chip{white-space:normal;text-align:left;line-height:1.35}
+.shortcuts.sc3{grid-template-columns:repeat(3,minmax(0,1fr))}
+@media (max-width:720px){ .chead,.mlayer,.ask-hero,#today{margin-inline:12px} .shortcuts.sc3{grid-template-columns:repeat(3,minmax(0,1fr))} .sc3 .sc-card{padding:10px} .sc3 .sc-card b{font-size:14px} }
 /* 松果 AI 數據頁 */
 .ais-tiles{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
 .ais-tile{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:12px;display:flex;flex-direction:column;gap:4px;min-width:0}
@@ -725,9 +741,10 @@ const randNick = () => I18N.lang==="en" && I18N.randNick ? I18N.randNick() : ADJ
 const TR = window.sgTranslate || { view:(id,texts)=>({ texts, button:null }), translateItems(){}, needs:()=>false, init(){} };
 TR.init({ db:()=>S.db, uid:()=>S.uid, lang:()=>I18N.lang, onChange:()=>renderKeep(), toast:m=>toast(m) });
 // 松果 AI 助理（web/assistant.js）：首頁卡片＋右下角「問松果」按鈕。aiContext() 在下面 BUS／EVENTS 之後定義
-const AI = window.sgAssistant || { init(){}, sync(){}, homeCard:()=>null, open(){} };
+const AI = window.sgAssistant || { init(){}, sync(){}, homeCard:()=>null, open(){}, suggestions:()=>[] };
 AI.init({ context:()=>aiContext(), agent:(t,hist)=>AGENT.ask(t,hist), lang:()=>I18N.lang, tr:s=>I18N.tr(s), translate:el=>I18N.translate(el),
-  visible:()=>!!S.nick && !["food","nav"].includes(S.tab),   // 地圖頁右下角已有按鈕，避免重疊
+  visible:()=>!!S.nick,
+  fabVisible:()=>!["map","home"].includes(S.tab),   // 右下角按鈕：地圖頁右下角已有按鈕；首頁已經有大的問松果輸入框
   openRides:()=>{ S.space.transit="rides"; saveSpace(); go("transit"); } });
 // 活動空檔媒合（web/events-ai.js）。upcomingEvents／evWhen 在下面定義
 const EVAI = window.sgEventsAI || { init(){}, panel:()=>null };
@@ -861,9 +878,9 @@ AGENT.init({ lang:()=>I18N.lang, tr:s=>I18N.tr(s), places:()=>RIDE_PLACES.filter
 const PX = window.sgPixel || null, UIX = window.sgUI || null, PH = window.sgPhotos || null, TODAY = window.sgToday || null;
 if (PH) PH.init({ toast:m=>toast(m), tr:s=>I18N.tr(s), translate:el=>I18N.translate(el) });
 // 分頁圖示：首頁、交通、社群、我的換成像素圖；其他（＋建立、舊分頁）照舊
-const navIcon = (id, ic) => PX && ["home","transit","community","me"].includes(id) ? PX.icon(id, { size:24 }) : icon(ic);
+const navIcon = (id, ic) => PX && ["home","transit","map","community","me"].includes(id) ? PX.icon(id, { size:24 }) : icon(ic);
 // 分頁頂部橫幅：現有分頁先這樣對應
-const BANNER_OF = { home:"home", transit:"transit", food:"map", nav:"map", forum:"community", community:"community", campus:"community", market:"community", housing:"community", schedule:"me", me:"me", more:"me" };
+const BANNER_OF = { home:"home", transit:"transit", map:"map", food:"map", nav:"map", forum:"community", community:"community", news:"community", campus:"community", market:"community", housing:"community", schedule:"me", me:"me", more:"me", settings:"me" };
 // 首頁大松鼠：同一個元素跨重繪沿用，眨眼、思考、開心的狀態才不會被重設
 const HERO_EL = h("div",{id:"hero"}), HERO_ASK = h("div",{class:"px-ask-wrap"}); let heroMounted = false;
 function topBanner(tab){
@@ -871,7 +888,7 @@ function topBanner(tab){
   if (kind !== "home") return PX.banner(kind);
   const b = PX.banner("home", { hide:["normal"], sky:true }); b.classList.add("has-hero"); b.append(HERO_EL);
   // 橫幅下方：問松果輸入框（顯示大松鼠的問候與心情，點了打開問松果）
-  if (!heroMounted){ heroMounted = true; PX.mount(HERO_EL, { nick:()=>S.nick, size:88, translate:el=>I18N.translate(el), askHost:HERO_ASK, onAsk:()=>AI.open() }); }
+  if (!heroMounted){ heroMounted = true; PX.mount(HERO_EL, { nick:()=>S.nick, size:88, translate:el=>I18N.translate(el), askHost:HERO_ASK, onAsk:()=>{ const el=document.getElementById("home-ask"); if (el) el.focus(); else AI.open(); } }); }
   return [b, HERO_ASK];
 }
 // 載入中：骨架屏；空白：松鼠畫面（沒載入新檔案時用原本的文字）
@@ -977,6 +994,7 @@ const ICONS = {
   calendar:"M4 6h16v14H4zM4 10h16M9 3v4M15 3v4",
   map:"M9 4 3 6v14l6-2 6 2 6-2V4l-6 2-6-2zM9 4v14M15 6v14",
   cloud:"M7 18h10a4 4 0 0 0 .5-8 6 6 0 0 0-11.5 1.5A3.5 3.5 0 0 0 7 18z",
+  bell:"M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9M10.3 21a1.94 1.94 0 0 0 3.4 0",
   search:"M11 4a7 7 0 1 0 0 14 7 7 0 0 0 0-14zM20 20l-4.2-4.2",
   user:"M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM4 21a8 8 0 0 1 16 0",
   users:"M9 11a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7zM3 20c0-3.3 2.7-6 6-6s6 2.7 6 6M16 4.5a3.5 3.5 0 0 1 0 6.5M18 14c2 .7 3 2.8 3 5",
@@ -1014,7 +1032,7 @@ const initial = s => (s||"?").trim().slice(-1);
    ===================================================================== */
 const S = {
   nick: LS.get("pc.nick") || "", dept: LS.get("pc.dept") || "", home: LS.get("pc.home") || "",
-  tab: LS.get("pc.tab") || "home",
+  tab: LS.get("pc.tab") || "home", mapLayer: LS.get("pc.mlayer") || "food",
   space: LS.json("pc.space", {}),     // last space per tab
   housingSeg: LS.get("pc.hseg") || "off",
   filter: "", sort: "new",
@@ -1146,7 +1164,7 @@ document.addEventListener("pointerup", ptrUp, true); document.addEventListener("
 function render(){
   LIVE.clear(); app.replaceChildren();
   if (!S.nick){ app.append(gate()); renderOverlay(); I18N.translate(app); return; }
-  const wide = ["schedule","food","nav"].includes(S.tab);
+  const wide = ["schedule","map"].includes(S.tab);
   app.append(topbar(),
     h("div",{class:"shell"},
       h("aside",{class:"side side-col","aria-label":"選單"}, sideNav()),
@@ -1220,17 +1238,22 @@ const TABS = [
   ["home","首頁","home",1],["transit","交通","bus",1,,"公車時刻・拼車"],["news","活動","mega",0,,"近期活動・學校公告"],["forum","論壇","chat",1,,"即時大廳・看板"],
   ["schedule","課表","calendar",0,,"我的課表與提醒"],["food","美食","pin",0,,"共同編輯的美食地圖"],["nav","導航","map",0,,"校內建築・步行導航"],
   ["market","市集","bag",0,,"二手・免費送・徵求"],["housing","租屋","house",0,,"租屋大廳・避雷"],["campus","系所","campus",0,,"各系看板"],
-  ["weather","天氣","cloud",0,,"中壢天氣預報"],["aistats","AI 數據","star",0,,"松果 AI 數據"],["responsible-ai","負責任的 AI","lock",0,,"AI 怎麼處理你的資料"],["online","在線","users",0,,"現在誰在線上"],["inbox","私訊","send",0,,"加密私訊"],
+  ["weather","天氣","cloud",0,,"中壢天氣預報"],["aistats","AI 數據","star",0,,"松果 AI 數據"],["responsible-ai","負責任的 AI","lock",0,,"AI 怎麼處理你的資料"],
+  ["map","地圖","map",0,,"美食・校內地點"],["settings","設定","user",0,,"暱稱、語言、安裝"],["online","在線","users",0,,"現在誰在線上"],["inbox","私訊","send",0,,"加密私訊"],
 ];
-/* 分頁重整：導覽只剩 5 大類（首頁｜交通｜＋建立｜社群｜我的）。
-   舊分頁全部保留（網址 #/food、#/news… 照樣能開），GROUP_OF 決定它們歸在哪一類、導覽列亮哪一個。 */
-const GROUPS = [["home","首頁","home"],["transit","交通","bus"],["community","社群","chat"],["me","我的","user"]];
-const GROUP_OF = { home:"home", food:"home", nav:"home", weather:"home", news:"home", transit:"transit",
-  forum:"community", campus:"community", market:"community", housing:"community", community:"community",
-  me:"me", more:"me", schedule:"me", inbox:"me", online:"me", aistats:"me", "responsible-ai":"me" };
+/* 松果 2.0：底部 5 個分頁（首頁｜交通｜地圖｜社群｜我的），「＋建立」移到社群右上角。
+   舊分頁全部保留、只是不在選單上（網址 #/food、#/news… 照樣能開），GROUP_OF 決定它們歸在哪一類、導覽列亮哪一個。
+   交通＝公車＋拼車；地圖＝美食＋校內導航（同一張地圖，圖層切換）；社群＝大廳、看板、活動、市集、租屋、系所；
+   我的＝課表、私訊、通知、設定（在線、語言、安裝、AI 數據、負責任的 AI 放在設定裡） */
+const GROUPS = [["home","首頁","home"],["transit","交通","bus"],["map","地圖","map"],["community","社群","chat"],["me","我的","user"]];
+const GROUP_OF = { home:"home", weather:"home", transit:"transit", map:"map", food:"map", nav:"map",
+  forum:"community", news:"community", campus:"community", market:"community", housing:"community", community:"community",
+  me:"me", more:"me", schedule:"me", inbox:"me", settings:"me", online:"me", aistats:"me", "responsible-ai":"me" };
+// 設定底下的頁面：「‹ 設定」回去
+const UNDER_SETTINGS = ["online", "aistats", "responsible-ai"];
 const groupOf = tab => GROUP_OF[tab] || "home";
 // 社群：上方分段切換（即時大廳和看板都是 forum 分頁，用 forumSeg 區分）
-const COMMUNITY = [["lobby","即時大廳"],["boards","看板"],["campus","系所"],["market","市集"],["housing","租屋"]];
+const COMMUNITY = [["lobby","大廳"],["boards","看板"],["news","活動"],["market","市集"],["housing","租屋"],["campus","系所"]];
 const communityKey = () => S.tab === "forum" ? (S.forumSeg === "boards" ? "boards" : "lobby") : S.tab;
 function goCommunity(k){
   k = k || LS.get("pc.comm") || "lobby"; LS.set("pc.comm", k);
@@ -1263,14 +1286,18 @@ function searchSources(){
   return out;
 }
 function goGroup(g){ g === "community" ? goCommunity() : go(g); }
+// 社群上方：篩選標籤（大廳、看板、活動、市集、租屋、系所）＋右上角「＋建立」
 function communitySeg(){
   const cur = communityKey();
-  return h("div",{class:"seg cseg",role:"tablist","aria-label":"社群"}, COMMUNITY.map(([k,l]) =>
-    h("button",{role:"tab","aria-selected":cur===k?"true":"false","aria-pressed":cur===k?"true":"false",onclick:()=>goCommunity(k)}, l)));
+  return h("div",{class:"chead"},
+    h("div",{class:"chips cchips",role:"tablist","aria-label":"社群"}, COMMUNITY.map(([k,l]) =>
+      h("button",{class:"chip",role:"tab","aria-selected":cur===k?"true":"false","aria-pressed":cur===k?"true":"false",onclick:()=>goCommunity(k)}, l))),
+    h("button",{class:"primary ccreate",disabled:!canPost(),onclick:()=>openModal({k:"create"}),"aria-label":"建立"}, icon("plus"), h("span",{},"建立")));
 }
 // 首頁、我的底下的頁面：上方一個「‹ 返回」
 function backBar(){
-  const g = groupOf(S.tab); if (S.tab === g || g === "transit" || g === "community") return null;
+  if (UNDER_SETTINGS.includes(S.tab)) return h("button",{class:"linkbtn backbar",onclick:()=>go("settings")}, "‹ ", "設定");
+  const g = groupOf(S.tab); if (S.tab === g || g === "transit" || g === "community" || g === "map") return null;
   return h("button",{class:"linkbtn backbar",onclick:()=>go(g)}, "‹ ", g === "me" ? "我的" : "首頁");
 }
 const pendingReqs = () => S.reqIn.filter(r => r.status==="pending").length;
@@ -1283,7 +1310,6 @@ function topbar(){
       S.room ? h("button",{class:"online-pill",title:"看看誰在線上",onclick:()=>go("online")}, h("i",{}), h("b",{},"在線 "), h("span",{class:"mono"}, online || 1)) : null,
       h("button",{class:"iconbtn lang-btn",translate:"no",title:I18N.lang==="en"?"切換成中文":"Switch to English","aria-label":I18N.lang==="en"?"切換成中文":"Switch to English",onclick:()=>switchLang(I18N.lang==="en"?"zh":"en")}, I18N.lang==="en" ? "中" : "EN"),
       h("button",{class:"iconbtn",title:"搜尋",onclick:()=>SEARCH.open(),"aria-label":"搜尋"}, icon("search")),
-      h("button",{class:"iconbtn hide-phone",title:"建立",onclick:()=>openModal({k:"create"}),"aria-label":"建立"}, icon("plus")),
       h("button",{class:"iconbtn hide-phone",title:"私訊",onclick:()=>go("inbox"),"aria-label":"私訊"}, icon("send"), pending ? h("span",{class:"badge"}, pending) : null),
       NOTIFY.bell(),
       h("button",{class:"me-btn",onclick:()=>openModal({k:"profile"}),"aria-label":"我的設定"}, avatar(S.nick, "sm"))));
@@ -1294,9 +1320,7 @@ function sideNav(){
     h("span",{class:"ico"}, navIcon(id, ic)), h("span",{class:"lbl"}, label), id==="me" && pending ? h("span",{class:"badge"}, pending) : null);
   return h("nav",{class:"snav"},
     h("button",{onclick:()=>openModal({k:"profile"})}, avatar(S.nick, "sm"), h("span",{class:"lbl"}, S.nick)),
-    item(GROUPS[0]), item(GROUPS[1]),
-    h("button",{class:"snav-create",onclick:()=>openModal({k:"create"}),title:"建立"}, h("span",{class:"ico"}, icon("plus")), h("span",{class:"lbl"},"建立")),
-    item(GROUPS[2]), item(GROUPS[3]),
+    GROUPS.map(item),
     h("hr",{}),
     h("button",{onclick:()=>openModal({k:"install"}),title:"安裝到手機"}, h("span",{class:"ico"}, icon("phone")), h("span",{class:"lbl"},"安裝到手機")),
     h("div",{class:"lang-row",translate:"no"}, h("span",{class:"ico"}, icon("globe")),
@@ -1307,10 +1331,10 @@ function sideNav(){
 function bottomNav(){
   const pending = pendingReqs(), cur = groupOf(S.tab);
   const btn = (id, label, ic, extra) => h("button",{class:"tab"+(extra||""),"aria-current":cur===id?"page":null,
-    onclick:()=> id==="create" ? openModal({k:"create"}) : goGroup(id),"aria-label":label}, navIcon(id, ic), h("span",{},label),
+    onclick:()=>goGroup(id),"aria-label":label}, navIcon(id, ic), h("span",{},label),
     id==="me" && pending ? h("span",{class:"badge"}, pending) : null);
   return h("nav",{class:"bottom","aria-label":"主選單"},
-    btn("home","首頁","home"), btn("transit","交通","bus"), btn("create","建立","plus"," create"), btn("community","社群","chat"), btn("me","我的","user"));
+    GROUPS.map(([id,label,ic]) => btn(id, label, ic)));
 }
 function rightRail(){
   const nexts = ["zl","hsr"].map(d => ({ d, x: nextTrips(d, "out", 1).list[0] })).filter(o => o.x);
@@ -1337,22 +1361,31 @@ function rightRail(){
 }
 /* 網址：#/food、#/news、#/lobby… 每個分頁都有自己的網址，舊連結點了照樣能打開；
    手機的「上一頁」也能回到前一個分頁。首頁不加 #。 */
-const ROUTE_TABS = ["home","transit","news","forum","schedule","food","nav","market","housing","campus","weather","online","inbox","me","more","aistats","responsible-ai"];
+const ROUTE_TABS = ["home","transit","news","forum","schedule","food","nav","market","housing","campus","weather","online","inbox","me","more","aistats","responsible-ai","map","settings"];
 function routeFromHash(){
-  const k = decodeURIComponent((location.hash || "").replace(/^#\/?/, "")).split(/[/?]/)[0];
+  const parts = decodeURIComponent((location.hash || "").replace(/^#\/?/, "")).split(/[/?]/), k = parts[0];
   if (k === "lobby" || k === "boards" || k === "community") return { tab:"forum", seg: k === "boards" ? "boards" : "lobby" };
+  // 舊網址：#/food → 地圖的美食圖層；#/nav → 地圖的校內地點圖層
+  if (k === "food" || k === "nav") return { tab:"map", layer: k === "nav" ? "campus" : "food" };
+  if (k === "map") return { tab:"map", layer: parts[1] === "campus" ? "campus" : "food" };
   return ROUTE_TABS.includes(k) ? { tab:k } : null;
 }
-const hashOf = () => S.tab === "home" ? "" : "#/" + (S.tab === "forum" ? (S.forumSeg === "boards" ? "boards" : "lobby") : S.tab);
+const hashOf = () => S.tab === "home" ? "" : "#/" + (S.tab === "forum" ? (S.forumSeg === "boards" ? "boards" : "lobby")
+  : S.tab === "map" ? (S.mapLayer === "campus" ? "map/campus" : "map") : S.tab);
 function syncHash(push){
   const want = hashOf(); if ((location.hash || "") === want) return;
   try { history[push ? "pushState" : "replaceState"](null, "", want || location.pathname + location.search); } catch {}
 }
 // 打開網站時，網址上的分頁優先（例如別人分享的 …/#/food）
-{ const r = routeFromHash(); if (r){ S.tab = r.tab; LS.set("pc.tab", r.tab); if (r.seg){ S.forumSeg = r.seg; LS.set("pc.fseg", r.seg); } } }
+{ const r = routeFromHash(); if (r){ S.tab = r.tab; LS.set("pc.tab", r.tab); if (r.seg){ S.forumSeg = r.seg; LS.set("pc.fseg", r.seg); } if (r.layer){ S.mapLayer = r.layer; LS.set("pc.mlayer", r.layer); } } }
+// 以前存下來的分頁是 food／nav：改成地圖
+if (S.tab === "food" || S.tab === "nav"){ S.mapLayer = S.tab === "nav" ? "campus" : "food"; S.tab = "map"; LS.set("pc.tab", "map"); LS.set("pc.mlayer", S.mapLayer); }
 window.addEventListener("popstate", () => { const r = routeFromHash() || { tab:"home" };
-  if (r.seg){ S.forumSeg = r.seg; LS.set("pc.fseg", r.seg); } if (S.modal) S.modal = null; go(r.tab, null, true); });
+  if (r.seg){ S.forumSeg = r.seg; LS.set("pc.fseg", r.seg); } if (r.layer){ S.mapLayer = r.layer; LS.set("pc.mlayer", r.layer); }
+  if (S.modal) S.modal = null; go(r.tab, null, true); });
 function go(tab, space, fromPop){
+  // 美食、校內導航合併成「地圖」：程式裡原本的 go("food")／go("nav") 都轉到地圖的對應圖層
+  if (tab === "food" || tab === "nav"){ S.mapLayer = tab === "nav" ? "campus" : "food"; LS.set("pc.mlayer", S.mapLayer); tab = "map"; }
   S.tab = tab; LS.set("pc.tab", tab); S.filter = ""; closeThread();
   if (space){ S.space[tab] = space; saveSpace();
     if (tab==="housing"){ S.housingSeg = space.startsWith("hb:") ? "boards" : "off"; LS.set("pc.hseg",S.housingSeg); }
@@ -1371,7 +1404,7 @@ function currentSpaceId(){
 function page(){
   const P = { transit:transitPage, market:()=>spaceView("m:all"), housing:housingPage, campus:campusPage, inbox:inboxPage, food:foodPage,
     schedule:schedulePage, forum:forumPage, news:eventsPage, weather:weatherPage, online:onlinePage, nav:navPage,
-    me:mePage, more:mePage, community:forumPage, aistats:aistatsPage, "responsible-ai":()=>h("div",{class:"stack"}, RAI.view()) };
+    me:mePage, more:mePage, community:forumPage, map:mapPage, settings:settingsPage, aistats:aistatsPage, "responsible-ai":()=>h("div",{class:"stack"}, RAI.view()) };
   const body = (P[S.tab] || homePage)();
   const banner = topBanner(P[S.tab] ? S.tab : "home");
   if (groupOf(S.tab) === "community") return h("div",{class:"stack"}, [].concat(banner || []), communitySeg(), body);
@@ -1424,7 +1457,35 @@ function feedItems(kind){
   if (!kind || kind==="events") for (const e of S.events) if ((e.end || e.date) >= todayISO()) items.push({ ts:e.ts, el:() => eventCard(normEvent(e)) });
   return items.sort((a,b) => b.ts - a.ts).slice(0, 40);
 }
+// 首頁（松果 2.0，以 AI 為主）：#hero（像素松鼠，在橫幅裡）→ 問松果大輸入框＋4 個建議問題 → #today → 3 個捷徑
 function homePage(){
+  const ask = v => { v = String(v || "").trim(); if (!v) return; const el = document.getElementById("home-ask"); if (el) el.value = ""; AI.open(v); };
+  const input = h("input",{type:"text",id:"home-ask",maxlength:"500",autocomplete:"off",enterkeyhint:"send",placeholder:"問松果：公車、拼車、活動、美食、課表…","aria-label":"問松果"});
+  input.addEventListener("keydown", e => { if (e.key === "Enter" && !e.isComposing && e.keyCode !== 229) ask(input.value); });
+  const sugs = AI.suggestions ? AI.suggestions() : [];
+  return h("div",{class:"stack home2"},
+    statusBanner(),
+    h("section",{class:"card ask-hero"},
+      h("div",{class:"ask-row"}, input, VOICE.button ? VOICE.button("home-ask", () => document.getElementById("home-ask")) : null,
+        h("button",{class:"primary",onclick:()=>ask(document.getElementById("home-ask").value)},"問")),
+      sugs.length ? h("div",{class:"ask-sugs"}, sugs.slice(0, 4).map(q => h("button",{class:"chip",onclick:()=>ask(tr(q))}, q))) : null),
+    h("div",{id:"today"}, TODAY ? TODAY.card() : null),
+    homeShortcuts());
+}
+// 首頁 3 個捷徑：下一班 132、今天活動、附近吃什麼
+function homeShortcuts(){
+  const cur = nowMin();
+  const b132 = trips("zl","out",dayCtx()).filter(x => !x.offBoard && x.route === "132" && x.t >= cur)[0];
+  const todayN = upcomingEvents().filter(e => evDayKey(e) === "today").length;
+  const card = (ic, title, sub, onclick) => h("button",{class:"sc-card",onclick}, h("span",{class:"sc-ico"}, icon(ic)), h("b",{}, title), h("span",{}, sub));
+  return h("section",{class:"shortcuts sc3","aria-label":"捷徑"},
+    card("bus","下一班 132", b132 ? [b132.approx ? "約 " : "", fromMin(b132.t), "・", minsUntil(b132.t)] : "今天已經收班",
+      ()=>{ S.busDest="zl"; LS.set("pc.busDest","zl"); S.busDir="out"; LS.set("pc.busDir","out"); S.space.transit="bus"; saveSpace(); go("transit"); }),
+    card("mega","今天活動", todayN ? [todayN, " 場"] : "看近期活動", ()=>goCommunity("news")),
+    card("pin","附近吃什麼","美食地圖", ()=>go("food")));
+}
+// 舊首頁（松果 1.x）：先藏起來不刪，確定沒問題後再移除
+function homePageV1(){
   const f = S.feedKind || "";
   const items = feedItems(f);
   const evs = upcomingEvents().slice(0, 2);
@@ -1447,26 +1508,44 @@ function qbtn(ic, title, sub, onclick){ return h("button",{class:"qbtn",onclick}
 function spaceLabel(id){ const s = spaceById(id); return s ? (s.short && s.zone ? ZONES.find(z=>z.id===s.zone).name : s.name) : "已移除的版"; }
 function jumpToPost(p){ const sp = spaceById(p.space); if (!sp) return; go(sp.tab, sp.id); openThread(p.id); }
 // 「我的」：課表、私訊、設定、語言、安裝到手機
+const meRow = (ic, title, sub, onclick, badge) => h("button",{class:"qbtn",onclick}, icon(ic),
+  h("div",{}, h("b",{}, title, badge ? h("span",{class:"badge",style:"margin-left:6px"}, badge) : null), h("span",{}, sub||"")));
+// 「我的」（松果 2.0）：課表、私訊、通知、設定
 function mePage(){
-  const pending = pendingReqs(), n = nextClass();
-  const row = (ic, title, sub, onclick, badge) => h("button",{class:"qbtn",onclick}, icon(ic),
-    h("div",{}, h("b",{}, title, badge ? h("span",{class:"badge",style:"margin-left:6px"}, badge) : null), h("span",{}, sub||"")));
+  const pending = pendingReqs(), n = nextClass(), unread = NOTIFY.unreadCount ? NOTIFY.unreadCount() : 0;
   return h("div",{class:"stack"},
     h("section",{class:"card me-card"}, avatar(S.nick),
       h("div",{class:"me-who"}, h("b",{translate:"no"}, S.nick), h("span",{class:"small muted"}, S.dept && spaceById(S.dept) ? spaceById(S.dept).name : "匿名使用者・不用註冊")),
-      h("button",{class:"ghost",onclick:()=>openModal({k:"profile"})},"設定")),
+      h("button",{class:"ghost",onclick:()=>openModal({k:"profile"})},"編輯")),
     h("div",{class:"quick"},
-      row("calendar","課表", n ? [n.c.name, "・", n.ongoing ? "上課中" : n.c.start] : "我的課表與提醒", ()=>go("schedule")),
-      row("send","私訊","加密私訊", ()=>go("inbox"), pending),
-      row("users","在線","現在誰在線上", ()=>go("online")),
-      row("user","設定","暱稱、系所、住處", ()=>openModal({k:"profile"})),
-      row("star","松果 AI 數據","各 AI 功能的使用次數、成功率、回應時間", ()=>go("aistats")),
-      row("lock","負責任的 AI","AI 怎麼處理你的資料、內容安全、出錯時怎麼辦", ()=>go("responsible-ai")),
-      row("phone","安裝到手機","加到主畫面當 App 用", ()=>openModal({k:"install"}))),
+      meRow("calendar","課表", n ? [n.c.name, "・", n.ongoing ? "上課中" : n.c.start] : "我的課表與提醒", ()=>go("schedule")),
+      meRow("send","私訊","加密私訊", ()=>go("inbox"), pending),
+      meRow("bell","通知","私訊請求、拼車、活動、留言", ()=>NOTIFY.open && NOTIFY.open(), unread),
+      meRow("user","設定","暱稱、語言、安裝、AI 數據", ()=>go("settings"))));
+}
+// 設定：原本放在「我的」的在線、安裝、語言、AI 數據、負責任的 AI 都在這裡（藏一層，沒有刪）
+function settingsPage(){
+  return h("div",{class:"stack"},
+    h("div",{class:"sphead"}, h("h1",{},"設定")),
+    h("div",{class:"quick"},
+      meRow("user","暱稱與個人資料","暱稱、系所、住處", ()=>openModal({k:"profile"})),
+      meRow("users","在線","現在誰在線上", ()=>go("online")),
+      meRow("phone","安裝到手機","加到主畫面當 App 用", ()=>openModal({k:"install"})),
+      meRow("star","松果 AI 數據","各 AI 功能的使用次數、成功率、回應時間", ()=>go("aistats")),
+      meRow("lock","負責任的 AI","AI 怎麼處理你的資料、內容安全、出錯時怎麼辦", ()=>go("responsible-ai"))),
     h("section",{class:"card bar"}, h("span",{class:"sc-ico"}, icon("globe")), h("b",{style:"flex:1"},"語言"),
       h("div",{class:"lang-row",translate:"no"},
         h("button",{"aria-pressed":I18N.lang!=="en"?"true":"false",onclick:()=>switchLang("zh")},"中文"),
         h("button",{"aria-pressed":I18N.lang==="en"?"true":"false",onclick:()=>switchLang("en")},"English"))));
+}
+// 地圖（松果 2.0）：美食＋校內導航，同一張地圖，上方切換圖層
+function mapPage(){
+  const layer = S.mapLayer === "campus" ? "campus" : "food";
+  const setLayer = l => { S.mapLayer = l; LS.set("pc.mlayer", l); closeThread(); syncHash(false); render(); };
+  return h("div",{class:"stack"},
+    h("div",{class:"seg mlayer",role:"tablist","aria-label":"地圖圖層"},
+      [["food","美食"],["campus","校內地點"]].map(([k,l]) => h("button",{role:"tab","aria-selected":layer===k?"true":"false","aria-pressed":layer===k?"true":"false",onclick:()=>setLayer(k)}, l))),
+    layer === "food" ? foodPage() : navPage());
 }
 // 首頁捷徑：美食、導航、天氣、活動（原本的分頁和網址都還在）
 function shortcuts(){
@@ -1654,7 +1733,7 @@ async function aiContext(){
     food, foodNote:"美食地圖評分最高的店（stars 是同學評分 1–5，walkMin 是從正門步行約幾分鐘）",
     nextCourse,
     // 讓 AI 能回答網站上所有頁面的問題：課表、拼車、看板／市集／租屋貼文、大廳、校內地點
-    timetable: (S.timetable||[]).slice(0, 40).map(c => ({ name:c.name, weekday:"週"+DAYN[c.day], start:c.start, end:c.end, room:c.room||"" })),
+    timetable: (tt().courses||[]).slice(0, 40).map(c => ({ name:c.name, weekday:"週"+DAYN[c.day], start:c.start, end:c.end, room:c.room||"" })),
     rides: upcomingRides().slice(0, 15).map(r => ({ from:r.from, to:r.to, when:new Date(r.when).toLocaleString("zh-TW",{month:"numeric",day:"numeric",weekday:"short",hour:"2-digit",minute:"2-digit"}), seatsLeft:Math.max(0,(r.seats||0)-1-(S.riders[r.id]?.size||0)), ...(r.note?{note:String(r.note).slice(0,60)}:{}) })),
     posts: S.posts.filter(p => { try { return visibleTo(p); } catch { return true; } }).slice(0, 60).map(p => ({ board:spaceLabel(p.space), cat:p.cat||"", title:String(p.title||"").slice(0,60), body:String(p.body||"").slice(0,140), ...(p.price?{price:p.price}:{}), ago:ago(p.ts) })),
     postsNote:"各看板最新貼文（市集、租屋、系所、討論區等），是同學發的內容，不是官方資訊",
@@ -2188,7 +2267,7 @@ function selectFood(id, center){
 }
 /* light refresh while someone is typing in the search box: redraw pins and the list only */
 function renderFoodSoft(){
-  if (S.tab !== "food") return;
+  if (S.tab !== "map" || S.mapLayer !== "food") return;
   if (isTyping() || composing){ const M = MAPS.food; if (M) drawMarkers(M, foodMapOpts()); patchLive(); return; }
   renderKeep();
 }
@@ -2797,7 +2876,7 @@ function spotSheet(){
     h("label",{class:"f",for:"sp-name"},"名稱",name),
     h("div",{class:"f"},"類別", h("div",{class:"radios",role:"radiogroup"}, SPOT_CATS.map(([c]) => h("label",{}, h("input",{type:"radio",name:"spcat",checked:st.cat===c,onchange:()=>st.cat=c}),c)))),
     h("label",{class:"f",for:"sp-coord"},"位置", h("small",{},"最快：在 Google 地圖長按該地點，複製座標貼上。或按下方按鈕直接在地圖上點。"), coord),
-    h("div",{class:"bar"}, posLine, h("span",{class:"spacer"}), h("button",{class:"ghost",onclick:()=>{ S.tab = "nav"; startPick("nav", "拖曳地圖，把圖釘對準「" + (st.name||"這個地點") + "」", p => { if (p){ st.pos = p; st.coord = ""; } S.modal = m; render(); }, st.pos); }},"在地圖上選")),
+    h("div",{class:"bar"}, posLine, h("span",{class:"spacer"}), h("button",{class:"ghost",onclick:()=>{ S.tab = "map"; S.mapLayer = "campus"; startPick("nav", "拖曳地圖，把圖釘對準「" + (st.name||"這個地點") + "」", p => { if (p){ st.pos = p; st.coord = ""; } S.modal = m; render(); }, st.pos); }},"在地圖上選")),
     h("label",{class:"f",for:"sp-note"},"說明（選填）",note),
     h("p",{class:"muted small",style:"margin:0"},"地圖是大家一起編輯的。標錯了沒關係，其他人可以再修正。"),
     err, foot(btn));
@@ -2824,7 +2903,9 @@ function leafletMap(key, opts){
     loadLeaflet().then(() => renderKeep(), () => { leafletFailed = true; renderKeep(); });
     return h("div",{class:"map lmap map-loading",role:"status"}, h("span",{},"地圖載入中…"));
   }
-  let M = MAPS[key];
+  // 美食和校內地點共用同一張地圖（松果 2.0）：MAPS.food、MAPS.nav 都指向它，切換圖層只換標記
+  let M = MAPS.shared;
+  if (M){ MAPS[key] = M; M.key = key; }
   if (!M){
     const saved = LS.json("pc.map."+key, null);
     const el = h("div",{class:"map lmap","aria-label":"地圖","data-notr":"1"});
@@ -2835,8 +2916,8 @@ function leafletMap(key, opts){
     map.on("moveend", () => { const c = map.getCenter(); LS.set("pc.map."+key, JSON.stringify({ lat:c.lat, lng:c.lng, z:map.getZoom() }));
       S.dragging = false; if (S.dirty && !S.modal){ S.dirty = false; setTimeout(renderKeep); } });
     map.on("zoomend", () => drawMarkers(M, M.opts));
-    map.on("click", e => { if (mapPlacing && (!mapPick || mapPick.key===key)) map.panTo(e.latlng); });
-    M = MAPS[key] = { el, map, base, layer, me:null, opts };
+    map.on("click", e => { if (mapPlacing && (!mapPick || mapPick.key===M.key)) map.panTo(e.latlng); });
+    M = MAPS[key] = MAPS.shared = { el, map, base, layer, me:null, opts, key };
   }
   M.opts = opts;
   const picking = !!mapPlacing && (!mapPick || mapPick.key===key);
