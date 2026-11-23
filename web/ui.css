@@ -237,12 +237,45 @@ body.ph-open{overflow:hidden}
 .av{font-size:var(--fs-2)!important} .av.xs{font-size:var(--fs-1)!important} .av.lg{font-size:var(--fs-3)!important}
 /* 分段切換（.seg）是分頁，不是按鈕；「想說什麼？」（.fake）是假的輸入框，所以保留原樣 */
 
-/* ---------- 字級統一：全站只用 4 種（自動從 index.html 與各 js 檔的樣式產生，改版後要重新產生） ---------- */
+/* =====================================================================
+   v2-look：接上 index.html 後的版面（陳奕晴）
+   ===================================================================== */
+/* 像素分頁圖示：固定 24px（像素圖要整數倍放大才不會糊） */
+.tab .px-icon,.snav .ico .px-icon{width:24px!important;height:24px!important}
+.snav .ico:has(.px-icon){background:transparent}
+.tab[aria-current="page"] .px-icon{transform:translateY(-2px)}
+
+/* 首頁：湖邊橫幅裡坐著會動的大松鼠 */
+.px-banner.has-hero{height:120px}
+.px-banner.has-hero #hero{position:absolute;left:calc(50% - 64px);bottom:4px;z-index:1}
+.px-banner.has-hero .px-hero-say{margin-bottom:46px;font-size:var(--fs-2);max-width:min(48vw,220px)}
+@media (max-width:420px){ .px-banner.has-hero #hero{left:calc(50% - 96px)} }
+
+/* 空白畫面：松鼠畫面放在原本的空白卡片裡，不要重複內距 */
+.empty>.px-empty{padding:0}
+.empty>.px-empty h3{margin:0}
+.px-offline{display:flex;align-items:center;gap:var(--space-2)}
+.wx-mini .px{flex:none}
+.post-photos{padding:0 0 var(--space-2)}
+.sk-list{margin:0}
+
+/* ---------- 修好 3 個舊問題 ---------- */
+/* ①「11月」對比太低：白字配原本的粉紅只有 3.0:1，改成深一點的紅（約 5.3:1），淺色深色都一樣 */
+.ev .cal i{background:#c8233c!important;color:#fff!important}
+/* ②「＋新增店家」在手機上被地圖下緣與底部選單擋住、和其他按鈕重疊：改放在地圖右上角 */
+.food-map .map-fab{top:12px!important;bottom:auto!important;right:12px!important}
+/* ③ 問松果浮動按鈕蓋住列表最後一筆：頁面底部留出按鈕的高度 */
+body:has(.ai-fab:not([hidden])) .wrap{padding-bottom:84px}
+@media (max-width:720px){ body:has(.ai-fab:not([hidden])) .wrap{padding-bottom:calc(140px + env(safe-area-inset-bottom,0px))} }
+
+/* ---------- 字級統一：全站只用 4 種（12／14／16／22）。這段是自動產生的：從 index.html 與各 js 檔用到的字級，對應到最接近的一種。改版後要重新產生 ---------- */
 body{font-size:var(--fs-3)!important}
 h1,h2,.sphead h1{font-size:var(--fs-4)!important} h3,h4{font-size:var(--fs-3)!important} small{font-size:var(--fs-1)}
 .ai-card-txt small,
 .ai-foot,
 .ai-note,
+.ais-head,
+.ais-tile span,
 .badge,
 .board .dest small,
 .board .when small,
@@ -297,6 +330,7 @@ h1,h2,.sphead h1{font-size:var(--fs-4)!important} h3,h4{font-size:var(--fs-3)!im
 .ai-ride,
 .ai-sug,
 .ai-typing,
+.ais-row,
 .backbar,
 .board .none,
 .check,
@@ -429,6 +463,7 @@ select,
 textarea{font-size:var(--fs-3)!important}
 .ai-card-go,
 .ai-x,
+.ais-tile b,
 .board .when,
 .brand b,
 .ev .cal b,
