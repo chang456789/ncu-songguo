@@ -268,6 +268,14 @@ body.ph-open{overflow:hidden}
 body:has(.ai-fab:not([hidden])) .wrap{padding-bottom:84px}
 @media (max-width:720px){ body:has(.ai-fab:not([hidden])) .wrap{padding-bottom:calc(140px + env(safe-area-inset-bottom,0px))} }
 
+/* ---------- AI 發文助手（web/post-ai.js） ---------- */
+.postai{display:flex;flex-direction:column;gap:var(--space-1)}
+.postai-row{display:flex;align-items:center;gap:var(--space-3);flex-wrap:wrap}
+.postai-btn{color:var(--pine)!important;border-color:var(--pine)!important;font-weight:700}
+.postai-note{margin:0;font-size:var(--fs-1);color:var(--muted);display:flex;align-items:center;gap:var(--space-1);flex-wrap:wrap}
+.postai-price{color:var(--ink);font-weight:700}
+.postai-think{flex:none}
+
 /* ---------- 字級統一：全站只用 4 種（12／14／16／22）。這段是自動產生的：從 index.html 與各 js 檔用到的字級，對應到最接近的一種。改版後要重新產生 ---------- */
 body{font-size:var(--fs-3)!important}
 h1,h2,.sphead h1{font-size:var(--fs-4)!important} h3,h4{font-size:var(--fs-3)!important} small{font-size:var(--fs-1)}

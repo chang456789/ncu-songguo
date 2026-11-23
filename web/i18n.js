@@ -30,6 +30,13 @@
     "AI 回應逾時，先用簡單版整理。":"AI took too long — here's a simple summary.", "AI 暫時無法使用，先用簡單版整理。":"AI is unavailable — here's a simple summary.",
     "清除篩選":"Clear filter", "照片還在上傳中，請稍等一下。":"Photos are still uploading — please wait a moment.",
     "最多 4 張，上傳前會自動壓縮。":"Up to 4 photos, compressed automatically before upload.", "菜單、招牌菜都可以，最多 4 張。":"Menus or signature dishes — up to 4 photos.",
+    "AI 幫我寫":"Write it with AI", "還原我寫的":"Undo AI changes", "AI 正在幫你寫…":"AI is writing it for you…",
+    "寫一句話（物品、狀況、價格），再按「AI 幫我寫」，標題、分類、內文和價格建議會幫你填好。":"Write one line (item, condition, price), then tap “Write it with AI” to fill in the title, category, description and a price suggestion.",
+    "先在「內容」寫一句話，例如「九成新電風扇 300」。":"First write one line in the description, e.g. “Fan, like new, 300”.",
+    "AI 已經幫你填好，請確認、修改後再按發布。":"AI filled in the form — check and edit it, then tap Post.", "已還原成你原本寫的內容。":"Restored what you wrote.",
+    "AI 發文助手還沒啟用，你寫的內容都還在，可以直接發布。":"The AI writing helper isn't available yet — your text is untouched and you can post it as is.",
+    "按太快了，請等一分鐘再試；你寫的內容都還在。":"Too many tries — wait a minute and try again. Your text is untouched.",
+    "AI 回應逾時，你寫的內容都還在，可以再試一次。":"AI took too long — your text is untouched. You can try again.", "AI 暫時無法使用，你寫的內容都還在。":"AI is unavailable right now — your text is untouched.",
     "下拉重新整理":"Pull to refresh", "放開重新整理":"Release to refresh", "重新整理中…":"Refreshing…",
     // ---------- shell & navigation ----------
     "松果":"Songguo", "松果首頁":"Songguo home", "主選單":"Main menu", "選單":"Menu", "即時資訊":"Live info", "快速查看":"At a glance",
