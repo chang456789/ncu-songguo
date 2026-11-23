@@ -287,8 +287,422 @@
       "..oo..............oo..",
       "..oo..............oo..",
     ],
+    // ---------- 松果 2.0：分頁圖示（24×24，k＝跟著文字顏色）、AI 頭像、眨眼、橫幅道具 ----------
+    blink: [
+      "................................",
+      "................................",
+      "..............ooo......ooo......",
+      "..............ofo......ofo......",
+      ".....oooooo..ofcfo....ofcfo.....",
+      "....offffffo.ofcfoooooofcfo.....",
+      "...offffffffo.oooffffffooo......",
+      "..offfffcffffooffffffffffo......",
+      "..offfcccccffoffffffffffffo.....",
+      "..offfcccccffoffffffffffffo.....",
+      "..offfcccccffoffffffffffffo.....",
+      "..offcccccccfoffoofffffoofo.....",
+      "..offcccccccfoffffccccffffo.....",
+      "..offcccccccfoffcccoocccffo.....",
+      "..offfcccccffoffccccccccffo.....",
+      "..offfcccccffoofcccococcfo......",
+      "..offfcccccffo.oocccoccoo.......",
+      "...offffcffffo.oooooooo.........",
+      "....offfffffffoffffffgfo........",
+      ".....offfffffoffffffoggfo.......",
+      ".....offfffffoffccoonnnoo.......",
+      ".....offfffffoffccfoonnof.......",
+      ".....offffffoffcccfonnoofo......",
+      ".....offfffffofcccooonnoo.......",
+      "......offffffofcccconnooo.......",
+      "......offffffofcccccooofo.......",
+      ".......oooooo.ofccccccfo........",
+      ".............oooooccooooo.......",
+      ".............offfoooofffo.......",
+      "..............ooo....ooo........",
+      "................................",
+      "................................",
+    ],
+    icon_home: [
+      "........................",
+      "........................",
+      "........................",
+      ".......kkkk..kkkk.......",
+      "......kggggkkggggk......",
+      ".......kkkk.gkkkk.......",
+      "..........kkkk..........",
+      "........kknnnnkk........",
+      ".......knnnknnnkk.......",
+      ".......konnnonnnk.......",
+      "......knnnnnnnnnnk......",
+      "......knnknnnknnnk......",
+      "......knnnonnnonnk......",
+      "......knnnnnnnnnnk......",
+      "......kknnnknnnknk......",
+      "......knonnnonnnok......",
+      "......knnnnnnnnnnk......",
+      "......knnknnnknnnk......",
+      ".......knnonnnonk.......",
+      ".......knnnnnnnnk.......",
+      "........kknknnkk........",
+      "..........kkkk..........",
+      "........................",
+      "........................",
+    ],
+    icon_bus: [
+      "........................",
+      "........................",
+      "........................",
+      "........................",
+      "........................",
+      "..kkkkkkkkkkkkkkkkkkkk..",
+      ".kffffffffffffffffffffk.",
+      ".kfkkkkkkfkkkkkkfkkkkkk.",
+      ".kfkcccckfkcccckfkccckk.",
+      ".kfkcccckfkcccckfkccckk.",
+      ".kfkcccckfkcccckfkccckk.",
+      ".kfkkkkkkfkkkkkkfkccckk.",
+      ".kfffffffffffffffkccckk.",
+      ".kfffffffffffffffkkkkkk.",
+      ".kggggggggggggggggggggk.",
+      ".kfffkkfffffffffkkffffk.",
+      ".kffkookfffffffkookfffk.",
+      ".kkkooookkkkkkkooookkkk.",
+      "...kooook.....kooook....",
+      "....kook.......kook.....",
+      ".....kk.........kk......",
+      "........................",
+      "........................",
+      "........................",
+    ],
+    icon_map: [
+      "........................",
+      "........................",
+      ".........kkkkkk.........",
+      "........kggggggk........",
+      ".......kggggggggk.......",
+      "......kggggggggggk......",
+      ".....kggggkkkkggggk.....",
+      ".....kgggkcccckgggk.....",
+      ".....kgggkcccckgggk.....",
+      ".....kgggkcccckgggk.....",
+      ".....kgggkcccckgggk.....",
+      ".....kggggkkkkggggk.....",
+      "......kggggggggggk......",
+      "......kggggggggggk......",
+      ".......kggggggggk.......",
+      "........kggggggk........",
+      "........kggggggk........",
+      ".........kggggk.........",
+      "..........kggk..........",
+      "..........kggk..........",
+      "...........kk...........",
+      "...........kk...........",
+      ".....k.o.o.o.o.o.o.k....",
+      "........................",
+    ],
+    icon_chat: [
+      "........................",
+      "........................",
+      "........................",
+      ".......kkkkkkkkkk.......",
+      ".....kkcccccccccckk.....",
+      "....kcccccccccccccck....",
+      "...kcccccccccccccccck...",
+      "..kcccccccccccccccccck..",
+      "..kcccccccccccccccccck..",
+      "..kcccccccccccccccccck..",
+      "..kccccggcccggcccggcck..",
+      "..kccccggcccggcccggcck..",
+      "..kcccccccccccccccccck..",
+      "...kcccccccccccccccck...",
+      "....kcccccccccccccck....",
+      ".....kccccccccccckk.....",
+      ".....kccckkkkkkkk.......",
+      ".....kcck...............",
+      ".....kck................",
+      ".....kk.................",
+      ".....k..................",
+      "........................",
+      "........................",
+      "........................",
+    ],
+    icon_me: [
+      "........................",
+      "........................",
+      "........................",
+      "........................",
+      "......kk........kk......",
+      ".....kffk......kffk.....",
+      ".....kfck.kkkk.kfck.....",
+      ".....kfkkkffffkkkfk.....",
+      ".....kkffffffffffkk.....",
+      ".....kffffffffffffk.....",
+      ".....kffffffffffffk.....",
+      "....kfffckfffffckffk....",
+      "....kfffkkfffffkkffk....",
+      "....kffffffccffffffk....",
+      "....kffffcckkccffffk....",
+      ".....kffccccccccffk.....",
+      ".....kffccckkcccffk.....",
+      "......kfccccccccfk......",
+      ".......kkkcccckkk.......",
+      "..........kkkk..........",
+      "........................",
+      "........................",
+      "........................",
+      "........................",
+    ],
+    avatar: [
+      "........................",
+      ".....................g..",
+      "....................ggg.",
+      ".....................g..",
+      "......kk........kk......",
+      ".....kffk......kffk.....",
+      ".....kfck.kkkk.kfck.....",
+      ".....kfkkkffffkkkfk.....",
+      ".....kkffffffffffkk.....",
+      ".....kffffffffffffk.....",
+      ".....kffffffffffffk.....",
+      "....kfffckfffffckffk....",
+      "....kfffkkfffffkkffk....",
+      "....kffffffccffffffk....",
+      "....kffffcckkccffffk....",
+      ".....kffccccccccffk.....",
+      ".....kffccckkcccffk.....",
+      "......kfccccccccfk......",
+      ".......kkkcccckkk.......",
+      "..........kkkk..........",
+      "........................",
+      "........................",
+      "........................",
+      "........................",
+    ],
+    tree: [
+      "..........................",
+      "..........oooooo..........",
+      ".......ooollllllooo.......",
+      "......ollllllllllllo......",
+      ".....ollllllllllllllo.....",
+      "....ollllllllllllllllo....",
+      "...ollllllllllllllllllo...",
+      "...ollllllllllllllllllo...",
+      "..ollllllllllllllllllllo..",
+      "..ollllllllllllllllllllo..",
+      "..ollllllllllllllllllllo..",
+      "..ollllllllllllllllllllo..",
+      ".ollllllllllllllllllllllo.",
+      ".olllllllllllllllllllllllo",
+      "ollllllllllllggggggllllllo",
+      "ollllllllllggggggggggllllo",
+      "olllllllllgggggggggggglllo",
+      "olllllllllgggggggggggglllo",
+      ".ollllllllgggggggggggglllo",
+      ".ollllllllggggggggggggllo.",
+      "..ollllllllggggggggggllo..",
+      "...oollllllllgggggglllo...",
+      ".....olllllnnnnllllloo....",
+      "......ollllnnnnllllo......",
+      ".......oollnnnnlloo.......",
+      ".........oonnnnoo.........",
+      "..........onnnno..........",
+      "..........onnnno..........",
+      "..........onnnno..........",
+      "..........onnnno..........",
+      ".........onnnnno..........",
+      "........ononnnno..........",
+      ".........oonnnno..........",
+      "..........onnnno..........",
+      "..........onnnno..........",
+      "..........onnnno..........",
+      "..........onnnno..........",
+      "..........onnnno..........",
+      "..........onnnno..........",
+      "..........onnnno..........",
+    ],
+    lake: [
+      "............wwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww............",
+      "......wwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww......",
+      "wwwwwwwwwwwwwwcccwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwcccwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww",
+      "wwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwcwwwwwwwww",
+      "wwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwccwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww",
+      "wwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwccwwwwwwwwwwwwwwwwwwwwwww",
+      "wwwwwwwwwwwwwwwwwwwwwwwwwwwwccwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww",
+      "wwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww",
+    ],
+    goose: [
+      "....ooo.....",
+      "...occco....",
+      "...ocoof....",
+      "...occcofo..",
+      "....occo....",
+      "....occo....",
+      ".oooocccoo..",
+      "occcccccccoo",
+      "occcccccccco",
+      ".occcccccco.",
+      "..oooooooo..",
+    ],
+    reeds: [
+      "..g...",
+      "..g.g.",
+      "g.g.g.",
+      "g.g.gg",
+      "g.ggg.",
+      "gggg..",
+      ".gg...",
+      ".g....",
+      ".g....",
+      ".g....",
+      ".g....",
+      ".g....",
+    ],
+    stall: [
+      "....................................",
+      "....................................",
+      "....................................",
+      "............oooooooooooo............",
+      "..........ooccccggggccccoo..........",
+      "........ooggccccggggccccggoo........",
+      ".....oooggggccccggggccccggggooo.....",
+      "...oocccggggccccggggccccggggcccoo...",
+      ".oogccccggggccccggggccccggggccccgoo.",
+      "ogggccccggggccccggggccccggggccccgggo",
+      "ogggccccggggccccggggccccggggccccgggo",
+      "oggggggggggggggggggggggggggggggggggo",
+      ".oonoooooooooooooooooooooooooooonoo.",
+      "..onoo.o.o.o.o.o.o.o.o.o.o.o.o.ono..",
+      "..onocococococococococococococoono..",
+      "..onoo.o.o.o.o.o.o.o.o.o.o.o.o.ono..",
+      "..ono..........................ono..",
+      "..ono..........................ono..",
+      "..ono..........................ono..",
+      "..ono..........................ono..",
+      "..ono..........................ono..",
+      "..onoooooooooooooooooooooooooooono..",
+      ".offffffffffffffffffffffffffffffffo.",
+      ".onnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnno.",
+      ".onnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnno.",
+      ".onnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnno.",
+      ".onnnnnnccnnnnnnccnnnnnnccnnnnnnnno.",
+      ".onnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnno.",
+      ".onnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnno.",
+      ".onnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnno.",
+      ".onnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnno.",
+      ".onnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnno.",
+      ".onnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnno.",
+      ".onnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnno.",
+    ],
+    lantern: [
+      "..oo..",
+      "oooooo",
+      "offffo",
+      "offcfo",
+      "offffo",
+      "offffo",
+      "oooooo",
+      "..oo..",
+      "...o..",
+    ],
+    map: [
+      "..............................",
+      ".ooooooo.......oooooooo.......",
+      "occcccccoooooooccccogggoooooo.",
+      "occccccclcccccclccogcccgocccco",
+      "occccccclcccccclccoggcggocccco",
+      "occccccclcccccclcccogggoccccco",
+      "occccccclcccccclccccogocccccco",
+      "occccccclcccccclcccccolcccccco",
+      "occccccclcccccclccoccclcccccco",
+      "occccccclccccccloccccclcccccco",
+      "occccccclccccoclcccccclcccccco",
+      "occccccclcccccclcccccclcccccco",
+      "occccccclccoccclcccccclcccccco",
+      "occcccccloccccclcccccclcccccco",
+      "occccccclcccccclcccccclcccccco",
+      "occcccoclcccccclcccccclcccccco",
+      "occccccclcccccclcccccclcccccco",
+      "occcoccclcccccclcccccclcccccco",
+      "occccccclcccccclcccccclcccccco",
+      "occccccclcccccclcccccclcccccco",
+      "occccccclcccccclcccccclcccccco",
+      ".ooooooocccccccoooooooccccccco",
+    ],
+    bubble_dots: [
+      ".oooooooooooo.",
+      "occcccccccccco",
+      "occcccccccccco",
+      "occgccgccgccco",
+      "occcccccccccco",
+      ".oooooooooooo.",
+      "...oco........",
+      "...oo.........",
+      "...o..........",
+    ],
+    bubble_heart: [
+      ".ooooooooo.",
+      "occccccccco",
+      "occggcggcco",
+      "ocgggggggco",
+      "occgggggcco",
+      "occcgggccco",
+      "occccgcccco",
+      ".ooooooooo.",
+      "......oco..",
+      "......oo...",
+    ],
+    desk: [
+      "nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn",
+      "nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn",
+      "nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn",
+      "ooonnooooooooooooooooooooooooooooooooooooooooooooonnnnnnnnnnnnnoonnooo",
+      "..onno...........................................onnnnnnnnnnnnnoonno..",
+      "..onno...........................................onnnnnnffnnnnnoonno..",
+      "..onno...........................................onnnnnnnnnnnnnoonno..",
+      "..onno...........................................onnnnnnnnnnnnnoonno..",
+      "..onno...........................................onnnnnnnnnnnnnoonno..",
+      "..onno............................................ooooooooooooo.onno..",
+      "..onno..........................................................onno..",
+      "..onno..........................................................onno..",
+      "..onno..........................................................onno..",
+      "..onno..........................................................onno..",
+    ],
+    lamp: [
+      ".....oooooo.",
+      "....offffffo",
+      "...offffffo.",
+      "...oooooooo.",
+      "......o.....",
+      "......o.....",
+      "......o.....",
+      "......o.....",
+      "......o.....",
+      "......o.....",
+      "....ooooo...",
+      "...onnnnno..",
+    ],
+    laptop: [
+      "oooooooooooooo",
+      "occcccccccccco",
+      "ocggcccccccgco",
+      "ocgcccccccccco",
+      "occcccccccccco",
+      "occcccccccccco",
+      "oooooooooooooo",
+      ".onnnnnnnnnno.",
+      "oooooooooooooo",
+    ],
+    books: [
+      "oooooooooo",
+      "oggggggggo",
+      "oooooooooo",
+      ".offfffffo",
+      ".ooooooooo",
+      "onnnnnnnno",
+      "oooooooooo",
+    ],
   };
-  const CLASS = { o: "px-o", f: "px-f", c: "px-c", n: "px-n", g: "px-g" };
+  const CLASS = { o: "px-o", f: "px-f", c: "px-c", n: "px-n", g: "px-g", k: "px-k", l: "px-l", w: "px-w" };
   const reduced = () => !!(window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches);
 
   /* ---------- 文字格子 → SVG（同一列相同顏色的連續像素合併成一個長方形，檔案比較小） ---------- */
@@ -387,5 +801,105 @@
   /* ⑥ 天氣卡：下雨時撐傘 */
   function weather(isRain, opts = {}){ return sprite(isRain ? "umbrella" : "normal", { size: opts.size || 48, label: opts.label }); }
 
-  window.sgPixel = { sprite, loading, thinking, empty, error, celebrate, weather, grids: G, reduced };
+  /* =====================================================================
+     松果 2.0 美術
+     ===================================================================== */
+
+  /* ---------- 分頁圖示（24×24）：首頁＝松果、交通＝132 公車、地圖＝地圖釘、社群＝對話泡泡、我的＝松鼠頭 ---------- */
+  const ICONS = { home: "icon_home", transit: "icon_bus", map: "icon_map", community: "icon_chat", me: "icon_me" };
+  function icon(name, opts = {}){ return sprite(ICONS[name] || name, { size: (opts.size || 24) * 32 / 24, cls: "px-icon" + (opts.cls ? " " + opts.cls : ""), label: opts.label }); }
+
+  /* ---------- 分頁頂部橫幅（全寬、高 96px）：每張是由像素小圖組成的場景 ---------- */
+  // [圖名, x, y, 左右翻轉, 放大倍數]，畫布 200×48 像素、放大 2 倍顯示
+  const SCENES = {
+    home:      [["tree", 8, 8], ["lake", 70, 40], ["reeds", 62, 30], ["reeds", 176, 30], ["goose", 150, 31], ["goose", 126, 33, 1], ["normal", 92, 13]],   // 湖邊松鼠
+    transit:   [["stop", 46, 13], ["normal", 58, 13], ["bus", 98, 12, 0, 2], ["tree", 178, 8]],                                                          // 站牌與公車
+    map:       [["map", 30, 22], ["stall", 96, 10], ["lantern", 102, 12], ["lantern", 122, 12], ["happy", 62, 13], ["tree", 164, 8]],                     // 小地圖與美食
+    community: [["normal", 64, 13], ["normal", 108, 13, 1], ["bubble_dots", 58, 1], ["bubble_heart", 122, 2], ["bench", 150, 30], ["tree", 4, 8]],        // 松鼠們聊天
+    me:        [["normal", 58, 13], ["desk", 44, 30], ["lamp", 44, 18], ["laptop", 90, 23], ["books", 104, 23], ["tree", 170, 8]],                       // 松鼠書桌
+  };
+  const BW = 200, BH = 48, BSCALE = 2;
+  function bannerSVG(name){
+    const svg = document.createElementNS(SVGNS, "svg");
+    svg.setAttribute("viewBox", `0 0 ${BW} ${BH}`); svg.setAttribute("width", String(BW * BSCALE)); svg.setAttribute("height", String(BH * BSCALE));
+    svg.setAttribute("shape-rendering", "crispEdges"); svg.setAttribute("class", "px px-scene-svg"); svg.setAttribute("aria-hidden", "true");
+    let s = `<rect class="px-l" x="0" y="44" width="${BW}" height="1"/><rect class="px-g" x="0" y="45" width="${BW}" height="3"/>`;
+    for (const [k, x, y, flip, sc] of SCENES[name] || []){
+      const rows = G[k]; if (!rows) continue; const w = rows[0].length, z = sc || 1;
+      const t = flip ? `translate(${x + w * z} ${y}) scale(${-z} ${z})` : `translate(${x} ${y}) scale(${z})`;
+      s += `<g transform="${t}">${markup(k)}</g>`;
+    }
+    svg.innerHTML = s; return svg;
+  }
+  function banner(name, opts = {}){
+    return el("div", { class: "px-banner px-banner-" + name, role: opts.title ? "img" : null, "aria-label": opts.title || null }, bannerSVG(name));
+  }
+
+  /* ---------- 首頁大松鼠：PIXEL.mount("#hero") ---------- */
+  // 會眨眼；依時段說早安／午安／晚安；問松果思考時換成思考，回答完換成開心（約 4 秒後回到普通）
+  const heroes = new Set();
+  function greeting(d = new Date()){ const h = d.getHours(); return h >= 5 && h < 11 ? "早安" : h >= 11 && h < 17 ? "午安" : "晚安"; }
+  function mount(target, opts = {}){
+    const host = typeof target === "string" ? document.querySelector(target) : target;
+    if (!host) return null;
+    const hero = { host, mood: "normal", opts, timer: 0, blinkT: 0 };
+    const draw = () => {
+      const name = hero.mood === "think" ? "think" : hero.mood === "happy" ? "happy" : "normal";
+      const nick = opts.nick ? opts.nick() : "";
+      const say = opts.say ? opts.say(hero.mood) : hero.mood === "think" ? "讓我想想…" : hero.mood === "happy" ? "幫你找到了！" : greeting();
+      const bubble = el("div", { class: "px-hero-say", "aria-live": "polite" }, el("span", {}, say), nick && hero.mood === "normal" ? el("span", { translate: "no" }, (/^en/.test(document.documentElement.lang) ? ", " : "，") + nick) : null);
+      const art = sprite(name, { size: opts.size || 112, cls: "px-hero-art" + (hero.mood === "happy" ? " px-hero-happy" : "") });
+      host.replaceChildren(el("div", { class: "px-hero" }, art, bubble));
+      host.classList.add("px-hero-host");
+      if (opts.translate) opts.translate(host);
+      hero.art = art;
+    };
+    // 眨眼：每 3–6 秒閉眼 0.15 秒（減少動態效果時不眨）
+    const blink = () => {
+      clearTimeout(hero.blinkT);
+      hero.blinkT = setTimeout(() => {
+        if (!host.isConnected){ heroes.delete(hero); return; }
+        if (!reduced() && hero.mood === "normal" && hero.art && !document.hidden){
+          hero.art.innerHTML = markup("blink"); setTimeout(() => { if (hero.mood === "normal" && hero.art) hero.art.innerHTML = markup("normal"); }, 150);
+        }
+        blink();
+      }, 3000 + Math.random() * 3000);
+    };
+    hero.set = mood => {
+      clearTimeout(hero.timer);
+      hero.mood = mood; draw();
+      if (mood === "happy") hero.timer = setTimeout(() => { hero.mood = "normal"; draw(); }, 4000);
+    };
+    draw(); blink(); heroes.add(hero);
+    return hero;
+  }
+  function mood(m){ for (const h of heroes){ if (h.host.isConnected) h.set(m); else heroes.delete(h); } }
+
+  /* ---------- 問松果：AI 頭像換成小松鼠、思考中換成思考松鼠，並通知首頁大松鼠 ---------- */
+  // 不修改 web/assistant.js：等「問松果」的畫面出現後，把它的圖示換掉。
+  let aiBusy = false;
+  function enhanceAI(){
+    for (const ico of document.querySelectorAll(".ai-panel .ai-ico, .ai-fab .ai-ico, .ai-card .ai-ico, .ai-card-top .ai-ico")){
+      if (ico.dataset.px) continue;
+      const s = sprite("avatar", { size: 28, cls: "ai-ico px-avatar" }); s.dataset.px = "1"; ico.replaceWith(s);
+    }
+    for (const t of document.querySelectorAll(".ai-typing")){
+      if (t.dataset.px) continue; t.dataset.px = "1";
+      for (const i of t.querySelectorAll("i")) i.remove();
+      t.prepend(sprite("think", { size: 36, cls: "px-think-mini" }));
+    }
+    const busy = !!document.querySelector(".ai-panel:not([hidden]) .ai-typing");
+    if (busy !== aiBusy){ aiBusy = busy; mood(busy ? "think" : "happy"); }
+  }
+  let aiObs = null;
+  function watchAI(){
+    if (aiObs || !document.body) return;
+    aiObs = new MutationObserver(() => { cancelAnimationFrame(aiObs.raf); aiObs.raf = requestAnimationFrame(enhanceAI); });
+    aiObs.observe(document.body, { childList: true, subtree: true });
+    enhanceAI();
+  }
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", watchAI); else watchAI();
+
+  window.sgPixel = { sprite, loading, thinking, empty, error, celebrate, weather, icon, banner, mount, mood, greeting, grids: G, scenes: SCENES, reduced };
+  window.PIXEL = window.sgPixel;
 })();

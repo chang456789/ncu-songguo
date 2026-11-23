@@ -75,7 +75,7 @@
   /* 間距（4 的倍數） */
   --space-1:4px; --space-2:8px; --space-3:12px; --space-4:16px; --space-5:24px;
   /* 字級：說明文字／次要內文／內文與輸入框（iPhone 不會自動放大）／區塊標題／頁面標題 */
-  --fs-1:12px; --fs-2:14px; --fs-3:16px; --fs-4:20px; --fs-5:24px;
+  --fs-1:12px; --fs-2:14px; --fs-3:16px; --fs-4:22px; --fs-5:var(--fs-4);   /* 松果 2.0：全站只用 4 種字級（--fs-5 保留給舊樣式，等於 --fs-4） */
   /* 圖示線條粗細 */
   --icon-stroke:1.8;
 }
@@ -179,3 +179,287 @@ body.ph-open{overflow:hidden}
 .today-chip{font-size:var(--fs-1);background:var(--surface);border:1px solid var(--line);border-radius:var(--radius-pill);padding:2px 10px;white-space:nowrap}
 .today-chip b{color:var(--pine)}
 .today-foot{margin:0;font-size:var(--fs-1);color:var(--muted)}
+
+/* =====================================================================
+   松果 2.0 美術
+   ===================================================================== */
+/* ---------- 新增的像素顏色：k＝跟著文字顏色（分頁圖示選中時會變色）、l＝淺草綠、w＝湖水、橫幅天空 ---------- */
+:root{ --px-l:#8fd19e; --px-w:#7fb7e6; --px-sky:#eaf5ef; }
+@media (prefers-color-scheme:dark){ :root:not([data-theme="light"]){ --px-l:#2f7a55; --px-w:#2d5f8f; --px-sky:#18211d; } }
+:root[data-theme="dark"]{ --px-l:#2f7a55; --px-w:#2d5f8f; --px-sky:#18211d; }
+.px .px-k{fill:currentColor} .px .px-l{fill:var(--px-l)} .px .px-w{fill:var(--px-w)}
+
+/* ---------- 分頁圖示 ---------- */
+.px-icon{width:24px;height:24px}
+[aria-current="page"] .px-icon,.on .px-icon{transform:translateY(-1px)}
+@media (prefers-reduced-motion:no-preference){ .px-icon{transition:transform .15s} }
+
+/* ---------- 分頁頂部橫幅：全寬、高 96px；兩側用同色的天空與草地延伸，手機上從中間裁切 ---------- */
+.px-banner{position:relative;height:96px;overflow:hidden;display:flex;justify-content:center;align-items:flex-end;border-radius:var(--radius-m);
+  background:linear-gradient(to top,var(--px-g) 0,var(--px-g) 6px,var(--px-l) 6px,var(--px-l) 8px,var(--px-sky) 8px)}
+.px-banner .px-scene-svg{flex:none;display:block}
+@media (max-width:720px){ .px-banner{border-radius:0} }
+
+/* ---------- 首頁大松鼠 ---------- */
+.px-hero{display:flex;align-items:flex-end;gap:var(--space-2)}
+.px-hero-art{flex:none}
+.px-hero-say{position:relative;margin-bottom:56px;background:var(--surface);color:var(--ink);border:1px solid var(--line);border-radius:var(--radius-l);
+  padding:var(--space-2) var(--space-3);font-size:var(--fs-3);font-weight:700;box-shadow:var(--shadow-1)}
+.px-hero-say::before{content:"";position:absolute;left:-7px;bottom:12px;width:12px;height:12px;background:inherit;border-left:1px solid var(--line);border-bottom:1px solid var(--line);transform:rotate(45deg)}
+@media (prefers-reduced-motion:no-preference){
+  .px-hero-happy{animation:px-jump .6s cubic-bezier(.3,1.6,.5,1) 2}
+  .px-hero-art{transition:transform .2s}
+}
+.px-think-mini{margin-right:4px}
+.px-avatar{image-rendering:pixelated}
+
+/* ---------- 卡片只留一種：白底、12px 圓角、淡陰影、16px 內距 ---------- */
+.card,.info,.empty,.gate-card,.sc-card,.lobby-ai-card,.sk-card,.today-card{
+  background:var(--surface)!important;border:0!important;border-radius:var(--radius-m)!important;box-shadow:var(--shadow-1)!important}
+.card,.info,.lobby-ai-card,.today-card{padding:var(--space-3) var(--space-4)}
+.notice{border-radius:var(--radius-m)}
+@media (max-width:720px){ .wrap>.stack>.card,.wrap>.stack>.info,.wrap>.stack>.empty,.wrap>.stack>section>.card{border-radius:0!important;box-shadow:none!important} }
+
+/* ---------- 按鈕只留兩種：主要＝松綠實心；次要＝外框 ---------- */
+.primary,button.primary,.ai-fab{background:var(--pine)!important;color:var(--pine-ink)!important;border:1px solid var(--pine)!important;border-radius:var(--radius-s);font-weight:700}
+.primary:disabled{opacity:.45;cursor:not-allowed}
+.ghost,.chip,.iconbtn,.going,.ai-chip,.mic-btn,.ai-card-btn,.ai-sug,.tr-all.chip,.spbtn,.ra-qbtn,.ideas button{
+  background:transparent!important;color:var(--ink)!important;border:1px solid var(--line)!important;box-shadow:none!important}
+.ghost,.going{border-radius:var(--radius-s)}
+.chip,.ai-chip,.ai-sug,.spbtn,.ideas button{border-radius:var(--radius-pill)}
+.ra-qbtn{border-radius:var(--radius-m)}
+.spbtn:hover,.ra-qbtn:hover,.ideas button:hover,.ghost:hover:not(:disabled),.chip:hover:not(:disabled),.iconbtn:hover,.going:hover:not(:disabled),.ai-chip:hover:not(:disabled),.mic-btn:hover,.ai-card-btn:hover,.ai-sug:hover{border-color:var(--pine)!important;color:var(--pine)!important}
+/* 選中、開啟：同一種外框按鈕的「狀態」，不是第三種樣式 */
+.chip[aria-pressed="true"],.going.on,.ai-chip[aria-pressed="true"],.mic-btn.on{background:var(--pine-soft)!important;border-color:var(--pine)!important;color:var(--pine)!important}
+.ghost:disabled,.chip:disabled,.ai-chip:disabled{opacity:.5;cursor:not-allowed}
+
+/* 頭像裡的字（暱稱第一個字）也只用 4 種字級 */
+.av{font-size:var(--fs-2)!important} .av.xs{font-size:var(--fs-1)!important} .av.lg{font-size:var(--fs-3)!important}
+/* 分段切換（.seg）是分頁，不是按鈕；「想說什麼？」（.fake）是假的輸入框，所以保留原樣 */
+
+/* ---------- 字級統一：全站只用 4 種（自動從 index.html 與各 js 檔的樣式產生，改版後要重新產生） ---------- */
+body{font-size:var(--fs-3)!important}
+h1,h2,.sphead h1{font-size:var(--fs-4)!important} h3,h4{font-size:var(--fs-3)!important} small{font-size:var(--fs-1)}
+.ai-card-txt small,
+.ai-foot,
+.ai-note,
+.badge,
+.board .dest small,
+.board .when small,
+.board-note,
+.cat,
+.cmt .when,
+.ev .cal i,
+.ev .cal small,
+.ev .src,
+.leaflet-tooltip,
+.leaflet-tooltip.tt-osm,
+.leaflet-tooltip.tt-ours,
+.li small,
+.lm-icon span,
+.lock,
+.lwho,
+.map-hint .ghost,
+.msg small,
+.nt-txt small,
+.plate,
+.qbtn span,
+.ra-badge,
+.ra-nums small,
+.ra-pick-tag,
+.ra-src,
+.ra-tagchip,
+.rail .rrow .t span,
+.req .t small,
+.ride .clock small,
+.rtag,
+.sc-card span:last-child,
+.score,
+.side-foot,
+.spbtn .lane,
+.spbtn .n,
+.sr-item span,
+.sr-more,
+.sr-n,
+.status,
+.story .face small,
+.story>span,
+.tab,
+.tag,
+.tr-btn.sm,
+.tt-c,
+.tt-c b,
+.tt-hours span{font-size:var(--fs-1)!important}
+.ai-card-top span,
+.ai-card-txt b,
+.ai-clear,
+.ai-hello p,
+.ai-ride,
+.ai-sug,
+.ai-typing,
+.backbar,
+.board .none,
+.check,
+.chip,
+.cmt .bubble b,
+.cmt .bubble span,
+.composer .row2 button,
+.daygroup,
+.empty p,
+.err,
+.ev .when,
+.ev .where2,
+.ev-hl,
+.eyebrow,
+.gap-why,
+.going,
+.ideas button,
+.info,
+.lang-btn,
+.lang-row button,
+.linkbtn,
+.lobby-ai-tip,
+.lobby-ai-topics .topic,
+.map-hint,
+.map-home,
+.map-loading,
+.mod-note,
+.mod-note .linkbtn,
+.notice,
+.nt-empty,
+.nt-txt b,
+.online-pill,
+.online-row,
+.person,
+.phead .who span,
+.phead .who span a,
+.phead .who span button,
+.pick-hint,
+.pos-row,
+.post .acts button,
+.post .counts,
+.post .meta,
+.pv-box p,
+.pv-hits mark,
+.pv-label,
+.pv-preview,
+.ra-ask,
+.ra-chk,
+.ra-conf,
+.ra-f,
+.ra-filter,
+.ra-more summary,
+.ra-notes,
+.ra-prefs .chip,
+.ra-risk,
+.ra-sugg,
+.ra-why,
+.ra-why1,
+.radios label,
+.rail .rrow .t b,
+.rate,
+.rate .stars button,
+.ride .route small,
+.ride-acts,
+.seg button,
+.sheet ol,
+.small,
+.spbtn,
+.sphead p,
+.sr-group h3,
+.sr-hint,
+.suggest,
+.tips,
+.toast,
+.tr-btn,
+.trow .tt,
+.tt-dh,
+.tt-time,
+.where,
+details.more-fields summary,
+div.f,
+div.f small,
+label.f,
+label.f small{font-size:var(--fs-2)!important}
+.ai-bubble,
+.ai-card-ico,
+.ai-card-top b,
+.ai-fab,
+.ai-head b,
+.ai-hello b,
+.ai-panel textarea.ai-input,
+.board .dest,
+.board .rt,
+.composer .fake,
+.empty h3,
+.ev h3,
+.gate-card .primary,
+.lbody,
+.map-fab,
+.me-who b,
+.msg,
+.nick-row input,
+.nt-head b,
+.nt-kind,
+.phead .who b,
+.post .body,
+.post h3,
+.price,
+.qbtn b,
+.ra-head b,
+.ra-nums b,
+.ra-qbtn,
+.rail h3,
+.ride .route b,
+.sc-card b,
+.snav button,
+.sr-box input.sr-input,
+.sr-item b,
+.sr-x,
+.story .face b,
+body,
+input[type=date],
+input[type=datetime-local],
+input[type=number],
+input[type=search],
+input[type=text],
+input[type=time],
+input[type=url],
+select,
+textarea{font-size:var(--fs-3)!important}
+.ai-card-go,
+.ai-x,
+.board .when,
+.brand b,
+.ev .cal b,
+.fc-title,
+.gate-card h1,
+.pv-box h2,
+.ra-hero-t,
+.ra-nums b,
+.rail .rrow .big,
+.rating,
+.ride .clock b,
+.section-title h2,
+.sheet h2,
+.sphead h1,
+.star,
+.wx-temp{font-size:var(--fs-4)!important}
+[style*="font-size:10px"]{font-size:var(--fs-1)!important}
+[style*="font-size:11px"]{font-size:var(--fs-1)!important}
+[style*="font-size:11.5px"]{font-size:var(--fs-1)!important}
+[style*="font-size:12px"]{font-size:var(--fs-1)!important}
+[style*="font-size:12.5px"]{font-size:var(--fs-1)!important}
+[style*="font-size:13px"]{font-size:var(--fs-2)!important}
+[style*="font-size:14px"]{font-size:var(--fs-2)!important}
+[style*="font-size:15px"]{font-size:var(--fs-3)!important}
+[style*="font-size:16px"]{font-size:var(--fs-3)!important}
+[style*="font-size:17px"]{font-size:var(--fs-3)!important}
+[style*="font-size:18px"]{font-size:var(--fs-4)!important}
+[style*="font-size:19px"]{font-size:var(--fs-4)!important}
+[style*="font-size:20px"]{font-size:var(--fs-4)!important}
+[style*="font-size:22px"]{font-size:var(--fs-4)!important}
+[style*="font-size:24px"]{font-size:var(--fs-4)!important}
+[style*="font-size:26px"]{font-size:var(--fs-4)!important}
+[style*="font-size:34px"]{font-size:var(--fs-4)!important}
+[style*="font-size:36px"]{font-size:var(--fs-4)!important}
