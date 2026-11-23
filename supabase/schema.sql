@@ -62,6 +62,7 @@ begin
   elsif new.collection = 'dmreq'           then lim := 20;  pat := 'dmreq';
   elsif new.collection like 'dms/%'        then lim := 300; pat := 'dms/%';
   elsif new.collection = 'translations'    then lim := 300; pat := 'translations';
+  elsif new.collection = 'aistats'         then lim := 200; pat := 'aistats';   -- AI 使用紀錄（只有功能、成功與否、耗時）
   else return new; end if;
   select count(*) into n from public.docs
    where owner = auth.uid() and collection like pat and created_at > now() - interval '1 hour';

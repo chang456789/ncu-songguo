@@ -249,6 +249,28 @@
     "你想去的「":"“", "」快開始了":"” is starting soon", "留言在你的貼文「":"commented on your post “",
     // ---------- performance ----------
     "地圖載入中…":"Loading map…",
+    // ---------- AI agent v2 (web/agent.js) ----------
+    "整週":"Whole week", "堂課":"classes", "有":"has",
+    "堂課，點下面的卡片看完整課表。":"classes — tap the card for the full timetable.", "那天沒有課。":"No classes that day.", "篇相關的貼文，點下面的卡片看內容。":"related posts — tap a card to read it.",
+    "目前沒有相關的貼文，可以自己發一篇。":"No related posts yet — you can post one yourself.", "天氣預報":"Weather forecast", "中壢・逐時與一週預報":"Zhongli · hourly & weekly forecast",
+    "現在約":"Now about", "°，降雨機率":"°, rain chance", "%。點下面的卡片看完整預報。":"% — tap the card for the full forecast.",
+    "點下面的卡片看中壢的天氣預報。":"Tap the card for Zhongli's forecast.", "週一":"Mon", "週二":"Tue",
+    "週三":"Wed", "週四":"Thu", "週五":"Fri",
+    "週六":"Sat", "週日":"Sun",
+    // ---------- AI action tools & AI stats ----------
+    "個活動，點卡片就會下載行事曆檔（.ics），手機或 Google 日曆都能加入。":"events — tap a card to download a calendar file (.ics) for your phone or Google Calendar.", "沒有找到這個活動。":"Couldn't find that event.", "加入行事曆：":"Add to calendar: ",
+    "已下載行事曆檔，打開它就能加入行事曆":"Calendar file downloaded — open it to add the event", "打開已填好的貼文草稿":"Open the pre-filled post draft", "貼文草稿已經幫你填好（":"Your post draft is ready (",
+    "），點下面的卡片確認內容後再發布。":") — tap the card, check it, then publish.", "問松果已經幫你擬好草稿，價格只是建議。請確認或修改後再按發布。":"Ask Songguo drafted this for you — the price is only a suggestion. Check or edit it, then publish.", "松果 AI 數據":"Songguo AI stats",
+    "各 AI 功能的使用次數、成功率、回應時間":"Usage, success rate and response time of each AI feature", "每次網站呼叫 AI 都會記一筆：功能名稱、成功與否、花了多久。不記錄任何問題或回答的內容。":"Every AI call records one entry: the feature, whether it succeeded, and how long it took. No questions or answers are ever stored.", "讀不到數據，請檢查網路後再試一次。":"Couldn't load the stats — check your connection and try again.",
+    "還沒有數據":"No data yet", "大家開始使用問松果、交通精算、AI 翻譯之後，這裡就會出現統計。":"Stats will appear here once people use Ask Songguo, the commute advisor and AI translation.", "總呼叫次數":"Total calls",
+    "成功率":"Success rate", "平均回應時間":"Avg. response time", "各功能統計":"Per-feature stats",
+    "功能":"Feature", "次數":"Calls", "平均時間":"Avg. time",
+    "統計最近":"Based on the latest", "筆紀錄":"entries", "（從":" (since",
+    "起）":")", "。數據由使用者的瀏覽器回報，適合看使用趨勢。":". Reported by users' browsers — good for seeing usage trends.", "秒":"s",
+    "毫秒":"ms", "問松果（一般回答）":"Ask Songguo (general)", "AI 代理人：選工具":"AI agent: pick tool",
+    "AI 代理人：寫回答":"AI agent: write answer", "交通精算":"Commute advisor", "AI 翻譯":"AI translation",
+    "大廳懶人包":"Lounge summary", "大廳破冰話題":"Lounge icebreakers", "內容安全檢查":"Content safety check",
+    "活動空檔媒合":"Free-time event matching", "AI 數據":"AI stats",
     // ---------- AI translation (web/translate.js) ----------
     "翻譯":"Translate", "翻譯中…":"Translating…", "顯示原文":"Show original", "翻譯全部留言":"Translate all comments",
     "用 AI 翻譯":"Translate with AI", "AI 翻譯，可能有誤":"AI translation — may contain mistakes",

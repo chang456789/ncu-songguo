@@ -10,10 +10,21 @@
 //       { step: "answer", message, lang, tool, args, result }
 // 回應：{ ok: true, data } 或 { ok: false, code, error }   code：bad_request / rate_limited / ai_not_configured / timeout / ai_error
 const { chat, rateLimit } = require("./_lib/ai");
+const { weather } = require("./_lib/openmeteo");
 
 const FOOD_TYPES = ["正餐", "小吃", "早餐", "飲料咖啡", "宵夜", "甜點"];
 const EVENT_TAGS = ["免費", "有餐點", "可認證時數", "講座", "表演", "展覽", "社交", "練英文"];
-const TOOLS = ["commute", "find_rides", "draft_ride", "find_events", "find_food", "next_class", "none"];
+const TOOLS = ["commute", "find_rides", "draft_ride", "find_events", "find_food", "next_class", "my_timetable", "search_posts", "weather",
+  "create_post_draft", "add_to_calendar", "none"];
+// 動作工具 create_post_draft 可以發到的看板與分類（和 web/index.html 的 SPACES 一致）
+const DRAFT_SPACES = {
+  "m:all": ["書籍講義", "家具家電", "3C", "機車單車", "生活用品", "免費送", "徵求"],
+  "hb:list": ["轉租", "招租", "短租"], "hb:mate": ["徵室友", "找房一起租"],
+  "g:chat": ["閒聊", "心情", "問題"], "g:course": ["評價", "選課", "共筆"], "g:club": ["招生", "活動", "宣傳"],
+  "g:lost": ["遺失", "拾獲"], "g:food": ["推薦", "踩雷", "揪吃"], "g:help": ["問題", "教學"],
+};
+const BOARDS = ["market", "housing", "forum", "campus"];
+const MIN_CONFIDENCE = 0.6;   // AI 對選的工具沒把握（低於這個分數）時，一律交給一般回答（none → ai-chat）
 
 function readBody(req) {
   if (req.body && typeof req.body === "object") return req.body;
@@ -30,7 +41,7 @@ const text = (v, max) => typeof v === "string" && v.trim() ? v.trim().slice(0, m
 function routePrompt(places){
   return [
     "你是「松果」中央大學校園生活網站的 AI 代理人。讀使用者的一句話，決定要呼叫哪一個工具，並填好參數。",
-    "你只負責選工具，不要回答問題。只輸出 JSON：{\"tool\": \"工具名稱\", \"args\": {…}}",
+    "你只負責選工具，不要回答問題。只輸出 JSON：{\"tool\": \"工具名稱\", \"args\": {…}, \"confidence\": 0–1}",
     "",
     "工具：",
     "1. commute：交通精算（比較公車、計程車、拼車的時間與費用）。使用者要「去／到」中壢火車站、高鐵、台北，或問怎麼去、幾點要到、來不來得及。",
@@ -45,11 +56,23 @@ function routePrompt(places){
     "   「中午有一小時」→ 今天、timeFrom 12:00、timeTo 13:00。「今晚」→ 今天 18:00–23:00。",
     "5. find_food：找吃的、店家（「想吃便宜的」「附近有什麼宵夜」）。",
     `   args：{"budget": 1(便宜)|2|3 或 null, "type": ${FOOD_TYPES.map(x => `"${x}"`).join("|")} 或 null, "maxWalkMin": 數字或 null, "keyword": 字串或 null}`,
-    "6. next_class：使用者自己的課表、下一堂課、教室在哪。args：{}",
-    "7. none：和以上都無關的一般校園問題或閒聊。args：{}",
+    "6. next_class：使用者的「下一堂課」、下一堂在哪間教室。args：{}",
+    "7. my_timetable：查整週或某一天的課表（「我的課表」「週三有什麼課」「這週幾堂課」）。args：{\"day\": 1–7（週一＝1）或 null（整週）}",
+    "8. search_posts：搜尋網站上的貼文——二手市集（買賣、徵求）、租屋（房間、室友、避雷）、看板與討論區、系所看板。「有人在賣腳踏車嗎」「後門附近有套房嗎」「看板上有人問微積分嗎」。",
+    `   args：{"keyword": 關鍵字（例如 腳踏車、套房、微積分）或 null, "board": ${BOARDS.map(x => `"${x}"`).join("|")} 或 null}（market＝市集、housing＝租屋、forum＝看板與討論區、campus＝系所看板）`,
+    "9. weather：天氣、溫度、會不會下雨、要不要帶傘（只問天氣本身）。args：{\"day\": \"today\"|\"tomorrow\"|\"dayafter\"}",
+    "10. create_post_draft：使用者想「發文、賣東西、徵求、轉租、找室友、發失物招領」，幫他擬好貼文草稿（使用者確認後才會發布）。「幫我寫一篇賣腳踏車的文」「我要轉租後門套房」。",
+    "    args：{\"space\": 看板代號, \"category\": 分類, \"title\": 30 字內標題, \"body\": 150 字內內文（只寫使用者說過的事實，沒說的用「（請補充：…）」提示他自己填，不要編造規格、時間、地點）, \"price\": 價格或 null}",
+    "    看板代號與分類（分類只能從這裡選）：" + Object.entries(DRAFT_SPACES).map(([k, v]) => `${k}＝${v.join("/")}`).join("；") + "。m:all 是二手市集，hb:list 是招租轉租，hb:mate 是徵室友，g:lost 是失物招領，g:course 是課程評價，g:help 是求助問答，其他閒聊用 g:chat。",
+    "    price：市集賣東西時，使用者有說價格就照填；沒說就依二手學生市場給一個建議區間（例如「NT$800–1,200（建議）」），一定要加「（建議）」兩個字。租屋寫月租。其他看板 null。",
+    "11. add_to_calendar：把活動加入行事曆（「把週五的音樂會加到行事曆」「提醒我那場講座」）。args：{\"keyword\": 活動名稱裡的字或 null, \"date\": \"YYYY-MM-DD\" 或 null}",
+    "12. none：一般問題交給一般回答。以下一律選 none：穿搭（「明天穿什麼」也是 none，一般回答會參考天氣）、讀書與考試方法、英文學習與寫作、生活建議、心情與人際、一般知識、閒聊打招呼。args：{}",
     "",
     "地點（from、to）只能是這些字，完全一樣：" + places.join("、") + "。「後門、宵夜街」→「中央大學（後門）」；「學校、中大、正門」→「中央大學（正門）」；「高鐵」→「高鐵桃園站」；「中壢車站、火車站」→「中壢火車站」；「台北」→「台北車站」。",
     "時間依 now 換算（「明早」＝明天 08:00 左右、「今晚」＝今天 19:00 左右）。不確定的參數填 null。",
+    "",
+    "另外輸出 confidence（0 到 1）：你有多確定這個工具真的能回答這句話。不確定、或句子同時像好幾個工具時，選 none，不要硬選工具。",
+    "完整格式：{\"tool\": \"…\", \"args\": {…}, \"confidence\": 0.0–1.0}",
   ].join("\n");
 }
 
@@ -57,6 +80,9 @@ function routePrompt(places){
 function cleanRoute(j, places){
   if (!j || typeof j !== "object") return null;
   const tool = pick(j.tool, TOOLS); if (!tool) return null;
+  // 沒把握就不要硬選工具：confidence 低於門檻 → none（交給 ai-chat）
+  const conf = typeof j.confidence === "number" ? j.confidence : +j.confidence;
+  if (tool !== "none" && Number.isFinite(conf) && conf < MIN_CONFIDENCE) return { tool: "none", args: {}, lowConfidence: true };
   const a = j.args && typeof j.args === "object" ? j.args : {};
   const place = v => typeof v === "string" && places.includes(v.trim()) ? v.trim() : null;
   let args = {};
@@ -66,6 +92,15 @@ function cleanRoute(j, places){
   else if (tool === "draft_ride") args = { from: place(a.from), to: place(a.to), when: isoDT(a.when), seats: int(a.seats, 2, 6), luggage: pick(a.luggage, ["none", "light", "heavy"]) || "none" };
   else if (tool === "find_events") args = { date: isoD(a.date), timeFrom: hhmm(a.timeFrom), timeTo: hhmm(a.timeTo),
     tags: (Array.isArray(a.tags) ? a.tags : []).filter(t => EVENT_TAGS.includes(t)).slice(0, 3), keyword: text(a.keyword, 20) };
+  else if (tool === "my_timetable") args = { day: int(a.day, 1, 7) };
+  else if (tool === "search_posts") args = { keyword: text(a.keyword, 20), board: pick(a.board, BOARDS) };
+  else if (tool === "weather") args = { day: pick(a.day, ["today", "tomorrow", "dayafter"]) || "today" };
+  else if (tool === "create_post_draft"){
+    const space = pick(a.space, Object.keys(DRAFT_SPACES)) || "g:chat";
+    args = { space, category: pick(a.category, DRAFT_SPACES[space]) || DRAFT_SPACES[space][0], title: text(a.title, 30), body: text(a.body, 300),
+      price: space === "m:all" || space === "hb:list" ? text(a.price, 30) : null };
+  }
+  else if (tool === "add_to_calendar") args = { keyword: text(a.keyword, 20), date: isoD(a.date) };
   else if (tool === "find_food") args = { budget: int(a.budget, 1, 3), type: pick(a.type, FOOD_TYPES), maxWalkMin: int(a.maxWalkMin, 1, 60), keyword: text(a.keyword, 20) };
   if (tool === "commute" && !args.dest) return { tool: "none", args: {} };   // 沒有目的地就無法精算
   return { tool, args };
@@ -108,6 +143,8 @@ module.exports = async (req, res) => {
     clean = j => cleanRoute(j, places); task = "agent-route";
   } else if (body.step === "answer"){
     if (!TOOLS.includes(body.tool)) return fail(400, "bad_request", "不支援的工具");
+    // weather 工具：天氣資料由伺服器向 Open-Meteo 取得（和 ai-chat 同一個來源），不用前端給
+    if (body.tool === "weather") body.result = { day: (body.args && body.args.day) || "today", 天氣: await weather() };
     const resultText = JSON.stringify(body.result ?? null);
     if (resultText.length > 5000) return fail(413, "bad_request", "資料太長了");
     messages = [{ role: "system", content: answerPrompt(lang) },
