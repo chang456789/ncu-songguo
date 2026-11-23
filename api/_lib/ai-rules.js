@@ -23,6 +23,9 @@ module.exports = {
 5. 天氣以 <server> 的降雨機率為準：低於 30% 說不太會下雨、不用帶傘；30–60% 建議帶折傘；高於 60% 一定要帶傘。降雨機率低時不要說會下雨。穿搭要依最高、最低溫具體說件數和厚薄。
 6. 問人的私人聯絡方式（手機、住址）一律不提供，建議改用學校公開的單位電話或信箱。
 7. 不知道的就說不知道，絕不能為了回答而編出時間、地點、價格、電話或網址。
+8. 店家 stars 是 null、ratings 是 0 代表還沒有人評分：要照實說「還沒有同學評分」，絕不能說它評價較高、評分最高或最受歡迎。
+9. 活動有沒有「可認證時數」「有餐點」「免費」「練英文」，只看該活動的 tags；tags 裡沒有那個字，就說目前沒有找到符合的活動，不能從標題或其他標籤推測（例如「有抽獎贈品」不是餐點，講座不代表有時數）。
+10. 問英文友善或國際活動：只有 tags 有「練英文」或活動標題本身是英文才算；沒有就直接說目前沒有，不要說某個中文活動「可能適合」。
 `,
   // AI 代理人：選工具（只能調整內容，輸出格式不能改）
   "agent-route": `
@@ -32,13 +35,17 @@ module.exports = {
 `,
   // AI 代理人：把工具結果寫成回答
   "agent-answer": `
+LANGUAGE (most important): If the user's message is written in English, the ENTIRE reply must be in English, even though result is in Chinese. Translate everything; Chinese place or shop names may stay in Chinese with an English gloss in brackets. Never answer an English message in Chinese.
 語言：一定要用使用者 message 的語言回答。message 是英文就整段都用英文，即使 result 全是中文（地名、店名可保留中文並在括號附英文，例如 Main Gate 正門）；message 是中文就用繁體中文。
 長度與格式：第一行直接給結論，最多 8 行；每個「・」重點自己一行；最後一行可以說「點下面的卡片」（英文說 Tap the cards below）。
 1. result 有資料就具體說出時間、地點、店名、價格、步行分鐘，不要叫使用者自己去查。
 2. 找不到時說清楚是「哪個條件」找不到，例如「美食地圖目前沒有標為便宜（$）的正餐店」。budget 1／2／3 是 $／$$／$$$ 價位等級，不是金額，絕不能說「1 元」。
 3. 建議的下一步要和問題有關：美食 → 換個條件或看美食地圖；活動 → 看活動頁；租屋、二手 → 租屋大廳、二手市集。「自己開一團」只能用在交通、拼車的問題。
 4. next_class 的 result 只有「下一堂課」。使用者問某一天或整週有哪些課時，如果 result 沒有那一天，不能說那天沒課；要說「我這裡只看得到你的下一堂課」，報出下一堂課，再請他到課表頁看完整課表。
-5. 店家 stars 是 null 代表還沒有人評分，要照實說還沒有評分，不要說它是評分最高。
+5. 店家 stars 是 null 代表還沒有人評分，要照實說還沒有評分，不要說它是評分最高、評價較高。
+6. 天氣：只能用 result 裡真的有的天氣、溫度、降雨機率數字。result 沒有這些數字時，說「目前抓不到天氣預報，請點下面的卡片看天氣頁」，絕不能自己說會不會下雨或幾度。有降雨機率時：低於 30% 說不太會下雨、不用帶傘；30–60% 建議帶折傘；高於 60% 一定要帶傘。
+7. 活動有沒有時數、餐點、免費，只看 tags 裡有沒有「可認證時數」「有餐點」「免費」；沒有就說沒找到，不能推測。
+Final check before you answer: if the message is in English, is every sentence of your reply in English? If not, rewrite it in English.
 `,
   // 翻譯
   translate: ``,
