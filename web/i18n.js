@@ -280,6 +280,12 @@
     "負責任的 AI":"Responsible AI", "AI 怎麼處理你的資料":"How the AI handles your data",
     "AI 怎麼處理你的資料、內容安全、出錯時怎麼辦":"How the AI handles your data, content safety, and what to do when it's wrong", "負責任的 AI 說明頁還沒準備好，請稍後再來看。":"The Responsible AI page isn't ready yet — please check back later.",
     "讀不到說明頁，請檢查網路後再試一次。":"Couldn't load the page — check your connection and try again.", "說明頁暫時無法顯示。":"The page can't be shown right now.",
+    // ---------- Songguo 2.0 structure ----------
+    "大廳":"Lounge", "地圖圖層":"Map layers", "美食・校內地點":"Food · campus places",
+    "暱稱、語言、安裝":"Nickname, language, install", "暱稱、語言、安裝、AI 數據":"Nickname, language, install, AI stats", "私訊請求、拼車、活動、留言":"Message requests, rides, events, comments",
+    "暱稱與個人資料":"Nickname & profile", "問":"Ask", "問松果：公車、拼車、活動、美食、課表…":"Ask Songguo: buses, rides, events, food, classes…",
+    "下一班 132":"Next bus 132", "今天已經收班":"No more buses today", "今天活動":"Today's events",
+    "看近期活動":"See upcoming events", "附近吃什麼":"Food nearby",
     // ---------- AI translation (web/translate.js) ----------
     "翻譯":"Translate", "翻譯中…":"Translating…", "顯示原文":"Show original", "翻譯全部留言":"Translate all comments",
     "用 AI 翻譯":"Translate with AI", "AI 翻譯，可能有誤":"AI translation — may contain mistakes",
