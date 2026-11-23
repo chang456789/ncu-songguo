@@ -701,6 +701,141 @@
       "onnnnnnnno",
       "oooooooooo",
     ],
+    // ---------- v2-polish2：問松果卡片小圖示（12×12）、松鼠頭像的三種表情（公車牌、便當、行事曆） ----------
+    ci_bus: [
+      "............",
+      "kkkkkkkkkkk.",
+      "kffffffffffk",
+      "kfccfccfcffk",
+      "kfccfccfcffk",
+      "kffffffffffk",
+      "kggggggggggk",
+      "kffffffffffk",
+      "kkkkkkkkkkkk",
+      ".kok....kok.",
+      ".kkk....kkk.",
+      "............",
+    ],
+    ci_cal: [
+      ".kk....kk...",
+      "kkkkkkkkkk..",
+      "kggggggggk..",
+      "kggggggggk..",
+      "kcccccccck..",
+      "kckckckcck..",
+      "kcccccccck..",
+      "kckckckcck..",
+      "kcccccccck..",
+      "kkkkkkkkkk..",
+      "............",
+      "............",
+    ],
+    ci_food: [
+      "....k.k.....",
+      "...k.k......",
+      "............",
+      "kkkkkkkkkkkk",
+      "kccccccccnnk",
+      "kcccccccnnnk",
+      ".kccccccggk.",
+      ".kkccccccck.",
+      "..kkkkkkkk..",
+      "....kkkk....",
+      "............",
+      "............",
+    ],
+    ci_car: [
+      "............",
+      "...kkkkkk...",
+      "..kccckcck..",
+      ".kccccccck..",
+      "kkkkkkkkkkkk",
+      "kffffffffffk",
+      "kfkffffffkfk",
+      "kkkkkkkkkkkk",
+      ".kok....kok.",
+      ".kkk....kkk.",
+      "............",
+      "............",
+    ],
+    avatar_bus: [
+      "........................",
+      "........................",
+      "........................",
+      "........................",
+      "......kk........kk......",
+      ".....kffk......kffk.....",
+      ".....kfck.kkkk.kfck.....",
+      ".....kfkkkffffkkkfk.....",
+      ".....kkffffffffffkk.....",
+      ".....kffffffffffffk.....",
+      ".....kffffffffffffk.....",
+      "....kfffckfffffckffk....",
+      "....kfffkkfffffkkffk....",
+      "....kffffffccffffffk....",
+      "....kffffcckkccffffk....",
+      ".....kffccccccccffk.....",
+      ".....kffccckkcckkkkkkkkk",
+      "......kfccccccckfffffffk",
+      ".......kkkcccckkfkkkkkfk",
+      "..........kkkk.kfffffffk",
+      "...............kkkkkkkkk",
+      "..................kk....",
+      "..................kk....",
+      "..................kk....",
+    ],
+    avatar_food: [
+      "........................",
+      "........................",
+      "........................",
+      "........................",
+      "......kk........kk......",
+      ".....kffk......kffk.....",
+      ".....kfck.kkkk.kfck.....",
+      ".....kfkkkffffkkkfk.....",
+      ".....kkffffffffffkk.....",
+      ".....kffffffffffffk.....",
+      ".....kffffffffffffk.....",
+      "....kfffckfffffckffk....",
+      "....kfffkkfffffkkffk....",
+      "....kffffffccffffffk....",
+      "....kffffcckkccffffk....",
+      ".....kffccccccccffk.....",
+      ".....kffccckkcccffk.....",
+      "......kfccccccccfk......",
+      ".......kkkcccckkkkkkkkkk",
+      "..........kkkkkcccccnnnk",
+      "..............kccccnnggk",
+      "..............kcccccgggk",
+      "..............kkkkkkkkkk",
+      "...............kkkkkkkk.",
+    ],
+    avatar_cal: [
+      "........................",
+      "........................",
+      "........................",
+      "........................",
+      "......kk........kk......",
+      ".....kffk......kffk.....",
+      ".....kfck.kkkk.kfck.....",
+      ".....kfkkkffffkkkfk.....",
+      ".....kkffffffffffkk.....",
+      ".....kffffffffffffk.....",
+      ".....kffffffffffffk.....",
+      "....kfffckfffffckffk....",
+      "....kfffkkfffffkkffk....",
+      "....kffffffccffffffk....",
+      "....kffffcckkccffffk....",
+      ".....kffccccccccffk.....",
+      ".....kffccckkcccffk.....",
+      "......kfcccccccckk..k...",
+      ".......kkkcccckkkkkkkkkk",
+      "..........kkkk.kgggggggk",
+      "...............kccccccck",
+      "...............kckckckck",
+      "...............kccccccck",
+      "...............kkkkkkkkk",
+    ],
   };
   const CLASS = { o: "px-o", f: "px-f", c: "px-c", n: "px-n", g: "px-g", k: "px-k", l: "px-l", w: "px-w" };
   const reduced = () => !!(window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches);
@@ -831,9 +966,13 @@
     }
     svg.innerHTML = s; return svg;
   }
+  // 天空依時間換色：早上淺藍、傍晚橘粉、晚上深藍加星星（opts.sky）
+  function skyOf(d = new Date()){ const h = d.getHours(); return h >= 6 && h < 16 ? "morning" : h >= 16 && h < 19 ? "evening" : "night"; }
   function banner(name, opts = {}){
     // opts.hide：不畫某些小圖（首頁把場景裡的松鼠換成會動的大松鼠 #hero）
-    return el("div", { class: "px-banner px-banner-" + name, role: opts.title ? "img" : null, "aria-label": opts.title || null }, bannerSVG(name, opts.hide || []));
+    const b = el("div", { class: "px-banner px-banner-" + name + (opts.sky ? " px-sky-" + skyOf() : ""), role: opts.title ? "img" : null, "aria-label": opts.title || null }, bannerSVG(name, opts.hide || []));
+    if (opts.sky) b.append(el("span", { class: "px-stars", "aria-hidden": "true" }));
+    return b;
   }
 
   /* ---------- 首頁大松鼠：PIXEL.mount("#hero") ---------- */
@@ -848,9 +987,21 @@
       const name = hero.mood === "think" ? "think" : hero.mood === "happy" ? "happy" : "normal";
       const nick = opts.nick ? opts.nick() : "";
       const say = opts.say ? opts.say(hero.mood) : hero.mood === "think" ? "讓我想想…" : hero.mood === "happy" ? "幫你找到了！" : greeting();
-      const bubble = el("div", { class: "px-hero-say", "aria-live": "polite" }, el("span", {}, say), nick && hero.mood === "normal" ? el("span", { translate: "no" }, (/^en/.test(document.documentElement.lang) ? ", " : "，") + nick) : null);
+      const sayKids = [el("span", {}, say), nick && hero.mood === "normal" ? el("span", { translate: "no" }, (/^en/.test(document.documentElement.lang) ? ", " : "，") + nick) : null];
       const art = sprite(name, { size: opts.size || 112, cls: "px-hero-art" + (hero.mood === "happy" ? " px-hero-happy" : "") });
-      host.replaceChildren(el("div", { class: "px-hero" }, art, bubble));
+      if (opts.askHost){
+        // 對話泡泡改成「問松果輸入框」的外觀，放在橫幅下方；點了打開問松果
+        host.replaceChildren(el("div", { class: "px-hero" }, art));
+        opts.askHost.replaceChildren(el("button", { type: "button", class: "px-ask", onclick: () => opts.onAsk && opts.onAsk(), "aria-label": "問松果" },
+          sprite(hero.mood === "think" ? "think" : "avatar", { size: 28, cls: "px-ask-av" }),
+          el("span", { class: "px-ask-say", "aria-live": "polite" }, sayKids),
+          el("span", { class: "px-ask-ph" }, hero.mood === "normal" ? "問我公車、活動、美食…" : ""),
+          el("span", { class: "px-ask-go", "aria-hidden": "true" }, "›")));
+        if (opts.translate) opts.translate(opts.askHost);
+      } else {
+        const bubble = el("div", { class: "px-hero-say", "aria-live": "polite" }, sayKids);
+        host.replaceChildren(el("div", { class: "px-hero" }, art, bubble));
+      }
       host.classList.add("px-hero-host");
       if (opts.translate) opts.translate(host);
       hero.art = art;
@@ -906,6 +1057,6 @@
   }
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", watchAI); else watchAI();
 
-  window.sgPixel = { sprite, loading, thinking, empty, error, celebrate, weather, icon, banner, mount, mood, greeting, grids: G, scenes: SCENES, reduced };
+  window.sgPixel = { sprite, loading, thinking, empty, error, celebrate, weather, icon, banner, mount, mood, greeting, skyOf, grids: G, scenes: SCENES, reduced };
   window.PIXEL = window.sgPixel;
 })();

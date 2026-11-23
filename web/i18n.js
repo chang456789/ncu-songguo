@@ -37,6 +37,9 @@
     "AI 發文助手還沒啟用，你寫的內容都還在，可以直接發布。":"The AI writing helper isn't available yet — your text is untouched and you can post it as is.",
     "按太快了，請等一分鐘再試；你寫的內容都還在。":"Too many tries — wait a minute and try again. Your text is untouched.",
     "AI 回應逾時，你寫的內容都還在，可以再試一次。":"AI took too long — your text is untouched. You can try again.", "AI 暫時無法使用，你寫的內容都還在。":"AI is unavailable right now — your text is untouched.",
+    "我是松果，中大的 AI 生活助理":"I'm Songguo, NCU's AI campus-life helper", "試著問我：":"Try asking me:",
+    "下一班 132 公車幾點？":"When is the next bus 132?", "今天有什麼免費活動？":"Any free events today?", "後門宵夜吃什麼好？":"Late-night food near the back gate?",
+    "問我公車、活動、美食…":"Ask me about buses, events, food…",
     "下拉重新整理":"Pull to refresh", "放開重新整理":"Release to refresh", "重新整理中…":"Refreshing…",
     // ---------- shell & navigation ----------
     "松果":"Songguo", "松果首頁":"Songguo home", "主選單":"Main menu", "選單":"Menu", "即時資訊":"Live info", "快速查看":"At a glance",
