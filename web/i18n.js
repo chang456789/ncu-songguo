@@ -28,6 +28,8 @@
     "今日松果":"Today at Songguo", "松果正在整理今天…":"Songguo is putting your day together…", "下一堂":"Next class", "AI 整理・":"By AI · ",
     "AI 還沒啟用，先用簡單版整理。":"AI isn't available yet — here's a simple summary.", "AI 使用量太多了，先用簡單版整理。":"AI is busy — here's a simple summary.",
     "AI 回應逾時，先用簡單版整理。":"AI took too long — here's a simple summary.", "AI 暫時無法使用，先用簡單版整理。":"AI is unavailable — here's a simple summary.",
+    "清除篩選":"Clear filter", "照片還在上傳中，請稍等一下。":"Photos are still uploading — please wait a moment.",
+    "最多 4 張，上傳前會自動壓縮。":"Up to 4 photos, compressed automatically before upload.", "菜單、招牌菜都可以，最多 4 張。":"Menus or signature dishes — up to 4 photos.",
     "下拉重新整理":"Pull to refresh", "放開重新整理":"Release to refresh", "重新整理中…":"Refreshing…",
     // ---------- shell & navigation ----------
     "松果":"Songguo", "松果首頁":"Songguo home", "主選單":"Main menu", "選單":"Menu", "即時資訊":"Live info", "快速查看":"At a glance",

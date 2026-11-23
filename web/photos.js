@@ -115,8 +115,15 @@
   }
 
   /* ---------- 列表縮圖 ---------- */
+  function okUrl(u){
+    if (typeof u !== "string") return false;
+    if (/^data:image\/(jpeg|png|webp);/.test(u)) return true;
+    const base = ((window.SONGGUO_CONFIG || {}).supabaseUrl || "").replace(/\/+$/, "");
+    return !!base && u.startsWith(base + "/storage/v1/object/public/" + BUCKET + "/");
+  }
   function thumbs(urls, opts = {}){
-    const list = (Array.isArray(urls) ? urls : []).filter(u => typeof u === "string" && /^(https:\/\/|\/[^/]|data:image\/)/.test(u)).slice(0, MAX_PHOTOS);
+    // 只顯示我們自己 Supabase「photos」bucket 的照片（以及預覽頁用的 data: 圖），避免有人在貼文裡塞外部網址追蹤讀者
+    const list = (Array.isArray(urls) ? urls : []).filter(okUrl).slice(0, MAX_PHOTOS);
     if (!list.length) return null;
     return el("div", { class: "ph-thumbs n" + list.length + (opts.small ? " small" : "") },
       list.map((u, i) => el("button", { type: "button", class: "ph-thumb", "aria-label": app.tr("看大圖") + ` ${i + 1}/${list.length}`, onclick: e => { e.stopPropagation(); viewer(list, i); } },
