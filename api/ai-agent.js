@@ -49,7 +49,7 @@ function routePrompt(places){
     "   「5 點要到」依現在時間換成 24 小時制（例如現在是下午，就是 17:00）。趕時間 → time；省錢 → money；其他 → balanced。沒說出發點 → gate。",
     "2. find_rides：找別人開的拼車團。「有人揪嗎」「有沒有人一起」「找…的車」。",
     "   args：{\"from\": 地點或 null, \"to\": 地點或 null, \"when\": \"YYYY-MM-DDTHH:mm\" 或 null}",
-    "3. draft_ride：使用者想自己開團、揪人（「我要開團」「幫我揪」）。",
+    "3. draft_ride：使用者想自己開團、揪人（「我要開團」「幫我揪」「我要揪人去…」）。注意：「幫我揪…的車」是要自己開一團（draft_ride），不是找別人的團（find_rides）。",
     "   args：{\"from\": 地點, \"to\": 地點, \"when\": \"YYYY-MM-DDTHH:mm\" 或 null, \"seats\": 2–6 或 null, \"luggage\": \"none\"|\"light\"|\"heavy\"}",
     "4. find_events：找校園活動，或有空檔想找事做（「有一小時能做什麼」「這週有什麼活動」）。",
     `   args：{"date": "YYYY-MM-DD" 或 null, "timeFrom": "HH:MM" 或 null, "timeTo": "HH:MM" 或 null, "tags": [只能從 ${EVENT_TAGS.join("、")} 挑], "keyword": 字串或 null}`,
@@ -62,7 +62,9 @@ function routePrompt(places){
     `   args：{"keyword": 關鍵字（例如 腳踏車、套房、微積分）或 null, "board": ${BOARDS.map(x => `"${x}"`).join("|")} 或 null}（market＝市集、housing＝租屋、forum＝看板與討論區、campus＝系所看板）`,
     "9. weather：天氣、溫度、會不會下雨、要不要帶傘（只問天氣本身）。args：{\"day\": \"today\"|\"tomorrow\"|\"dayafter\"}",
     "10. create_post_draft：使用者想「發文、賣東西、徵求、轉租、找室友、發失物招領」，幫他擬好貼文草稿（使用者確認後才會發布）。「幫我寫一篇賣腳踏車的文」「我要轉租後門套房」。",
-    "    args：{\"space\": 看板代號, \"category\": 分類, \"title\": 30 字內標題, \"body\": 150 字內內文（只寫使用者說過的事實，沒說的用「（請補充：…）」提示他自己填，不要編造規格、時間、地點）, \"price\": 價格或 null}",
+    "    args：{\"space\": 看板代號, \"category\": 分類, \"title\": 30 字內標題, \"body\": 150 字內內文, \"price\": 價格或 null}",
+    "    body 只能改寫使用者說過的話，不可以加任何他沒說的描述（例如「狀況良好」「九成新」「適合通勤」「價格可議」都不行），其他用「（請補充：品牌、狀況、面交地點…）」提示他自己填。",
+    "    失物招領的分類：撿到東西＝拾獲；自己掉了東西＝遺失。",
     "    看板代號與分類（分類只能從這裡選）：" + Object.entries(DRAFT_SPACES).map(([k, v]) => `${k}＝${v.join("/")}`).join("；") + "。m:all 是二手市集，hb:list 是招租轉租，hb:mate 是徵室友，g:lost 是失物招領，g:course 是課程評價，g:help 是求助問答，其他閒聊用 g:chat。",
     "    price：市集賣東西時，使用者有說價格就照填；沒說就依二手學生市場給一個建議區間（例如「NT$800–1,200（建議）」），一定要加「（建議）」兩個字。租屋寫月租。其他看板 null。",
     "11. add_to_calendar：把活動加入行事曆（「把週五的音樂會加到行事曆」「提醒我那場講座」）。args：{\"keyword\": 活動名稱裡的字或 null, \"date\": \"YYYY-MM-DD\" 或 null}",
@@ -77,7 +79,7 @@ function routePrompt(places){
 }
 
 // 檢查並整理 AI 選的工具與參數：不合法的值一律變成 null，不會讓前端拿到奇怪的資料
-function cleanRoute(j, places){
+function cleanRoute(j, places, message = ""){
   if (!j || typeof j !== "object") return null;
   const tool = pick(j.tool, TOOLS); if (!tool) return null;
   // 沒把握就不要硬選工具：confidence 低於門檻 → none（交給 ai-chat）
@@ -103,6 +105,12 @@ function cleanRoute(j, places){
   else if (tool === "add_to_calendar") args = { keyword: text(a.keyword, 20), date: isoD(a.date) };
   else if (tool === "find_food") args = { budget: int(a.budget, 1, 3), type: pick(a.type, FOOD_TYPES), maxWalkMin: int(a.maxWalkMin, 1, 60), keyword: text(a.keyword, 20) };
   if (tool === "commute" && !args.dest) return { tool: "none", args: {} };   // 沒有目的地就無法精算
+  // 用使用者原話做確定性的修正（Azure 實測時 AI 偶爾會選錯這兩種）
+  if (tool === "find_rides" && /幫我揪|我要揪|我想揪|揪人|我要開團|開一團|幫我開團/.test(message))
+    return { tool: "draft_ride", args: { from: args.from, to: args.to, when: args.when, seats: null, luggage: "none" } };
+  if (tool === "create_post_draft" && args.space === "g:lost"){
+    if (/撿到|拾獲|found/i.test(message)) args.category = "拾獲"; else if (/掉了|遺失|弄丟|不見|lost/i.test(message)) args.category = "遺失";
+  }
   return { tool, args };
 }
 
@@ -140,7 +148,7 @@ module.exports = async (req, res) => {
       .map(m => ({ role: m.role, content: m.content.slice(0, 300) }));
     messages = [{ role: "system", content: routePrompt(places) }, ...history,
       { role: "user", content: JSON.stringify({ now: String(body.now || "").slice(0, 40), message }) }];
-    clean = j => cleanRoute(j, places); task = "agent-route";
+    clean = j => cleanRoute(j, places, message); task = "agent-route";
   } else if (body.step === "answer"){
     if (!TOOLS.includes(body.tool)) return fail(400, "bad_request", "不支援的工具");
     // weather 工具：天氣資料由伺服器向 Open-Meteo 取得（和 ai-chat 同一個來源），不用前端給

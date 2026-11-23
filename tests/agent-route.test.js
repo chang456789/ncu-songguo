@@ -2,7 +2,11 @@
 // 執行：node tests/agent-route.test.js
 //   ① 關鍵字備援（AI 不能用時，web/agent.js 的 ruleRoute）— 一定會跑
 //   ② 伺服器檢查 AI 選的工具（api/ai-agent.js 的 cleanRoute）— 一定會跑
-//   ③ 真正的 AI 路由 — 有設定 AI 金鑰（GITHUB_MODELS_TOKEN 或 AZURE_OPENAI_*）時才會跑
+//   ③ 真正的 AI 路由 — 兩種方式（擇一）：
+//      BASE_URL=https://ncu-songguo.vercel.app node tests/agent-route.test.js
+//        直接打已部署網站的 /api/ai-agent，用 Vercel 上真正的 Azure 測試，本機不需要任何金鑰（推薦）
+//        每批 9 句、批次之間等 65 秒，不超過網站的每分鐘上限
+//      或在本機設定 AI 金鑰（GITHUB_MODELS_TOKEN 或 AZURE_OPENAI_*）直接呼叫 api/ai-agent.js
 const path = require("path"), fs = require("fs"), vm = require("vm");
 const ROOT = path.resolve(__dirname, "..");
 
@@ -35,7 +39,7 @@ const CASES = [
   ["What should I wear tomorrow?", "none"],
   ["When is my next class?", "next_class"],
   // 動作工具
-  ["幫我寫一篇賣二手腳踏車的文，1500 元", "create_post_draft", a => a.space === "m:all" && a.category === "機車單車" && /1500/.test(a.price || "") && a.title === "賣二手腳踏車"],
+  ["幫我寫一篇賣二手腳踏車的文，1500 元", "create_post_draft", a => a.space === "m:all" && a.category === "機車單車" && /1500/.test(a.price || "") && /腳踏車/.test(a.title || "") && !/狀況良好|九成新|適合|可議/.test(a.body || "")],
   ["我要轉租後門套房", "create_post_draft", a => a.space === "hb:list" && a.category === "轉租"],
   ["幫我發一篇撿到學生證的失物招領", "create_post_draft", a => a.space === "g:lost" && a.category === "拾獲"],
   ["Help me sell my desk lamp", "create_post_draft", a => a.space === "m:all"],
@@ -77,6 +81,8 @@ ok(d1.space === "m:all" && d1.category === "機車單車" && d1.price === "NT$80
 const d2 = cleanRoute({ tool: "create_post_draft", args: { space: "hack", category: "亂寫", title: "t", price: "100" } }, P).args;
 ok(d2.space === "g:chat" && d2.category === "閒聊" && d2.price === null, "create_post_draft 不合法的看板與分類 → 閒聊；閒聊不填價格");
 ok(cleanRoute({ tool: "add_to_calendar", args: { keyword: "音樂會", date: "下週" } }, P).args.date === null, "add_to_calendar 不合法的日期 → null");
+ok(cleanRoute({ tool: "find_rides", args: { to: "台北車站", when: "2026-11-27T15:00" }, confidence: 0.9 }, P, "幫我揪週五下午回台北的車").tool === "draft_ride", "「幫我揪」被選成找車 → 改成開團（draft_ride）");
+ok(cleanRoute({ tool: "create_post_draft", args: { space: "g:lost", category: "遺失", title: "撿到學生證" }, confidence: 0.9 }, P, "幫我發一篇撿到學生證的失物招領").args.category === "拾獲", "失物招領「撿到」→ 拾獲");
 
 // ---------- 行事曆檔格式 ----------
 console.log("\n行事曆檔（.ics）");
@@ -89,22 +95,40 @@ console.log("");
 
 // ---------- ③ 真正的 AI 路由 ----------
 (async () => {
-  if (!process.env.GITHUB_MODELS_TOKEN && !(process.env.AZURE_OPENAI_ENDPOINT && process.env.AZURE_OPENAI_API_KEY)){
-    console.log("③ 真正的 AI 路由：略過（沒有設定 AI 金鑰）。設定 GITHUB_MODELS_TOKEN 後再執行一次就會測。");
+  const BASE = (process.env.BASE_URL || "").replace(/\/+$/, "");
+  const hasKey = process.env.GITHUB_MODELS_TOKEN || (process.env.AZURE_OPENAI_ENDPOINT && process.env.AZURE_OPENAI_API_KEY);
+  if (!BASE && !hasKey){
+    console.log("③ 真正的 AI 路由：略過。設定 BASE_URL=https://ncu-songguo.vercel.app（或本機 AI 金鑰）後再執行一次就會測。");
   } else {
-    console.log("③ 真正的 AI 路由");
-    const handler = require(path.join(ROOT, "api/ai-agent.js"));
-    const now = new Date(), pad = n => String(n).padStart(2, "0");
-    const nowStr = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}T14:00（週四）`;
-    let aiOK = 0;
-    for (const [q, tool] of CASES){
-      const r = await new Promise(done => handler({ method: "POST", headers: { "x-forwarded-for": "test-" + Math.random() }, body: { step: "route", message: q, lang: /[a-z]/i.test(q[0]) ? "en" : "zh", now: nowStr, places: P } },
-        { setHeader(){}, status(c){ this.c = c; return this; }, json(j){ done({ code: this.c, j }); } }));
-      const got = r.j.ok ? r.j.data.tool : `錯誤 ${r.j.code}`;
-      if (got === tool) aiOK++;
-      ok(got === tool, `${q.padEnd(20)} → ${got}${got === tool ? "" : `（應該是 ${tool}）`}`);
+    console.log(`③ 真正的 AI 路由（${BASE ? BASE + "/api/ai-agent" : "本機 api/ai-agent.js"}）`);
+    const handler = BASE ? null : require(path.join(ROOT, "api/ai-agent.js"));
+    const now = new Date(), pad = n => String(n).padStart(2, "0"), WK = "日一二三四五六";
+    const nowStr = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}T${pad(now.getHours())}:${pad(now.getMinutes())}（週${WK[now.getDay()]}）`;
+    const route = async (q) => {
+      const body = { step: "route", message: q, lang: /^[A-Za-z]/.test(q) ? "en" : "zh", now: nowStr, places: P };
+      if (BASE){
+        try {
+          const r = await fetch(BASE + "/api/ai-agent", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body), signal: AbortSignal.timeout(30000) });
+          const j = await r.json().catch(() => ({}));
+          return j.ok ? j.data : { error: j.code || ("HTTP " + r.status) };
+        } catch (e) { return { error: e.name === "TimeoutError" ? "timeout" : e.message }; }
+      }
+      return new Promise(done => handler({ method: "POST", headers: { "x-forwarded-for": "test-" + Math.random() }, body },
+        { setHeader(){}, status(c){ this.c = c; return this; }, json(j){ done(j.ok ? j.data : { error: j.code }); } }));
+    };
+    const BATCH = 9, WAIT = 65000;   // 網站每個 IP 每分鐘有上限；每批 9 句、批次間等 65 秒
+    let aiOK = 0; const wrong = [];
+    for (let i = 0; i < CASES.length; i++){
+      if (BASE && i && i % BATCH === 0){ console.log(`  （等 ${WAIT / 1000} 秒，避免超過每分鐘上限…）`); await new Promise(r => setTimeout(r, WAIT)); }
+      const [q, tool, check] = CASES[i];
+      const r = await route(q);
+      const got = r.error ? `錯誤 ${r.error}` : r.tool;
+      const good = got === tool && (!check || check(r.args || {}));
+      if (good) aiOK++; else wrong.push({ q, want: tool, got, args: r.args });
+      ok(good, `${q.padEnd(20)} → ${got}${got === tool && !good ? "（工具對，參數不對）" : got === tool ? "" : `（應該是 ${tool}）`}  ${r.args ? JSON.stringify(r.args) : ""}${r.lowConfidence ? " [沒把握→none]" : ""}`);
     }
     console.log(`  AI 路由：${aiOK} / ${CASES.length} 正確`);
+    if (wrong.length) console.log("  需要修的：\n" + wrong.map(w => `   - 「${w.q}」應該是 ${w.want}，AI 選了 ${w.got} ${w.args ? JSON.stringify(w.args) : ""}`).join("\n"));
   }
   console.log(fail ? `\n共 ${fail} 項失敗` : "\n全部通過");
   process.exit(fail ? 1 : 0);
