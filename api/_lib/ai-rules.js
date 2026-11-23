@@ -62,4 +62,6 @@ Final check before you answer: if the message is in English, is every sentence o
   "chatroom-icebreaker": ``,
   // 即時大廳內容審查
   "chatroom-moderate": ``,
+  // AI 發文助手（市集、租屋招租的「AI 幫我寫」）
+  post: ``,
 };

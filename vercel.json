@@ -49,6 +49,9 @@
     },
     "api/responsible-ai.js": {
       "includeFiles": "docs/responsible-ai.md"
+    },
+    "api/ai-post.js": {
+      "maxDuration": 30
     }
   }
 }

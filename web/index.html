@@ -617,6 +617,7 @@ a.ghost{color:var(--ink)}
 <script src="/ui.js"></script>
 <script src="/photos.js"></script>
 <script src="/today.js"></script>
+<script src="/post-ai.js"></script>
 <script src="/rai.js"></script>
 
 
@@ -881,6 +882,9 @@ async function todayContext(){
   const bus = ["zl","hsr","tpe"].map(d => { const x = nextTrips(d, "out", 1).list[0]; return x && { to:DEST[d], route:x.route, time:fromMin(x.t) }; }).filter(Boolean);
   return { weather: WX && WX.data, courses: tt().courses, bus, events: upcomingEvents() };
 }
+// AI 發文助手（web/post-ai.js）：市集、招租發文時「AI 幫我寫」
+const POSTAI = window.sgPostAI || null;
+if (POSTAI) POSTAI.init({ lang:()=>I18N.lang, tr:s=>I18N.tr(s), translate:el=>I18N.translate(el) });
 if (TODAY) TODAY.init({ context:todayContext, lang:()=>I18N.lang, onChange:()=>renderKeep(), translate:el=>I18N.translate(el) });
 function switchLang(l){ VOICE.stop(); I18N.setLang(l); S.dirty = false; render(); }
 
@@ -2987,6 +2991,18 @@ function postSheet(){
   const htype = sp.rent ? h("select",{id:"p-htype"}, HOUSE_TYPES.map(t => h("option",{},t))) : null;
   // 照片（web/photos.js）：市集、招租可以放 4 張；網址暫存在 S.modal，重繪也不會不見
   const photoPick = PH && (sp.price || sp.rent) ? PH.picker({ max:4, value:m.photos||[], onChange:urls=>{ m.photos = urls; } }) : null;
+  // AI 發文助手：讀使用者寫的一句話，填好標題、分類、內文、價格；失敗時表單不動。結果存進 S.modal，重繪也不會不見
+  const pickCat = c => { const i = sp.cats.indexOf(c); if (i < 0) return; st.cat = c; m.cat = c; const rs = document.querySelectorAll('input[name="pcat"]'); if (rs[i]) rs[i].checked = true; };
+  const priceEl = price || rent;
+  const postAI = POSTAI && (sp.price || sp.rent) ? POSTAI.box({ board: sp.price ? "market" : "rent", cats: sp.cats, types: sp.rent ? HOUSE_TYPES : [],
+    photos: () => (m.photos || []).length,
+    read: () => ({ title:title.value, body:body.value, price:priceEl ? priceEl.value : "", cat:st.cat, htype: htype ? htype.selectedIndex : -1 }),
+    apply: r => { title.value = r.title; body.value = r.body; m.carry = { t:r.title, b:r.body };
+      if (priceEl && r.price){ priceEl.value = r.price; m.price = r.price; }
+      if (htype && r.htype && HOUSE_TYPES.includes(r.htype)) htype.selectedIndex = HOUSE_TYPES.indexOf(r.htype);
+      pickCat(r.category); saveDraft(); },
+    restore: o => { title.value = o.title; body.value = o.body; m.carry = { t:o.title, b:o.body };
+      if (priceEl){ priceEl.value = o.price; m.price = o.price; } if (htype && o.htype >= 0) htype.selectedIndex = o.htype; pickCat(o.cat); saveDraft(); } }) : null;
   const about = sp.review || sp.rent ? h("select",{id:"p-about"}, h("option",{value:""},"（不指定）"), homeOptions().filter(g => g.group.startsWith("校外")).map(g => h("optgroup",{label:g.group.replace("校外・","")}, g.items.map(it => h("option",{value:it.id,selected:S.home===it.id},it.name))))) : null;
   const nickLabel = h("span",{class:"mono"}, S.nick);
   const ident = h("div",{class:"radios",role:"radiogroup","aria-label":"發文身分"},
@@ -3023,6 +3039,7 @@ function postSheet(){
     rent ? h("div",{class:"frow"}, h("label",{class:"f",for:"p-rent"},"租金",rent), h("label",{class:"f",for:"p-htype"},"房型",htype)) : null,
     h("label",{class:"f",for:"p-body"},"內容", h("small",{},"打到一半關掉也沒關係，草稿會自動保留。"), body),
     photoPick ? h("div",{class:"f"},"照片", h("small",{},"最多 4 張，上傳前會自動壓縮。"), photoPick) : null,
+    postAI,
     sp.review ? h("div",{class:"frow"}, rate("sound","隔音"), rate("landlord","房東態度"), rate("cp","CP 值")) : null,
     h("div",{class:"f"}, h("span",{},"發文身分　", nickLabel), ident),
     agree, err, foot(btn));
