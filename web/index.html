@@ -873,6 +873,7 @@ AGENT.init({ lang:()=>I18N.lang, tr:s=>I18N.tr(s), places:()=>RIDE_PLACES.filter
   openPostDraft:a=>openModal({ k:"post", space:a.space, prefill:a.title || "", draftBody:a.body || "", cat:a.category, price:a.price, ai:true }),
   toast:m=>toast(m),
   weather:()=>{ const w = loadWeather(); return w.data ? upcomingHours(w.data)[0] || null : null; }, goWeather:()=>go("weather"),
+  weatherForecast:()=>{ const w = loadWeather(); return w.data ? { source:w.data.source, now:upcomingHours(w.data)[0] || null, days:w.data.days || [] } : w.loading ? { loading:true } : null; },
   goSchedule:()=>go("schedule"), findRoom:room=>{ S.navQ = roomBuilding(room); go("nav"); } });
 // ---------- 松果 2.0 美術（web/pixel.js、ui.js、photos.js、today.js）：沒載入時全部退回原本的畫面 ----------
 const PX = window.sgPixel || null, UIX = window.sgUI || null, PH = window.sgPhotos || null, TODAY = window.sgToday || null;

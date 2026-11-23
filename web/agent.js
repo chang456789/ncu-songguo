@@ -227,12 +227,23 @@
         cards: list.slice(0, 3).map(p => ({ kind: "post", icon: "📝", title: [p.title || "（無標題）"], userTitle: true, sub: [p.spaceName, p.price ? "・" + p.price : p.rent ? "・" + p.rent : ""], action: () => A.openPost(p.id) })),
         summary: list.length ? ["找到 ", list.length, " 篇相關的貼文，點下面的卡片看內容。"] : ["目前沒有相關的貼文，可以自己發一篇。"] };
     },
-    weather(a){
-      const w = A.weather && A.weather();
+    async weather(a){
+      // 前端的預報（中央氣象署，失敗時 Open-Meteo）還在載入就最多等 3 秒；伺服器抓不到預報時會改用這份
+      let f = A.weatherForecast && A.weatherForecast();
+      for (let i = 0; i < 15 && f && f.loading; i++){ await new Promise(r => setTimeout(r, 200)); f = A.weatherForecast(); }
+      const off = a.day === "tomorrow" ? 1 : a.day === "dayafter" ? 2 : 0;
+      const d0 = new Date(); d0.setDate(d0.getDate() + off); const date = dayISO(d0);
+      const day = f && f.days ? f.days.find(x => String(x.t).slice(0, 10) === date) : null;
+      const now = f && f.now;
+      const label = off === 2 ? "後天" : off === 1 ? "明天" : "今天";
       const cards = [{ kind: "weather", icon: "☁️", title: ["天氣預報"], sub: ["中壢・逐時與一週預報"], action: () => A.goWeather() }];
-      // 天氣數字由伺服器在 answer 步驟向 Open-Meteo 取得；這裡只準備 AI 失敗時的摘要
-      return { result: { day: a.day }, cards,
-        summary: w ? ["現在約 ", Math.round(w.temp), "°，降雨機率 ", w.pop ?? "—", "%。點下面的卡片看完整預報。"] : ["點下面的卡片看中壢的天氣預報。"] };
+      const forecast = f && f.days ? { source: f.source || "", now: now ? { temp: now.temp, pop: now.pop, wx: now.wx } : null,
+        days: f.days.slice(0, 3).map(x => ({ t: String(x.t).slice(0, 10), max: x.max, min: x.min, pop: x.pop, wx: x.wx })) } : null;
+      // 天氣數字由伺服器在 answer 步驟向 Open-Meteo 取得，抓不到時用這裡的 forecast；summary 是 AI 失敗時的摘要
+      return { result: { day: a.day, forecast }, cards,
+        summary: day ? [label, "：", day.wx || "", " ", Math.round(day.min), "–", Math.round(day.max), "°，降雨機率 ", day.pop ?? "—", "%。點下面的卡片看完整預報。"]
+          : off === 0 && now ? ["現在約 ", Math.round(now.temp), "°，降雨機率 ", now.pop ?? "—", "%。點下面的卡片看完整預報。"]
+          : ["點下面的卡片看中壢的天氣預報。"] };
     },
     next_class(){
       const n = A.nextClass();
@@ -282,7 +293,7 @@
     const route = status === "ok" ? routed.data : ruleRoute(message);
     if (route.tool === "none") return { general: true, status, route };
     let out;
-    try { out = TOOLS[route.tool](route.args || {}); }
+    try { out = await TOOLS[route.tool](route.args || {}); }
     catch (e) { console.error("agent tool failed", route.tool, e); return { general: true, status, route }; }
     const cards = out.cards.map(c => ({ ...c, title: say(c.title), sub: say(c.sub) }));
     // 工具結果是空的：AI 正常時改走一般回答（ai-chat 讀得到全站資料），卡片照樣附上；AI 不能用時才顯示程式的摘要

@@ -84,6 +84,17 @@ ok(cleanRoute({ tool: "add_to_calendar", args: { keyword: "音樂會", date: "�
 ok(cleanRoute({ tool: "find_rides", args: { to: "台北車站", when: "2026-11-27T15:00" }, confidence: 0.9 }, P, "幫我揪週五下午回台北的車").tool === "draft_ride", "「幫我揪」被選成找車 → 改成開團（draft_ride）");
 ok(cleanRoute({ tool: "create_post_draft", args: { space: "g:lost", category: "遺失", title: "撿到學生證" }, confidence: 0.9 }, P, "幫我發一篇撿到學生證的失物招領").args.category === "拾獲", "失物招領「撿到」→ 拾獲");
 ok(cleanRoute({ tool: "create_post_draft", args: { space: "m:all", category: "機車單車", title: "賣二手腳踏車", price: null }, confidence: 0.9 }, P, "幫我寫一篇賣二手腳踏車的文，1500 元").args.price === "NT$1500", "使用者說了 1500 元 → 價格一定是 NT$1500");
+// weather 工具：伺服器抓不到預報時改用前端送來的預報，並挑出問的那一天
+{ const { weatherResult } = require(path.join(ROOT, "api/ai-agent.js"));
+  const NOW = new Date("2026-11-23T22:30:00+08:00").getTime();   // 台灣晚上 10 點半（UTC 已經是同一天下午）
+  const client = { source: "中央氣象署", now: { temp: 18.4, wx: "多雲" }, days: [{ t: "2026-11-23", min: 16, max: 21, pop: 20, wx: "多雲" }, { t: "2026-11-24T06:00:00+08:00", min: 15.6, max: 19.2, pop: 70, wx: "短暫雨" }] };
+  const r1 = weatherResult("tomorrow", null, client, NOW);
+  ok(r1.日期 === "2026-11-24" && r1.當天預報 && r1.當天預報.降雨機率 === 70 && r1.當天預報.最低 === 16, "天氣：伺服器抓不到 → 用前端的預報，挑出明天（降雨 70%）");
+  const server = { 地點: "中央大學", 預報: [{ 日期: "2026-11-25", 天氣: "晴", 最低: 14, 最高: 22, 降雨機率: 0 }] };
+  ok(weatherResult("dayafter", server, client, NOW).當天預報.天氣 === "晴", "天氣：伺服器有預報 → 用伺服器的，後天＝11/25");
+  const r3 = weatherResult("today", null, { days: [{ t: "亂寫", min: "x" }] }, NOW);
+  ok(r3.天氣 === null && r3.當天預報 === null && /抓不到/.test(r3.注意), "天氣：兩邊都沒有 → 明確標示抓不到，不讓 AI 猜");
+  ok(weatherResult("hack", null, null, NOW).day === "today", "天氣：不合法的 day → today"); }
 
 // ---------- 行事曆檔格式 ----------
 console.log("\n行事曆檔（.ics）");
