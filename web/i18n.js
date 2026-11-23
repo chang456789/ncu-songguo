@@ -274,6 +274,10 @@
     "AI 代理人：寫回答":"AI agent: write answer", "交通精算":"Commute advisor", "AI 翻譯":"AI translation",
     "大廳懶人包":"Lounge summary", "大廳破冰話題":"Lounge icebreakers", "內容安全檢查":"Content safety check",
     "活動空檔媒合":"Free-time event matching", "AI 數據":"AI stats",
+    // ---------- Responsible AI page (web/rai.js) ----------
+    "負責任的 AI":"Responsible AI", "AI 怎麼處理你的資料":"How the AI handles your data",
+    "AI 怎麼處理你的資料、內容安全、出錯時怎麼辦":"How the AI handles your data, content safety, and what to do when it's wrong", "負責任的 AI 說明頁還沒準備好，請稍後再來看。":"The Responsible AI page isn't ready yet — please check back later.",
+    "讀不到說明頁，請檢查網路後再試一次。":"Couldn't load the page — check your connection and try again.", "說明頁暫時無法顯示。":"The page can't be shown right now.",
     // ---------- AI translation (web/translate.js) ----------
     "翻譯":"Translate", "翻譯中…":"Translating…", "顯示原文":"Show original", "翻譯全部留言":"Translate all comments",
     "用 AI 翻譯":"Translate with AI", "AI 翻譯，可能有誤":"AI translation — may contain mistakes",

@@ -611,6 +611,7 @@ a.ghost{color:var(--ink)}
 <script src="/agent.js"></script>
 <script src="/search.js"></script>
 <script src="/notify.js"></script>
+<script src="/rai.js"></script>
 
 
 <script>
@@ -750,6 +751,9 @@ PRIV.init({ tr:s=>I18N.tr(s), translate:el=>I18N.translate(el) });
 function goEvent(id){ go("news"); setTimeout(() => { const el = document.querySelector(`[data-ev="${CSS.escape(id)}"]`); if (el){ el.scrollIntoView({ block:"center", behavior:"smooth" }); el.classList.add("ag-flash"); } }, 150); }
 function goFood(id){ go("food"); selectFood(id, true); }
 // AI 使用數據（web/aistats.js）：每次呼叫 AI 記一筆（功能、成功與否、耗時），「我的 → 松果 AI 數據」看統計
+// 負責任的 AI 說明頁（web/rai.js）：內容是謝恩妮維護的 docs/responsible-ai.md，依目前語言顯示
+const RAI = window.sgRAI || { init(){}, view:()=>h("p",{},"說明頁暫時無法顯示。") };
+RAI.init({ lang:()=>I18N.lang, onChange:()=>renderKeep() });
 const AISTATS = window.sgAIStats || { init(){}, flush(){}, load(){}, summary:()=>({ status:"error", total:0, rate:0, avg:0, list:[] }) };
 AISTATS.init({ db:()=>S.db, uid:()=>S.uid, canWrite:()=>S.canWrite, onChange:()=>renderKeep() });
 const AI_FEATURES = { "ai-chat":"問松果（一般回答）", "ai-agent:route":"AI 代理人：選工具", "ai-agent:answer":"AI 代理人：寫回答",
@@ -1173,14 +1177,14 @@ const TABS = [
   ["home","首頁","home",1],["transit","交通","bus",1,,"公車時刻・拼車"],["news","活動","mega",0,,"近期活動・學校公告"],["forum","論壇","chat",1,,"即時大廳・看板"],
   ["schedule","課表","calendar",0,,"我的課表與提醒"],["food","美食","pin",0,,"共同編輯的美食地圖"],["nav","導航","map",0,,"校內建築・步行導航"],
   ["market","市集","bag",0,,"二手・免費送・徵求"],["housing","租屋","house",0,,"租屋大廳・避雷"],["campus","系所","campus",0,,"各系看板"],
-  ["weather","天氣","cloud",0,,"中壢天氣預報"],["aistats","AI 數據","star",0,,"松果 AI 數據"],["online","在線","users",0,,"現在誰在線上"],["inbox","私訊","send",0,,"加密私訊"],
+  ["weather","天氣","cloud",0,,"中壢天氣預報"],["aistats","AI 數據","star",0,,"松果 AI 數據"],["responsible-ai","負責任的 AI","lock",0,,"AI 怎麼處理你的資料"],["online","在線","users",0,,"現在誰在線上"],["inbox","私訊","send",0,,"加密私訊"],
 ];
 /* 分頁重整：導覽只剩 5 大類（首頁｜交通｜＋建立｜社群｜我的）。
    舊分頁全部保留（網址 #/food、#/news… 照樣能開），GROUP_OF 決定它們歸在哪一類、導覽列亮哪一個。 */
 const GROUPS = [["home","首頁","home"],["transit","交通","bus"],["community","社群","chat"],["me","我的","user"]];
 const GROUP_OF = { home:"home", food:"home", nav:"home", weather:"home", news:"home", transit:"transit",
   forum:"community", campus:"community", market:"community", housing:"community", community:"community",
-  me:"me", more:"me", schedule:"me", inbox:"me", online:"me", aistats:"me" };
+  me:"me", more:"me", schedule:"me", inbox:"me", online:"me", aistats:"me", "responsible-ai":"me" };
 const groupOf = tab => GROUP_OF[tab] || "home";
 // 社群：上方分段切換（即時大廳和看板都是 forum 分頁，用 forumSeg 區分）
 const COMMUNITY = [["lobby","即時大廳"],["boards","看板"],["campus","系所"],["market","市集"],["housing","租屋"]];
@@ -1290,7 +1294,7 @@ function rightRail(){
 }
 /* 網址：#/food、#/news、#/lobby… 每個分頁都有自己的網址，舊連結點了照樣能打開；
    手機的「上一頁」也能回到前一個分頁。首頁不加 #。 */
-const ROUTE_TABS = ["home","transit","news","forum","schedule","food","nav","market","housing","campus","weather","online","inbox","me","more","aistats"];
+const ROUTE_TABS = ["home","transit","news","forum","schedule","food","nav","market","housing","campus","weather","online","inbox","me","more","aistats","responsible-ai"];
 function routeFromHash(){
   const k = decodeURIComponent((location.hash || "").replace(/^#\/?/, "")).split(/[/?]/)[0];
   if (k === "lobby" || k === "boards" || k === "community") return { tab:"forum", seg: k === "boards" ? "boards" : "lobby" };
@@ -1324,7 +1328,7 @@ function currentSpaceId(){
 function page(){
   const P = { transit:transitPage, market:()=>spaceView("m:all"), housing:housingPage, campus:campusPage, inbox:inboxPage, food:foodPage,
     schedule:schedulePage, forum:forumPage, news:eventsPage, weather:weatherPage, online:onlinePage, nav:navPage,
-    me:mePage, more:mePage, community:forumPage, aistats:aistatsPage };
+    me:mePage, more:mePage, community:forumPage, aistats:aistatsPage, "responsible-ai":()=>h("div",{class:"stack"}, RAI.view()) };
   const body = (P[S.tab] || homePage)();
   if (groupOf(S.tab) === "community") return h("div",{class:"stack"}, communitySeg(), body);
   const back = backBar();
@@ -1407,6 +1411,7 @@ function mePage(){
       row("users","在線","現在誰在線上", ()=>go("online")),
       row("user","設定","暱稱、系所、住處", ()=>openModal({k:"profile"})),
       row("star","松果 AI 數據","各 AI 功能的使用次數、成功率、回應時間", ()=>go("aistats")),
+      row("lock","負責任的 AI","AI 怎麼處理你的資料、內容安全、出錯時怎麼辦", ()=>go("responsible-ai")),
       row("phone","安裝到手機","加到主畫面當 App 用", ()=>openModal({k:"install"}))),
     h("section",{class:"card bar"}, h("span",{class:"sc-ico"}, icon("globe")), h("b",{style:"flex:1"},"語言"),
       h("div",{class:"lang-row",translate:"no"},
