@@ -46,6 +46,9 @@
     },
     "api/ai-agent.js": {
       "maxDuration": 30
+    },
+    "api/responsible-ai.js": {
+      "includeFiles": "docs/responsible-ai.md"
     }
   }
 }
