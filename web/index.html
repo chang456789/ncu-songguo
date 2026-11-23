@@ -730,6 +730,9 @@ const PRESET_LOCS = [
   ["xinyuan","歆園","wx","331巷"],["baoshu","寶樹屋","wx",""],["sanyou","三友新村","zd",""],
 ].map(([id,name,zone,lane]) => ({ id, name, zone, lane, preset:true }));
 const HOUSE_TYPES = ["獨立套房","分租套房","雅房","家庭式整層","整棟透天","其他"];
+// 舊問題：之前在英文介面發的招租文，房型存成了英文。顯示時換回中文，中英文介面就都能正確顯示
+const HOUSE_TYPE_EN = { "Studio":"獨立套房", "Shared-flat room":"分租套房", "Room (shared bath)":"雅房", "Whole flat":"家庭式整層", "Whole house":"整棟透天", "Other":"其他" };
+const htypeZh = v => HOUSE_TYPE_EN[v] || v;
 
 const DISCLAIMER = "本人保證所述內容皆為親身經歷之事實，未捏造或誇大，並對發文內容自負法律責任（包括但不限於刑法第 310 條誹謗罪及民事損害賠償）。本站僅提供交流平台，不代表本站立場，亦不擔保內容之真實性。請勿揭露房東或他人之全名、電話、身分證字號等個人資料。被檢舉內容將暫時隱藏並由管理員審核。";
 
@@ -1994,7 +1997,7 @@ function postCard(p){
   const tv = TR.view("post:"+p.id, [p.title || "", p.body || ""]);
   card.append(h("h3",{translate:"no"},tv.texts[0]));
   if (p.price) card.append(h("div",{class:"price"}, p.price));
-  if (p.rent) card.append(h("div",{class:"price"}, p.rent, p.htype ? h("span",{class:"muted small",style:"font-weight:400"},"　"+p.htype) : null));
+  if (p.rent) card.append(h("div",{class:"price"}, p.rent, p.htype ? h("span",{class:"muted small",style:"font-weight:400"},"　"+htypeZh(p.htype)) : null));
   if (p.ratings) card.append(h("div",{class:"scores"}, [["隔音",p.ratings.sound],["房東態度",p.ratings.landlord],["CP 值",p.ratings.cp]].map(([k,n]) => h("div",{class:"score"},k,dots(n)))));
   card.append(h("p",{class:"body",translate:"no"},tv.texts[1]));
   if (PH && p.photos && p.photos.length && !hidden){ const th = PH.thumbs(p.photos); if (th) card.append(h("div",{class:"post-photos"}, th)); }
@@ -3075,7 +3078,8 @@ function postSheet(){
   title.addEventListener("input", saveDraft); body.addEventListener("input", saveDraft);
   const price = sp.price ? h("input",{type:"text",id:"p-price",maxlength:"20",placeholder:"例：NT$300、免費",value:m.price||""}) : null;
   const rent = sp.rent ? h("input",{type:"text",id:"p-rent",maxlength:"24",placeholder:"例：月租 6,500（含水）",value:m.price||""}) : null;
-  const htype = sp.rent ? h("select",{id:"p-htype"}, HOUSE_TYPES.map(t => h("option",{},t))) : null;
+  // 選項加上固定的中文 value：英文介面時選項文字會被翻成英文，但存進資料庫的房型一律是中文
+  const htype = sp.rent ? h("select",{id:"p-htype"}, HOUSE_TYPES.map(t => h("option",{value:t},t))) : null;
   // 照片（web/photos.js）：市集、招租可以放 4 張；網址暫存在 S.modal，重繪也不會不見
   const photoPick = PH && (sp.price || sp.rent) ? PH.picker({ max:4, value:m.photos||[], onChange:urls=>{ m.photos = urls; } }) : null;
   // AI 發文助手：讀使用者寫的一句話，填好標題、分類、內文、價格；失敗時表單不動。結果存進 S.modal，重繪也不會不見
