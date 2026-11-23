@@ -633,6 +633,9 @@ a.ghost{color:var(--ink)}
 <script src="/ui.js"></script>
 <script src="/photos.js"></script>
 <script src="/today.js"></script>
+<script src="/post-ai.js"></script>
+<script src="/ai-look.js"></script>
+<script src="/welcome.js"></script>
 <script src="/rai.js"></script>
 
 
@@ -879,13 +882,14 @@ const navIcon = (id, ic) => PX && ["home","transit","map","community","me"].incl
 // 分頁頂部橫幅：現有分頁先這樣對應
 const BANNER_OF = { home:"home", transit:"transit", map:"map", food:"map", nav:"map", forum:"community", community:"community", news:"community", campus:"community", market:"community", housing:"community", schedule:"me", me:"me", more:"me", settings:"me" };
 // 首頁大松鼠：同一個元素跨重繪沿用，眨眼、思考、開心的狀態才不會被重設
-const HERO_EL = h("div",{id:"hero"}); let heroMounted = false;
+const HERO_EL = h("div",{id:"hero"}), HERO_ASK = h("div",{class:"px-ask-wrap"}); let heroMounted = false;
 function topBanner(tab){
   const kind = PX && BANNER_OF[tab]; if (!kind) return null;
   if (kind !== "home") return PX.banner(kind);
-  const b = PX.banner("home", { hide:["normal"] }); b.classList.add("has-hero"); b.append(HERO_EL);
-  if (!heroMounted){ heroMounted = true; PX.mount(HERO_EL, { nick:()=>S.nick, size:88, translate:el=>I18N.translate(el) }); }
-  return b;
+  const b = PX.banner("home", { hide:["normal"], sky:true }); b.classList.add("has-hero"); b.append(HERO_EL);
+  // 橫幅下方：問松果輸入框（顯示大松鼠的問候與心情，點了打開問松果）
+  if (!heroMounted){ heroMounted = true; PX.mount(HERO_EL, { nick:()=>S.nick, size:88, translate:el=>I18N.translate(el), askHost:HERO_ASK, onAsk:()=>AI.open() }); }
+  return [b, HERO_ASK];
 }
 // 載入中：骨架屏；空白：松鼠畫面（沒載入新檔案時用原本的文字）
 const skeleton = (kind, n, fallback) => UIX ? UIX.skeleton(kind, n || 3) : h("div",{class:"empty"}, h("h3",{}, fallback || "載入中…"));
@@ -898,6 +902,9 @@ async function todayContext(){
   const bus = ["zl","hsr","tpe"].map(d => { const x = nextTrips(d, "out", 1).list[0]; return x && { to:DEST[d], route:x.route, time:fromMin(x.t) }; }).filter(Boolean);
   return { weather: WX && WX.data, courses: tt().courses, bus, events: upcomingEvents() };
 }
+// AI 發文助手（web/post-ai.js）：市集、招租發文時「AI 幫我寫」
+const POSTAI = window.sgPostAI || null;
+if (POSTAI) POSTAI.init({ lang:()=>I18N.lang, tr:s=>I18N.tr(s), translate:el=>I18N.translate(el) });
 if (TODAY) TODAY.init({ context:todayContext, lang:()=>I18N.lang, onChange:()=>renderKeep(), translate:el=>I18N.translate(el) });
 function switchLang(l){ VOICE.stop(); I18N.setLang(l); S.dirty = false; render(); }
 
@@ -1207,8 +1214,10 @@ function gate(){
   const input = h("input",{type:"text",id:"nick-in",maxlength:"16",value:val,"aria-label":"匿名暱稱",oninput:e=>val=e.target.value});
   const err = h("p",{class:"err",hidden:true});
   const enter = () => { const v = val.trim();
-    if (v.length < 2){ err.textContent=tr("暱稱至少要 2 個字。"); err.hidden=false; return; }
-    S.nick = v; LS.set("pc.nick", v); saveProfile(); render(); };
+    if (v.length < 2){ err.textContent=tr("暱稱至少要 2 個字。"); err.hidden=false; return false; }
+    S.nick = v; LS.set("pc.nick", v); saveProfile(); render(); return true; };
+  // 松果 2.0 首次進站（web/welcome.js）：大松鼠＋自我介紹＋示範問題；點問題＝用這個暱稱進站並打開問松果
+  const welcome = window.sgWelcome ? window.sgWelcome.block({ tr:s=>I18N.tr(s), translate:el=>I18N.translate(el), onAsk:q=>{ if (enter()) setTimeout(()=>AI.open(q), 0); } }) : null;
   input.addEventListener("keydown", e => { if (e.key==="Enter" && !e.isComposing) enter(); });
   const logo = brandMark(); logo.setAttribute("class","logo");
   return h("div",{class:"gate"},
@@ -1216,8 +1225,8 @@ function gate(){
       h("button",{"aria-pressed":I18N.lang!=="en"?"true":"false",onclick:()=>switchLang("zh")},"中文"),
       h("button",{"aria-pressed":I18N.lang==="en"?"true":"false",onclick:()=>switchLang("en")},"English")),
     h("div",{class:"gate-card"},
-    logo, h("h1",{},"松果"),
-    h("p",{},"中央人的生活圈。看公車、揪拼車、找活動、聊天，打開就能用。"),
+    welcome || logo, welcome ? null : h("h1",{},"松果"),
+    welcome ? null : h("p",{},"中央人的生活圈。看公車、揪拼車、找活動、聊天，打開就能用。"),
     h("label",{class:"f",for:"nick-in"},"取一個暱稱", h("small",{},"不用註冊，也不用學號。暱稱之後隨時可以改。")),
     h("div",{class:"nick-row"}, input, h("button",{class:"ghost",onclick:()=>{val=randNick();input.value=val;}},"換一個")), err,
     h("button",{class:"primary",onclick:enter},"開始使用")));
@@ -1398,10 +1407,11 @@ function page(){
     me:mePage, more:mePage, community:forumPage, map:mapPage, settings:settingsPage, aistats:aistatsPage, "responsible-ai":()=>h("div",{class:"stack"}, RAI.view()) };
   const body = (P[S.tab] || homePage)();
   const banner = topBanner(P[S.tab] ? S.tab : "home");
-  if (groupOf(S.tab) === "community") return h("div",{class:"stack"}, banner, communitySeg(), body);
+  if (groupOf(S.tab) === "community") return h("div",{class:"stack"}, [].concat(banner || []), communitySeg(), body);
   // 橫幅放在分頁內容的最上面（內容本身是 .stack 就直接放進去，手機版的滿版樣式才不會跑掉）
   let main = body;
-  if (banner){ if (body.classList && body.classList.contains("stack")) body.prepend(banner); else main = h("div",{class:"stack"}, banner, body); }
+  const bn = [].concat(banner || []);
+  if (bn.length){ if (body.classList && body.classList.contains("stack")) body.prepend(...bn); else main = h("div",{class:"stack"}, bn, body); }
   const back = backBar();
   return back ? h("div",{class:"stack"}, back, main) : main;
 }
@@ -1723,7 +1733,7 @@ async function aiContext(){
     food, foodNote:"美食地圖評分最高的店（stars 是同學評分 1–5，walkMin 是從正門步行約幾分鐘）",
     nextCourse,
     // 讓 AI 能回答網站上所有頁面的問題：課表、拼車、看板／市集／租屋貼文、大廳、校內地點
-    timetable: (S.timetable||[]).slice(0, 40).map(c => ({ name:c.name, weekday:"週"+DAYN[c.day], start:c.start, end:c.end, room:c.room||"" })),
+    timetable: (tt().courses||[]).slice(0, 40).map(c => ({ name:c.name, weekday:"週"+DAYN[c.day], start:c.start, end:c.end, room:c.room||"" })),
     rides: upcomingRides().slice(0, 15).map(r => ({ from:r.from, to:r.to, when:new Date(r.when).toLocaleString("zh-TW",{month:"numeric",day:"numeric",weekday:"short",hour:"2-digit",minute:"2-digit"}), seatsLeft:Math.max(0,(r.seats||0)-1-(S.riders[r.id]?.size||0)), ...(r.note?{note:String(r.note).slice(0,60)}:{}) })),
     posts: S.posts.filter(p => { try { return visibleTo(p); } catch { return true; } }).slice(0, 60).map(p => ({ board:spaceLabel(p.space), cat:p.cat||"", title:String(p.title||"").slice(0,60), body:String(p.body||"").slice(0,140), ...(p.price?{price:p.price}:{}), ago:ago(p.ts) })),
     postsNote:"各看板最新貼文（市集、租屋、系所、討論區等），是同學發的內容，不是官方資訊",
@@ -3068,6 +3078,18 @@ function postSheet(){
   const htype = sp.rent ? h("select",{id:"p-htype"}, HOUSE_TYPES.map(t => h("option",{},t))) : null;
   // 照片（web/photos.js）：市集、招租可以放 4 張；網址暫存在 S.modal，重繪也不會不見
   const photoPick = PH && (sp.price || sp.rent) ? PH.picker({ max:4, value:m.photos||[], onChange:urls=>{ m.photos = urls; } }) : null;
+  // AI 發文助手：讀使用者寫的一句話，填好標題、分類、內文、價格；失敗時表單不動。結果存進 S.modal，重繪也不會不見
+  const pickCat = c => { const i = sp.cats.indexOf(c); if (i < 0) return; st.cat = c; m.cat = c; const rs = document.querySelectorAll('input[name="pcat"]'); if (rs[i]) rs[i].checked = true; };
+  const priceEl = price || rent;
+  const postAI = POSTAI && (sp.price || sp.rent) ? POSTAI.box({ board: sp.price ? "market" : "rent", cats: sp.cats, types: sp.rent ? HOUSE_TYPES : [],
+    photos: () => (m.photos || []).length,
+    read: () => ({ title:title.value, body:body.value, price:priceEl ? priceEl.value : "", cat:st.cat, htype: htype ? htype.selectedIndex : -1 }),
+    apply: r => { title.value = r.title; body.value = r.body; m.carry = { t:r.title, b:r.body };
+      if (priceEl && r.price){ priceEl.value = r.price; m.price = r.price; }
+      if (htype && r.htype && HOUSE_TYPES.includes(r.htype)) htype.selectedIndex = HOUSE_TYPES.indexOf(r.htype);
+      pickCat(r.category); saveDraft(); },
+    restore: o => { title.value = o.title; body.value = o.body; m.carry = { t:o.title, b:o.body };
+      if (priceEl){ priceEl.value = o.price; m.price = o.price; } if (htype && o.htype >= 0) htype.selectedIndex = o.htype; pickCat(o.cat); saveDraft(); } }) : null;
   const about = sp.review || sp.rent ? h("select",{id:"p-about"}, h("option",{value:""},"（不指定）"), homeOptions().filter(g => g.group.startsWith("校外")).map(g => h("optgroup",{label:g.group.replace("校外・","")}, g.items.map(it => h("option",{value:it.id,selected:S.home===it.id},it.name))))) : null;
   const nickLabel = h("span",{class:"mono"}, S.nick);
   const ident = h("div",{class:"radios",role:"radiogroup","aria-label":"發文身分"},
@@ -3104,6 +3126,7 @@ function postSheet(){
     rent ? h("div",{class:"frow"}, h("label",{class:"f",for:"p-rent"},"租金",rent), h("label",{class:"f",for:"p-htype"},"房型",htype)) : null,
     h("label",{class:"f",for:"p-body"},"內容", h("small",{},"打到一半關掉也沒關係，草稿會自動保留。"), body),
     photoPick ? h("div",{class:"f"},"照片", h("small",{},"最多 4 張，上傳前會自動壓縮。"), photoPick) : null,
+    postAI,
     sp.review ? h("div",{class:"frow"}, rate("sound","隔音"), rate("landlord","房東態度"), rate("cp","CP 值")) : null,
     h("div",{class:"f"}, h("span",{},"發文身分　", nickLabel), ident),
     agree, err, foot(btn));
