@@ -107,11 +107,16 @@ ok(cleanRoute({ tool: "create_post_draft", args: { space: "m:all", category: "�
   ok(cleanRoute({ tool: "find_food", args: {}, confidence: 0.9 }, P, "中壢新開的咖啡廳").tool === "find_food", "web_search：沒有金鑰 → 不會把找店改成上網");
   process.env.TAVILY_API_KEY = "tvly-test";
   const w1 = cleanRoute({ tool: "web_search", args: { query: "最近很紅的餐廳", topic: "hack", days: 9999 }, confidence: 0.9 }, P, "最近很紅的餐廳");
-  ok(w1.tool === "web_search" && w1.args.query === "最近很紅的餐廳 中壢 中央大學 附近" && w1.args.topic === "general" && w1.args.days === null, "web_search：沒說地點 → 加「中壢 中央大學 附近」；不合法的 topic、days → 預設");
+  ok(w1.tool === "web_search" && w1.args.query === "最近很紅的餐廳 中壢 中央大學 附近" && w1.args.topic === "general" && w1.args.days === 30, "web_search：沒說地點 → 加「中壢 中央大學 附近」；不合法的 topic → general；不合法的 days → 依原話「最近」＝30 天");
   ok(cleanRoute({ tool: "web_search", args: { query: "多益 報名 時間", topic: "general", days: 60 }, confidence: 0.9 }, P, "多益最近一次報名時間").args.query === "多益 報名 時間", "web_search：考試報名跟地點無關 → 不加地點");
   ok(cleanRoute({ tool: "web_search", args: { query: "" }, confidence: 0.9 }, P, "桃園最近有什麼展覽").args.query.includes("桃園"), "web_search：AI 沒給查詢字串 → 用原話");
   ok(cleanRoute({ tool: "find_food", args: {}, confidence: 0.9 }, P, "中央大學附近最近很紅的餐廳").tool === "web_search", "AI 把「最近很紅的餐廳」選成 find_food → 改成 web_search");
   ok(cleanRoute({ tool: "web_search", args: { query: "132 公車" }, confidence: 0.9 }, P, "下一班132").tool === "none", "AI 把「下一班132」選成 web_search → 不准上網");
+  const w2 = cleanRoute({ tool: "find_events", args: { date: "2026-11-28" }, confidence: 0.9 }, P, "這週末中壢有什麼活動");
+  ok(w2.tool === "web_search" && /中壢/.test(w2.args.query) && w2.args.days === 7, "正式網站實測：「這週末中壢有什麼活動」被選成 find_events → 改成 web_search（這週 → 7 天）");
+  ok(cleanRoute({ tool: "find_events", args: {}, confidence: 0.9 }, P, "這週有什麼免費的講座").tool === "find_events", "校內活動（沒提校外地點）→ 照舊 find_events");
+  ok(cleanRoute({ tool: "find_food", args: {}, confidence: 0.9 }, P, "中壢有什麼好吃的").tool === "find_food", "「中壢有什麼好吃的」→ 照舊美食地圖");
+  ok(cleanRoute({ tool: "web_search", args: { query: "What's trending to eat near NCU" }, confidence: 0.9 }, P, "What's trending to eat near NCU?").args.query === "中央大學 熱門 美食 餐廳 附近", "正式網站實測：AI 給英文查詢字串 → 換成中文");
   ok(cleanRoute({ tool: "web_search", args: { query: "x" }, confidence: 0.3 }, P, "中壢新開的咖啡廳").tool === "none", "web_search：沒把握 → none");
   if (saved) process.env.TAVILY_API_KEY = saved; else delete process.env.TAVILY_API_KEY; }
 // weather 工具：伺服器抓不到預報時改用前端送來的預報，並挑出問的那一天
