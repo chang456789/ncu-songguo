@@ -501,6 +501,21 @@
     "例：咖哩老師":"e.g. Curry Teacher", "切換成中文":"切換成中文", "Switch to English":"Switch to English",
     "在地圖上選":"Pick on map", "選一棟宿舍進入它的大廳。":"Choose a dorm to enter its lobby.",
     "營業中":"Open", "暫停營業":"Temporarily closed", "寒暑假暫停":"Closed for vacation", "已歇業":"Closed",
+    // 找課程／教授（web/profs.js）
+    "找課程／教授":"Courses & professors", "課名、課號、教授姓名與信箱":"Course names, codes, professors and emails",
+    "教授":"Professors",
+    "課名、課號或教師姓名":"Course name, code or instructor", "教授姓名、系所或研究專長":"Professor name, department or research area",
+    "資料來自中央大學課程查詢系統與教師履歷平台，每天更新一次。":"Data comes from NCU's public course search and faculty profiles, updated once a day.",
+    "向學校查詢中，第一次查大約要 5–10 秒…":"Asking the university… the first search takes about 5–10 seconds.",
+    "查得太快了，請等一分鐘再試。":"Too many searches. Please wait a minute.", "學校的資料暫時連不上，請稍後再試。":"The university's data is unavailable right now. Please try again later.",
+    "本學期":"This semester:", "筆":"courses", "共":"Found", "位教授":"professors", "顯示前":"showing the first",
+    "這學期沒有查到符合的課程，換個關鍵字試試（例如課號或教授全名）。":"No matching courses this semester. Try another keyword, like a course code or the professor's full name.",
+    "沒有查到符合的教授，試試全名、系所或研究專長。":"No matching professors. Try a full name, department or research area.",
+    "授課教授":"Instructor", "未定":"TBA", "時間教室":"Time & room", "未排定":"Not scheduled", "學分":"credits", "上限":"Cap",
+    "必修":"Required", "選修":"Elective", "課程綱要":"Syllabus", "到 Dcard 看評價":"Reviews on Dcard",
+    "信箱":"Email", "顯示信箱":"Show email", "沒有公開信箱":"No public email", "查詢中…":"Searching…",
+    "這學期沒有查到開課。":"No courses found this semester.", "看開的課":"Courses taught", "教師簡歷":"Faculty profile",
+    "找到 ":"Found ", " 位教授，點下面的卡片看信箱和開的課。":" professors. Tap a card for their email and courses.", "沒有查到這位教授，試試全名或系所。":"No matching professor. Try a full name or department.", "這學期找到 ":"This semester: ", " 門相關的課，點下面的卡片看時間、教室和教授。":" matching courses. Tap a card for times, rooms and instructors.", "這學期沒有查到相關的課，換個關鍵字試試。":"No matching courses this semester. Try another keyword.", "學校的教師資料暫時連不上，請稍後再試。":"The university's faculty data is unavailable right now. Please try again later.", "學校的課程查詢暫時連不上，請稍後再試。":"The university's course search is unavailable right now. Please try again later.", "找課程／教授暫時無法顯示。":"Courses & professors can't be shown right now.",
   };
 
   const WKEN = { "一":"Mon", "二":"Tue", "三":"Wed", "四":"Thu", "五":"Fri", "六":"Sat", "日":"Sun" };

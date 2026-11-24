@@ -58,6 +58,14 @@
     {
       "source": "/api/ai-timetable",
       "destination": "/api/ai-agent?task=timetable"
+    },
+    {
+      "source": "/api/ncu-courses",
+      "destination": "/api/ai-agent?task=ncu&type=courses"
+    },
+    {
+      "source": "/api/ncu-profs",
+      "destination": "/api/ai-agent?task=ncu&type=profs"
     }
   ]
 }
