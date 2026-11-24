@@ -503,6 +503,7 @@
     "必修":"Required", "選修":"Elective", "課程綱要":"Syllabus", "到 Dcard 看評價":"Reviews on Dcard",
     "信箱":"Email", "顯示信箱":"Show email", "沒有公開信箱":"No public email", "查詢中…":"Searching…",
     "這學期沒有查到開課。":"No courses found this semester.", "看開的課":"Courses taught", "教師簡歷":"Faculty profile",
+    "找到 ":"Found ", " 位教授，點下面的卡片看信箱和開的課。":" professors. Tap a card for their email and courses.", "沒有查到這位教授，試試全名或系所。":"No matching professor. Try a full name or department.", "這學期找到 ":"This semester: ", " 門相關的課，點下面的卡片看時間、教室和教授。":" matching courses. Tap a card for times, rooms and instructors.", "這學期沒有查到相關的課，換個關鍵字試試。":"No matching courses this semester. Try another keyword.", "學校的教師資料暫時連不上，請稍後再試。":"The university's faculty data is unavailable right now. Please try again later.", "學校的課程查詢暫時連不上，請稍後再試。":"The university's course search is unavailable right now. Please try again later.", "找課程／教授暫時無法顯示。":"Courses & professors can't be shown right now.",
   };
 
   const WKEN = { "一":"Mon", "二":"Tue", "三":"Wed", "四":"Thu", "五":"Fri", "六":"Sat", "日":"Sun" };

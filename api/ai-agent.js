@@ -15,7 +15,7 @@ const { weather } = require("./_lib/openmeteo");
 const FOOD_TYPES = ["正餐", "小吃", "早餐", "飲料咖啡", "宵夜", "甜點"];
 const EVENT_TAGS = ["免費", "有餐點", "可認證時數", "講座", "表演", "展覽", "社交", "練英文"];
 const TOOLS = ["commute", "find_rides", "draft_ride", "find_events", "find_food", "next_class", "my_timetable", "search_posts", "weather",
-  "create_post_draft", "add_to_calendar", "none"];
+  "create_post_draft", "add_to_calendar", "find_course", "none"];
 // 動作工具 create_post_draft 可以發到的看板與分類（和 web/index.html 的 SPACES 一致）
 const DRAFT_SPACES = {
   "m:all": ["書籍講義", "家具家電", "3C", "機車單車", "生活用品", "免費送", "徵求"],
@@ -68,7 +68,9 @@ function routePrompt(places){
     "    看板代號與分類（分類只能從這裡選）：" + Object.entries(DRAFT_SPACES).map(([k, v]) => `${k}＝${v.join("/")}`).join("；") + "。m:all 是二手市集，hb:list 是招租轉租，hb:mate 是徵室友，g:lost 是失物招領，g:course 是課程評價，g:help 是求助問答，其他閒聊用 g:chat。",
     "    price：使用者有說價格（例如「1500 元」）就一定照填在 price。沒說時，市集依這個物品的二手學生行情給一個合理的建議區間，格式「NT$下限–上限（建議）」，一定要加「（建議）」；不確定行情就填 null。租屋寫月租。其他看板 null。",
     "11. add_to_calendar：把活動加入行事曆（「把週五的音樂會加到行事曆」「提醒我那場講座」）。args：{\"keyword\": 活動名稱裡的字或 null, \"date\": \"YYYY-MM-DD\" 或 null}",
-    "12. none：一般問題交給一般回答。以下一律選 none：穿搭（「明天穿什麼」也是 none，一般回答會參考天氣）、讀書與考試方法、英文學習與寫作、生活建議、心情與人際、一般知識、閒聊打招呼。args：{}",
+    "12. find_course：查學校這學期開的課或教授資料（不是使用者自己的課表）。「微積分是誰教的」「MA1001 在哪上課」「彭俊文老師的信箱」「資工系有哪些教授」「研究機器學習的老師」。",
+    "    args：{\"keyword\": 課名、課號或教授姓名、系所、研究專長（去掉「老師」「教授」等稱呼）, \"kind\": \"course\"（問課：誰教、時間、教室）|\"prof\"（問人：信箱、系所、開什麼課、研究什麼）}",
+    "13. none：一般問題交給一般回答。以下一律選 none：穿搭（「明天穿什麼」也是 none，一般回答會參考天氣）、讀書與考試方法、英文學習與寫作、生活建議、心情與人際、一般知識、閒聊打招呼。args：{}",
     "",
     "地點（from、to）只能是這些字，完全一樣：" + places.join("、") + "。「後門、宵夜街」→「中央大學（後門）」；「學校、中大、正門」→「中央大學（正門）」；「高鐵」→「高鐵桃園站」；「中壢車站、火車站」→「中壢火車站」；「台北」→「台北車站」。",
     "時間依 now 換算（「明早」＝明天 08:00 左右、「今晚」＝今天 19:00 左右）。不確定的參數填 null。",
@@ -103,8 +105,10 @@ function cleanRoute(j, places, message = ""){
       price: space === "m:all" || space === "hb:list" ? text(a.price, 30) : null };
   }
   else if (tool === "add_to_calendar") args = { keyword: text(a.keyword, 20), date: isoD(a.date) };
+  else if (tool === "find_course") args = { keyword: text(String(a.keyword || "").replace(/(老師|教授|先生|女士)$/, ""), 40), kind: pick(a.kind, ["course", "prof"]) || "course" };
   else if (tool === "find_food") args = { budget: int(a.budget, 1, 3), type: pick(a.type, FOOD_TYPES), maxWalkMin: int(a.maxWalkMin, 1, 60), keyword: text(a.keyword, 20) };
   if (tool === "commute" && !args.dest) return { tool: "none", args: {} };   // 沒有目的地就無法精算
+  if (tool === "find_course" && !args.keyword) return { tool: "none", args: {} };
   // 用使用者原話做確定性的修正（Azure 實測時 AI 偶爾會選錯這兩種）
   if (tool === "find_rides" && /幫我揪|我要揪|我想揪|揪人|我要開團|開一團|幫我開團/.test(message))
     return { tool: "draft_ride", args: { from: args.from, to: args.to, when: args.when, seats: null, luggage: "none" } };
@@ -156,6 +160,8 @@ function answerPrompt(lang){
 module.exports = async (req, res) => {
   // /api/ai-timetable（用說的建立課表）借用這個 function 執行，見 api/_lib/timetable.js 開頭的說明
   if (req.query && req.query.task === "timetable") return require("./_lib/timetable")(req, res);
+  // /api/ncu-courses、/api/ncu-profs（找課程／教授）也借用這個 function，見 api/_lib/ncu.js 的說明
+  if (req.query && req.query.task === "ncu") return require("./_lib/ncu").handler(req, res);
   res.setHeader("cache-control", "no-store");
   const fail = (status, code, error) => res.status(status).json({ ok: false, code, error });
   if (req.method !== "POST") return fail(405, "bad_request", "請用 POST");
