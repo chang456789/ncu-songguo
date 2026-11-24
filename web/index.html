@@ -415,6 +415,8 @@ nav.bottom{display:none}
 .mod-note .linkbtn{font-size:13px}
 @media (max-width:720px){ .wrap>.stack>.mod-note,.wrap>.stack>[data-live="lobbymod"]{margin-inline:12px} }
 /* 語音輸入（web/voice.js） */
+.mic-btn{touch-action:manipulation;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+.ask-novoice{margin:-4px 0 0}
 .mic-btn{flex:none;width:42px;height:42px;border-radius:50%;border:1px solid var(--line);background:var(--sunk);color:var(--ink);display:inline-grid;place-items:center;padding:0;cursor:pointer}
 .mic-btn:hover{border-color:var(--pine);color:var(--pine)}
 .mic-btn.on{background:var(--pine);border-color:var(--pine);color:var(--bg);animation:mic-pulse 1.2s ease-in-out infinite}
@@ -637,6 +639,7 @@ a.ghost{color:var(--ink)}
 <script src="/chatroom-ai.js"></script>
 <script src="/moderation.js"></script>
 <script src="/voice.js"></script>
+<script src="/speak.js"></script>
 <script src="/ride-ai.js"></script>
 <script src="/privacy.js"></script>
 <script src="/agent.js"></script>
@@ -1483,16 +1486,18 @@ function feedItems(kind){
 //   ① #hero（像素松鼠，在橫幅裡，由 page() 加在最上面）＋問松果大輸入框＋3 個建議問題；回答直接在下面展開（AI.thread），不開視窗
 //   ② #today 今日松果　③ 今天的校園（活動＋熱門貼文，橫向滑動）　④ 動態
 function homePage(){
-  const ask = v => { v = String(v || "").trim(); if (!v) return; const el = document.getElementById("home-ask"); if (el) el.value = "";
-    if (AI.ask) AI.ask(v, { inline:true }); else AI.open(v); };
+  const ask = (v, voice) => { v = String(v || "").trim(); if (!v) return; const el = document.getElementById("home-ask"); if (el) el.value = "";
+    if (AI.ask) AI.ask(v, { inline:true, voice:!!voice }); else AI.open(v); };
   const input = h("input",{type:"text",id:"home-ask",maxlength:"500",autocomplete:"off",enterkeyhint:"send",placeholder:"問松果：公車、拼車、活動、美食、課表…","aria-label":"問松果"});
   input.addEventListener("keydown", e => { if (e.key === "Enter" && !e.isComposing && e.keyCode !== 229) ask(input.value); });
   const sugs = AI.suggestions ? AI.suggestions() : [];
   return h("div",{class:"stack home2"},
     statusBanner(),
     h("section",{class:"card ask-hero"},
-      h("div",{class:"ask-row"}, input, VOICE.button ? VOICE.button("home-ask", () => document.getElementById("home-ask")) : null,
+      // 麥克風：點一下或按住說話，說完直接送出，回答會念出來（web/voice.js、web/speak.js）
+      h("div",{class:"ask-row"}, input, AI.mic ? AI.mic("home-ask", () => document.getElementById("home-ask"), true) : VOICE.button ? VOICE.button("home-ask", () => document.getElementById("home-ask")) : null,
         h("button",{class:"primary",onclick:()=>ask(document.getElementById("home-ask").value)},"問")),
+      VOICE.supported === false ? h("p",{class:"muted small ask-novoice"},"這個瀏覽器不支援語音輸入，可以改用 Chrome 或 Edge，或直接打字。") : null,
       sugs.length ? h("div",{class:"ask-sugs"}, sugs.slice(0, 3).map(q => h("button",{class:"chip",onclick:()=>ask(tr(q))}, q))) : null,
       AI.thread ? h("div",{class:"home-thread"}, AI.thread()) : null),
     h("div",{id:"today"}, TODAY ? TODAY.card() : null),
