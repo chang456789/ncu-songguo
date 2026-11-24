@@ -35,7 +35,7 @@
   async function getJSON(url){
     const r = await fetch(url);
     let j = null; try { j = await r.json(); } catch {}
-    if (!r.ok) throw new Error(j && j.code === "rate_limited" ? tr("查得太快了，請等一分鐘再試。") : tr("學校的資料暫時連不上，請稍後再試。"));
+    if (!r.ok || !j) throw new Error(j && j.code === "rate_limited" ? tr("查得太快了，請等一分鐘再試。") : tr("學校的資料暫時連不上，請稍後再試。"));
     return j;
   }
 
@@ -91,6 +91,7 @@
   }
 
   /* ---------- 搜尋 ---------- */
+  const put = (...x) => resultEl.replaceChildren(...x.flat(Infinity).filter(Boolean));   // 陣列要展開，不然會變成文字
   async function search(q, m){
     q = String(q || "").trim().slice(0, 40);
     if (m && m !== mode){ mode = m; syncTabs(); }
@@ -98,22 +99,22 @@
     if (!q || busy) return;
     const key = mode + ":" + q; if (key === lastKey && resultEl.childElementCount) return;
     busy = true; lastKey = key;
-    resultEl.replaceChildren(el("p", { class: "muted", role: "status" }, tr("向學校查詢中，第一次查大約要 5–10 秒…")));
+    put(el("p", { class: "muted", role: "status" }, tr("向學校查詢中，第一次查大約要 5–10 秒…")));
     try {
       if (mode === "course"){
         const j = await getJSON("/api/ncu-courses?q=" + encodeURIComponent(q));
-        resultEl.replaceChildren(j.courses.length
+        put(j.courses.length
           ? [el("p", { class: "muted small" }, `${tr("本學期")} ${j.courses.length} ${tr("筆")}`), ...j.courses.map(courseCard)]
           : el("p", { class: "muted" }, tr("這學期沒有查到符合的課程，換個關鍵字試試（例如課號或教授全名）。")));
       } else {
         const j = await getJSON("/api/ncu-profs?q=" + encodeURIComponent(q));
-        resultEl.replaceChildren(j.profs.length
+        put(j.profs.length
           ? [el("p", { class: "muted small" }, `${tr("共")} ${j.total} ${tr("位教授")}${j.total > j.profs.length ? `，${tr("顯示前")} ${j.profs.length} ${tr("位教授")}` : ""}`), ...j.profs.map(profCard)]
           : el("p", { class: "muted" }, tr("沒有查到符合的教授，試試全名、系所或研究專長。")));
       }
     } catch (err) {
       lastKey = "";
-      resultEl.replaceChildren(el("div", { class: "info" }, err.message));
+      put(el("div", { class: "info" }, err.message));
     }
     busy = false;
   }
