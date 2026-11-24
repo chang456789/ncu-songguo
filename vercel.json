@@ -52,6 +52,12 @@
     },
     "api/ai-post.js": {
       "maxDuration": 30
+    },
+    "api/ncu-courses.js": {
+      "maxDuration": 30
+    },
+    "api/ncu-profs.js": {
+      "maxDuration": 30
     }
   }
 }
