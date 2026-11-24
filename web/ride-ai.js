@@ -296,8 +296,10 @@
   function commuteCard(){
     const h = A.h; if (!h) return null;
     const R = CM.result;
-    const quick = h("div", { class: "ra-quick" }, [["zl", "現在去中壢火車站"], ["hsr", "現在去高鐵桃園站"], ["tpe", "現在去台北"]].map(([d, l]) =>
-      h("button", { type: "button", class: "ra-qbtn", "aria-pressed": CM.dest === d ? "true" : "false", onclick: () => analyze(d) }, l)));
+    // 3 個目的地：一排膠囊按鈕（窄螢幕可以左右滑）
+    const quick = h("div", { class: "ra-quick", role: "group", "aria-label": "現在出發去" }, h("span", { class: "ra-qlbl small muted" }, "現在出發去"),
+      [["zl", "中壢火車站"], ["hsr", "高鐵桃園站"], ["tpe", "台北"]].map(([d, l]) =>
+        h("button", { type: "button", class: "ra-qbtn", "aria-pressed": CM.dest === d ? "true" : "false", onclick: () => analyze(d) }, l)));
     const head = h("div", { class: "ra-head" }, h("div", {}, h("b", {}, "智慧精算決策卡"), h("span", { class: "small muted" }, "AI 幫你比較公車、拼車、計程車的時間與費用")));
     if (!R) return h("section", { class: "card ra-card" }, head, quick, h("details", { class: "ra-more", open: CM.moreOpen || null, ontoggle: e => { CM.moreOpen = e.target.open; } }, h("summary", {}, "調整條件"), controls()));
 
@@ -522,7 +524,10 @@
   const css = `
 .ra-card{display:flex;flex-direction:column;gap:12px}
 .ra-head b{display:block;font-size:17px}
-.ra-quick{display:flex;gap:8px;flex-wrap:wrap}
+.ra-quick{display:flex;gap:8px;flex-wrap:nowrap;align-items:center;overflow-x:auto;scrollbar-width:none;padding:2px 0 4px;margin-bottom:-2px}
+.ra-quick::-webkit-scrollbar{display:none}
+.ra-qlbl{flex:none;white-space:nowrap}
+.ra-quick .ra-qbtn{flex:0 0 auto;border-radius:999px;padding:7px 14px;font-size:14px;white-space:nowrap}
 .ra-qbtn{flex:1 1 140px;background:var(--sunk);color:var(--ink);border:1px solid var(--line);border-radius:12px;padding:10px 12px;font-weight:700;font-size:15px;cursor:pointer;text-align:center}
 .ra-qbtn[aria-pressed=true]{border-color:var(--pine);color:var(--pine);background:var(--surface);box-shadow:inset 0 0 0 1px var(--pine)}
 .ra-more summary{cursor:pointer;color:var(--pine);font-weight:600;font-size:14px}
