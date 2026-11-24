@@ -742,3 +742,7 @@ textarea{font-size:var(--fs-3)!important}
 [style*="font-size:26px"]{font-size:var(--fs-4)!important}
 [style*="font-size:34px"]{font-size:var(--fs-4)!important}
 [style*="font-size:36px"]{font-size:var(--fs-4)!important}
+
+/* 首頁已有大的問松果輸入框：橫幅下方只保留松鼠問候，不重複輸入入口 */
+.px-ask-wrap .px-ask-ph, .px-ask-wrap .px-ask-go { display: none !important; }
+.px-ask-wrap .px-ask { cursor: default; }
