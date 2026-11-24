@@ -7,6 +7,7 @@
 //        直接打已部署網站的 /api/ai-agent，用 Vercel 上真正的 Azure 測試，本機不需要任何金鑰（推薦）
 //        每批 9 句、批次之間等 65 秒，不超過網站的每分鐘上限
 //      或在本機設定 AI 金鑰（GITHUB_MODELS_TOKEN 或 AZURE_OPENAI_*）直接呼叫 api/ai-agent.js
+process.env.TZ = "Asia/Taipei";   // 時間換算依台灣時間（電腦或雲端是別的時區也一樣）
 const path = require("path"), fs = require("fs"), vm = require("vm");
 const ROOT = path.resolve(__dirname, "..");
 
@@ -78,10 +79,34 @@ for (const [q, tool, check] of CASES){
   ok(good, `${q.padEnd(20)} → ${r.tool}${good ? "" : `（應該是 ${tool}）`}  ${JSON.stringify(r.args)}`);
 }
 for (const q of NOT_WEB){ const r = ruleRoute(q); ok(r.tool !== "web_search", `不上網：${q.padEnd(16)} → ${r.tool}`); }
+// 時間換算：沒說上午或下午的 1～6 點一律當下午，不管測試在幾點跑（以前凌晨跑會算成 05:00）
+function ruleAt(iso){
+  const T = new Date(iso).getTime();
+  class FixedDate extends Date { constructor(...a){ if (a.length) super(...a); else super(T); } static now(){ return T; } }
+  const w = {};
+  vm.runInNewContext(fs.readFileSync(path.join(ROOT, "web/agent.js"), "utf8"), { window: w, console, Date: FixedDate, URL, Blob: class {}, document: {}, sessionStorage: { getItem(){ return null; }, setItem(){} } });
+  return w.sgAgent.ruleRoute;
+}
+for (const [at, q, want] of [
+  ["2026-11-25T03:00:00+08:00", "我 5 點要到高鐵", "17:00"], ["2026-11-25T10:00:00+08:00", "我 5 點要到高鐵", "17:00"],
+  ["2026-11-25T03:00:00+08:00", "6點半要到中壢火車站", "18:30"], ["2026-11-25T03:00:00+08:00", "早上 5 點要到高鐵", "05:00"],
+  ["2026-11-25T03:00:00+08:00", "凌晨5點要到高鐵", "05:00"], ["2026-11-25T21:00:00+08:00", "8 點要到高鐵", "20:00"],
+  ["2026-11-25T07:00:00+08:00", "8 點要到高鐵", "08:00"], ["2026-11-25T03:00:00+08:00", "12 點要到高鐵", "12:00"],
+]){
+  const r = ruleAt(at)(q), hm = at.slice(11, 16);
+  ok(r.tool === "commute" && r.args.arriveBy === want, `現在 ${hm}「${q}」→ ${r.args && r.args.arriveBy}（應該是 ${want}）`);
+}
 console.log(`  關鍵字備援：${ruleOK} / ${CASES.length} 正確\n`);
 
 // ---------- ② 伺服器檢查 ----------
 console.log("② 伺服器檢查 AI 選的工具（cleanRoute）");
+{ const { pmFix, cleanRoute } = require(path.join(ROOT, "api/ai-agent.js"));
+  ok(pmFix("05:00", "我 5 點要到高鐵") === "17:00" && pmFix("05:30", "五點半要到高鐵") === "17:30", "伺服器：AI 把「5 點」算成 05:00 → 修正成 17:00（中文數字也可以）");
+  ok(pmFix("05:00", "凌晨 5 點要到高鐵") === "05:00" && pmFix("05:00", "早上五點要到高鐵") === "05:00", "伺服器：說了凌晨、早上就不改");
+  ok(pmFix("04:00", "我 5 點要到高鐵") === "04:00" && pmFix("08:00", "8 點要到") === "08:00" && pmFix(null, "5 點") === null, "伺服器：只改使用者說出的 1～6 點");
+  const c = cleanRoute({ tool: "commute", args: { dest: "hsr", arriveBy: "05:00" }, confidence: 0.9 }, [], "我 5 點要到高鐵");
+  const d = cleanRoute({ tool: "draft_ride", args: { from: null, to: null, when: "2026-11-27T03:00" }, confidence: 0.9 }, [], "幫我揪週五 3 點去高鐵的車");
+  ok(c.args.arriveBy === "17:00" && d.args.when === "2026-11-27T15:00", "cleanRoute：交通精算的 arriveBy、開團的 when 都會修正"); }
 const { cleanRoute } = require(path.join(ROOT, "api/ai-agent.js"));
 const P = ["中央大學（正門）", "中央大學（後門）", "中壢火車站", "高鐵桃園站", "台北車站", "松山機場"];
 ok(cleanRoute({ tool: "find_food", args: { budget: 1 }, confidence: 0.4 }, P).tool === "none", "沒把握（confidence 0.4）→ none");

@@ -54,7 +54,10 @@
   function hourIn(t, now){
     const m = /(\d{1,2})\s*(?:[點:：時]|o'?clock|pm|am)\s*(\d{1,2}|半)?/i.exec(t); if (!m) return null;
     let h = +m[1]; const mi = m[2] === "半" ? 30 : m[2] ? +m[2] : 0;
-    if (h < 12 && (/下午|晚上|傍晚|今晚|pm|evening|tonight/i.test(t) || (!/早上|上午|明早|am|morning/i.test(t) && now.getHours() >= h))) h += 12;
+    const am = /早上|上午|清晨|凌晨|明早|一早|\bam\b|a\.m\.|morning/i.test(t);
+    // 沒說上午或下午的 1～6 點一律當下午（「5 點要到高鐵」＝17:00，半夜問也一樣）；7～11 點照舊依現在時間判斷
+    if (h >= 1 && h <= 6 && !am) h += 12;
+    else if (h < 12 && (/下午|晚上|傍晚|今晚|pm|evening|tonight/i.test(t) || (!am && now.getHours() >= h))) h += 12;
     return `${pad(h % 24)}:${pad(mi)}`;
   }
   function whenIn(t, now){

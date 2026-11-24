@@ -90,7 +90,7 @@ function routePrompt(places){
     "工具：",
     "1. commute：交通精算（比較公車、計程車、拼車的時間與費用）。使用者要「去／到」中壢火車站、高鐵、台北，或問怎麼去、幾點要到、來不來得及。",
     "   args：{\"dest\": \"zl\"(中壢火車站)|\"hsr\"(高鐵桃園站)|\"tpe\"(台北、松山機場), \"arriveBy\": \"HH:MM\" 或 null, \"luggage\": true/false, \"priority\": \"time\"|\"balanced\"|\"money\", \"origin\": \"gate\"(正門)|\"back\"(後門)|\"snack\"(宵夜街)|\"edu\"(綜教館)}",
-    "   「5 點要到」依現在時間換成 24 小時制（例如現在是下午，就是 17:00）。趕時間 → time；省錢 → money；其他 → balanced。沒說出發點 → gate。",
+    "   「5 點要到」換成 24 小時制：沒說上午或下午的 1～6 點一律當下午（5 點＝17:00，不管現在幾點）；說了早上、上午、凌晨才是上午。趕時間 → time；省錢 → money；其他 → balanced。沒說出發點 → gate。",
     "2. find_rides：找別人開的拼車團。「有人揪嗎」「有沒有人一起」「找…的車」。",
     "   args：{\"from\": 地點或 null, \"to\": 地點或 null, \"when\": \"YYYY-MM-DDTHH:mm\" 或 null}",
     "3. draft_ride：使用者想自己開團、揪人（「我要開團」「幫我揪」「我要揪人去…」）。注意：「幫我揪…的車」是要自己開一團（draft_ride），不是找別人的團（find_rides）。",
@@ -133,6 +133,15 @@ function routePrompt(places){
 }
 
 // 檢查並整理 AI 選的工具與參數：不合法的值一律變成 null，不會讓前端拿到奇怪的資料
+// 沒說上午或下午的 1～6 點一律當下午（「我 5 點要到高鐵」＝17:00）。只改使用者自己說出的那個鐘點，說了早上／上午／凌晨就不改
+const AM_WORDS = /早上|上午|清晨|凌晨|明早|一早|\bam\b|a\.m\.|morning/i;
+const ZH_HOUR = { 一: 1, 二: 2, 兩: 2, 三: 3, 四: 4, 五: 5, 六: 6 };
+function pmFix(hm, message){
+  if (!hm || !/^\d{2}:\d{2}$/.test(hm) || AM_WORDS.test(message)) return hm;
+  const h = +hm.slice(0, 2); if (h < 1 || h > 6) return hm;
+  const said = [...String(message).matchAll(/(\d{1,2}|[一二兩三四五六])\s*(?:[點:：時]|o'?clock|pm)/gi)].some(m => (ZH_HOUR[m[1]] || +m[1]) === h);
+  return said ? `${String(h + 12).padStart(2, "0")}${hm.slice(2)}` : hm;
+}
 function cleanRoute(j, places, message = ""){
   if (!j || typeof j !== "object") return null;
   const tool = pick(j.tool, TOOLS); if (!tool) return null;
@@ -166,6 +175,9 @@ function cleanRoute(j, places, message = ""){
   else if (tool === "find_food") args = { budget: int(a.budget, 1, 3), type: pick(a.type, FOOD_TYPES), maxWalkMin: int(a.maxWalkMin, 1, 60), keyword: text(a.keyword, 20) };
   if (tool === "commute" && !args.dest) return { tool: "none", args: {} };   // 沒有目的地就無法精算
   if (tool === "find_course" && !args.keyword) return { tool: "none", args: {} };
+  // 沒說上午或下午的 1～6 點一律當下午：AI 偶爾會依現在時間（例如凌晨）算成 05:00，這裡依原話修正
+  if (tool === "commute") args.arriveBy = pmFix(args.arriveBy, message);
+  if ((tool === "find_rides" || tool === "draft_ride") && args.when) args.when = args.when.slice(0, 11) + pmFix(args.when.slice(11), message);
   // 用使用者原話做確定性的修正（Azure 實測時 AI 偶爾會選錯這兩種）
   if (tool === "find_rides" && /幫我揪|我要揪|我想揪|揪人|我要開團|開一團|幫我開團/.test(message))
     return { tool: "draft_ride", args: { from: args.from, to: args.to, when: args.when, seats: null, luggage: "none" } };
@@ -342,6 +354,7 @@ module.exports = async (req, res) => {
   }
 };
 module.exports.cleanRoute = cleanRoute;
+module.exports.pmFix = pmFix;
 module.exports.weatherResult = weatherResult;
 module.exports.finishWebReply = finishWebReply;
 module.exports.localizeQuery = localizeQuery;
