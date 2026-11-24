@@ -650,6 +650,7 @@ a.ghost{color:var(--ink)}
 <script src="/ai-look.js"></script>
 <script src="/welcome.js"></script>
 <script src="/rai.js"></script>
+<script src="/tt-voice.js"></script>
 
 
 <script>
@@ -796,7 +797,7 @@ RAI.init({ lang:()=>I18N.lang, onChange:()=>renderKeep() });
 const AISTATS = window.sgAIStats || { init(){}, flush(){}, load(){}, summary:()=>({ status:"error", total:0, rate:0, avg:0, list:[] }) };
 AISTATS.init({ db:()=>S.db, uid:()=>S.uid, canWrite:()=>S.canWrite, onChange:()=>renderKeep() });
 const AI_FEATURES = { "ai-chat":"問松果（一般回答）", "ai-agent:route":"AI 代理人：選工具", "ai-agent:answer":"AI 代理人：寫回答",
-  "ai-ride:commute_advisor":"交通精算", "ai-ride:parse_ride":"一句話找車・開團", "ai-translate":"AI 翻譯", "ai-today":"今日松果",
+  "ai-ride:commute_advisor":"交通精算", "ai-ride:parse_ride":"一句話找車・開團", "ai-translate":"AI 翻譯", "ai-today":"今日松果", "ai-timetable":"用說的建立課表",
   "ai-chatroom:summary":"大廳懶人包", "ai-chatroom:icebreaker":"大廳破冰話題", "ai-chatroom:moderate":"內容安全檢查", "events:match":"活動空檔媒合" };
 function aistatsPage(){
   const st = AISTATS.summary();
@@ -2642,6 +2643,10 @@ function forumPage(){
 const DAYN = ["","一","二","三","四","五","六","日"];
 const CCOLORS = ["#235c45","#1d4f9e","#c2552b","#7a3fa0","#c98a00","#c23a6e","#2a7a8a","#5a677a"];
 function tt(){ return S.timetable || { courses:[], remind:10, until:"2027-01-15" }; }
+// 🎤 用說的建立課表（web/tt-voice.js）：AI 整理成清單 → 預覽修改 → 確認才寫入
+const TTV = window.sgTTVoice || null;
+if (TTV) TTV.init({ h, tr:s=>tr(s), voice:VOICE, toast:m=>toast(m), tt:()=>tt(), save:next=>saveTimetable(next), colors:CCOLORS,
+  open:()=>openModal({k:"ttvoice"}), closeModal:()=>closeModal(), rerender:()=>{ if (S.modal && S.modal.k==="ttvoice") render(); } });
 async function saveTimetable(next){
   S.timetable = next; LS.set("pc.tt", JSON.stringify(next)); scheduleReminders(); render();
   if (S.db && S.uid && S.canWrite !== false){ try { await S.db.doc(`data/users/${S.uid}/timetable`).set(next); } catch(e){ toast("課表已存在這台裝置，但同步失敗：" + writeErr(e)); } }
@@ -2687,6 +2692,7 @@ function schedulePage(){
     nextClassCard(),
     h("div",{class:"bar"},
       h("button",{class:"primary",onclick:()=>openModal({k:"course",c:null})},"＋ 新增課程"),
+      TTV ? TTV.button() : null,
       h("span",{class:"spacer"}),
       h("button",{class:"ghost",disabled:!cs.length,onclick:()=>downloadIcs()},"匯入手機行事曆"),
       h("button",{class:"ghost",onclick:()=>openModal({k:"ttset"})},"提醒設定")),
@@ -3047,7 +3053,7 @@ function openModal(m){ S.modal = m; render(); const f = document.querySelector("
 function closeModal(){ S.modal = null; S.dirty = false; render(); }
 function renderOverlay(){
   if (!S.modal) return;
-  const B = { profile:profileSheet, loc:locSheet, post:postSheet, report:reportSheet, del:delSheet, ride:rideSheet, delride:delRideSheet, dmreq:dmReqSheet, install:installSheet, bus:busSheet, food:foodSheet, delfood:delFoodSheet, landmarks:landmarkSheet, course:courseSheet, ttset:ttSettingsSheet, spot:spotSheet, create:createSheet, event:eventSheet };
+  const B = { profile:profileSheet, loc:locSheet, post:postSheet, report:reportSheet, del:delSheet, ride:rideSheet, delride:delRideSheet, dmreq:dmReqSheet, install:installSheet, bus:busSheet, food:foodSheet, delfood:delFoodSheet, landmarks:landmarkSheet, course:courseSheet, ttset:ttSettingsSheet, ttvoice:()=>TTV ? TTV.sheet() : sheet(""), spot:spotSheet, create:createSheet, event:eventSheet };
   overlayEl = h("div",{class:"scrim",onclick:e=>{ if (e.target===overlayEl) closeModal(); }}, B[S.modal.k]());
   overlayEl.addEventListener("keydown", e => { if (e.key==="Escape") closeModal(); });
   app.append(overlayEl);
