@@ -191,6 +191,8 @@
     "可以問我公車、活動、美食和你的課表。我只會根據松果網站上的資料回答。":"Ask me about buses, events, food and your timetable. I only answer from data on Songguo.",
     "下一班到中壢火車站的公車是幾點？":"When is the next bus to Zhongli Station?", "這週有什麼活動？有提供餐點的嗎？":"What events are on this week? Any with free food?",
     "評價最高的店有哪些？":"Which places are rated highest?", "我的下一堂課是什麼時候、在哪裡？":"When and where is my next class?",
+  // 全站語音問答
+  "朗讀":"Read aloud", "停止朗讀":"Stop reading", "這個瀏覽器不支援語音輸入，可以改用 Chrome 或 Edge，或直接打字。":"This browser doesn't support voice input. Try Chrome or Edge, or just type.",
   // 松果 2.0 首頁精簡、右欄問松果、交通膠囊按鈕
   "現在出發去":"Leave now for", "今天的校園":"Campus today", "AI 可能出錯，重要資訊請以網站頁面與學校公告為準。":"AI can make mistakes. Check the site pages and official school notices for anything important.",
     "輸入問題…":"Type a question…", "清除對話":"Clear chat", "松果正在想…":"Songguo is thinking…", "看拼車":"See ride shares",

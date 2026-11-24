@@ -3,10 +3,13 @@
    - 即時大廳輸入框、「問松果」輸入框旁有麥克風按鈕。
    - 中文介面用 zh-TW，英文介面用 en-US。
    - 辨識結果只「填進輸入框」，由使用者自己按送出，絕不自動發送。
+     例外：問松果（首頁、浮動視窗、電腦版右欄）傳了 onFinal，說完會直接送出並朗讀回答（web/speak.js）。
+   - 點一下：說完停頓就自動結束；按住：放開就結束（兩種都可以）。
    - 瀏覽器不支援（例如部分 iPhone）就不顯示按鈕。
    index.html 用法：
      VOICE.init({ lang:()=>I18N.lang, toast:m=>toast(m), tr:s=>I18N.tr(s) })
      VOICE.button("lobby", () => document.getElementById("lobby-in"))   // 不支援時回傳 null
+     VOICE.button("home-ask", getInput, { onFinal: text => …, onPress: () => … })   // 說完自動送出
      「問松果」的輸入框在 web/assistant.js 裡，這裡會在視窗出現後自動把按鈕加上去，不用改 assistant.js。
    ===================================================================== */
 (() => {
@@ -33,35 +36,53 @@
     }
   }
   function stop(){ if (rec){ try { rec.stop(); } catch {} } }
-  function start(key, getInput){
+  function start(key, getInput, opts){
     if (rec){ const same = activeKey === key; stop(); if (same) return; }
+    opts = opts || {};
     const inp = getInput(); if (!inp || inp.disabled) return;
     const r = new SR();
     r.lang = app.lang() === "en" ? "en-US" : "zh-TW";
     r.interimResults = true; r.continuous = false; r.maxAlternatives = 1;
     const base = inp.value, sep = base && !/\s$/.test(base) && app.lang() === "en" ? " " : "";
     const max = inp.maxLength > 0 ? inp.maxLength : 500;
+    let heard = "", failed = false;
     r.onresult = e => {
       let text = ""; for (const res of e.results) text += res[0].transcript;
+      heard = text;
       const el = getInput(); if (!el) return;     // 畫面重繪過也找得到新的輸入框
       el.value = (base + sep + text).slice(0, max);
       el.dispatchEvent(new Event("input", { bubbles: true }));
     };
-    r.onerror = e => { if (e.error !== "aborted") app.toast(ERR[e.error] || "語音辨識失敗，請再試一次。"); };
+    r.onerror = e => { failed = true; if (e.error !== "aborted") app.toast(ERR[e.error] || "語音辨識失敗，請再試一次。"); };
     r.onend = () => {
       if (rec === r){ rec = null; activeKey = null; sync(); }
-      const el = getInput(); if (el && !el.disabled){ el.focus({ preventScroll: true }); try { el.setSelectionRange(el.value.length, el.value.length); } catch {} }
+      const el = getInput();
+      // 說完自動送出：清掉輸入框、交給 onFinal
+      if (opts.onFinal && heard.trim() && !failed){
+        const full = (base + sep + heard).slice(0, max);
+        if (el){ el.value = ""; el.dispatchEvent(new Event("input", { bubbles: true })); }
+        opts.onFinal(full.trim()); return;
+      } if (el && !el.disabled){ el.focus({ preventScroll: true }); try { el.setSelectionRange(el.value.length, el.value.length); } catch {} }
     };
     rec = r; activeKey = key;
     try { r.start(); } catch { rec = null; activeKey = null; app.toast("語音辨識失敗，請再試一次。"); }
     sync();
   }
 
-  function button(key, getInput){
+  const HOLD = 450;   // 按住超過這個時間（毫秒）才算「按住說話」，放開就結束
+  function button(key, getInput, opts){
     if (!SR) return null;
     const b = document.createElement("button");
     b.type = "button"; b.className = "mic-btn"; b.dataset.key = key; b.innerHTML = MIC;
-    b.addEventListener("click", e => { e.preventDefault(); start(key, getInput); });
+    let downAt = 0;
+    const press = () => { if (opts && opts.onPress) opts.onPress(); start(key, getInput, opts); };
+    // 滑鼠、手指：按下就開始聽（點一下＝說完停頓自動結束；按住＝放開就結束）
+    b.addEventListener("pointerdown", e => { if (e.button !== 0) return; e.preventDefault(); downAt = Date.now(); press(); });
+    b.addEventListener("pointerup", () => { if (downAt && Date.now() - downAt > HOLD && activeKey === key) stop(); downAt = 0; });
+    b.addEventListener("pointercancel", () => { downAt = 0; });
+    b.addEventListener("contextmenu", e => e.preventDefault());   // 手機長按不要跳出選單
+    // 鍵盤（Enter、空白鍵）：點一下開始，再點一下停止
+    b.addEventListener("click", e => { e.preventDefault(); if (e.detail === 0) press(); });
     setTimeout(sync);   // 畫面重繪後，讓新按鈕顯示目前是否正在聽
     return b;
   }
