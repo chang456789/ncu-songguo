@@ -136,10 +136,12 @@ async function post(url, extraHeaders, body, opts) {
 
 // 簡單的防濫用：同一個 IP 每分鐘最多 limit 次（同一台伺服器實例內有效，足夠擋住惡意狂刷）
 const hits = new Map();
-function rateLimit(req, limit = 12) {
+// bucket：選填，分開計算的類別（例如 api/ai-agent.js 代為執行的 /api/ai-timetable 用 "timetable"，不和問松果共用額度）
+function rateLimit(req, limit = 12, bucket = "") {
   const ip = String(req.headers["x-forwarded-for"] || req.socket?.remoteAddress || "?").split(",")[0].trim();
-  const now = Date.now(); const list = (hits.get(ip) || []).filter(t => now - t < 60000);
-  list.push(now); hits.set(ip, list);
+  const key = bucket ? bucket + ":" + ip : ip;
+  const now = Date.now(); const list = (hits.get(key) || []).filter(t => now - t < 60000);
+  list.push(now); hits.set(key, list);
   if (hits.size > 5000) hits.clear();
   return list.length <= limit;
 }

@@ -415,6 +415,8 @@ nav.bottom{display:none}
 .mod-note .linkbtn{font-size:13px}
 @media (max-width:720px){ .wrap>.stack>.mod-note,.wrap>.stack>[data-live="lobbymod"]{margin-inline:12px} }
 /* 語音輸入（web/voice.js） */
+.mic-btn{touch-action:manipulation;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+.ask-novoice{margin:-4px 0 0}
 .mic-btn{flex:none;width:42px;height:42px;border-radius:50%;border:1px solid var(--line);background:var(--sunk);color:var(--ink);display:inline-grid;place-items:center;padding:0;cursor:pointer}
 .mic-btn:hover{border-color:var(--pine);color:var(--pine)}
 .mic-btn.on{background:var(--pine);border-color:var(--pine);color:var(--bg);animation:mic-pulse 1.2s ease-in-out infinite}
@@ -637,6 +639,7 @@ a.ghost{color:var(--ink)}
 <script src="/chatroom-ai.js"></script>
 <script src="/moderation.js"></script>
 <script src="/voice.js"></script>
+<script src="/speak.js"></script>
 <script src="/ride-ai.js"></script>
 <script src="/privacy.js"></script>
 <script src="/agent.js"></script>
@@ -651,6 +654,7 @@ a.ghost{color:var(--ink)}
 <script src="/welcome.js"></script>
 <script src="/rai.js"></script>
 <script src="/mine.js"></script>
+<script src="/tt-voice.js"></script>
 
 
 <script>
@@ -744,6 +748,9 @@ const PRESET_LOCS = [
   ["xinyuan","歆園","wx","331巷"],["baoshu","寶樹屋","wx",""],["sanyou","三友新村","zd",""],
 ].map(([id,name,zone,lane]) => ({ id, name, zone, lane, preset:true }));
 const HOUSE_TYPES = ["獨立套房","分租套房","雅房","家庭式整層","整棟透天","其他"];
+// 舊問題：之前在英文介面發的招租文，房型存成了英文。顯示時換回中文，中英文介面就都能正確顯示
+const HOUSE_TYPE_EN = { "Studio":"獨立套房", "Shared-flat room":"分租套房", "Room (shared bath)":"雅房", "Whole flat":"家庭式整層", "Whole house":"整棟透天", "Other":"其他" };
+const htypeZh = v => HOUSE_TYPE_EN[v] || v;
 
 const DISCLAIMER = "本人保證所述內容皆為親身經歷之事實，未捏造或誇大，並對發文內容自負法律責任（包括但不限於刑法第 310 條誹謗罪及民事損害賠償）。本站僅提供交流平台，不代表本站立場，亦不擔保內容之真實性。請勿揭露房東或他人之全名、電話、身分證字號等個人資料。被檢舉內容將暫時隱藏並由管理員審核。";
 
@@ -804,7 +811,7 @@ RAI.init({ lang:()=>I18N.lang, onChange:()=>renderKeep() });
 const AISTATS = window.sgAIStats || { init(){}, flush(){}, load(){}, summary:()=>({ status:"error", total:0, rate:0, avg:0, list:[] }) };
 AISTATS.init({ db:()=>S.db, uid:()=>S.uid, canWrite:()=>S.canWrite, onChange:()=>renderKeep() });
 const AI_FEATURES = { "ai-chat":"問松果（一般回答）", "ai-agent:route":"AI 代理人：選工具", "ai-agent:answer":"AI 代理人：寫回答",
-  "ai-ride:commute_advisor":"交通精算", "ai-ride:parse_ride":"一句話找車・開團", "ai-translate":"AI 翻譯", "ai-today":"今日松果",
+  "ai-ride:commute_advisor":"交通精算", "ai-ride:parse_ride":"一句話找車・開團", "ai-translate":"AI 翻譯", "ai-today":"今日松果", "ai-timetable":"用說的建立課表",
   "ai-chatroom:summary":"大廳懶人包", "ai-chatroom:icebreaker":"大廳破冰話題", "ai-chatroom:moderate":"內容安全檢查", "events:match":"活動空檔媒合" };
 function aistatsPage(){
   const st = AISTATS.summary();
@@ -1495,16 +1502,18 @@ function feedItems(kind){
 //   ① #hero（像素松鼠，在橫幅裡，由 page() 加在最上面）＋問松果大輸入框＋3 個建議問題；回答直接在下面展開（AI.thread），不開視窗
 //   ② #today 今日松果　③ 今天的校園（活動＋熱門貼文，橫向滑動）　④ 動態
 function homePage(){
-  const ask = v => { v = String(v || "").trim(); if (!v) return; const el = document.getElementById("home-ask"); if (el) el.value = "";
-    if (AI.ask) AI.ask(v, { inline:true }); else AI.open(v); };
+  const ask = (v, voice) => { v = String(v || "").trim(); if (!v) return; const el = document.getElementById("home-ask"); if (el) el.value = "";
+    if (AI.ask) AI.ask(v, { inline:true, voice:!!voice }); else AI.open(v); };
   const input = h("input",{type:"text",id:"home-ask",maxlength:"500",autocomplete:"off",enterkeyhint:"send",placeholder:"問松果：公車、拼車、活動、美食、課表…","aria-label":"問松果"});
   input.addEventListener("keydown", e => { if (e.key === "Enter" && !e.isComposing && e.keyCode !== 229) ask(input.value); });
   const sugs = AI.suggestions ? AI.suggestions() : [];
   return h("div",{class:"stack home2"},
     statusBanner(),
     h("section",{class:"card ask-hero"},
-      h("div",{class:"ask-row"}, input, VOICE.button ? VOICE.button("home-ask", () => document.getElementById("home-ask")) : null,
+      // 麥克風：點一下或按住說話，說完直接送出，回答會念出來（web/voice.js、web/speak.js）
+      h("div",{class:"ask-row"}, input, AI.mic ? AI.mic("home-ask", () => document.getElementById("home-ask"), true) : VOICE.button ? VOICE.button("home-ask", () => document.getElementById("home-ask")) : null,
         h("button",{class:"primary",onclick:()=>ask(document.getElementById("home-ask").value)},"問")),
+      VOICE.supported === false ? h("p",{class:"muted small ask-novoice"},"這個瀏覽器不支援語音輸入，可以改用 Chrome 或 Edge，或直接打字。") : null,
       sugs.length ? h("div",{class:"ask-sugs"}, sugs.slice(0, 3).map(q => h("button",{class:"chip",onclick:()=>ask(tr(q))}, q))) : null,
       AI.thread ? h("div",{class:"home-thread"}, AI.thread()) : null),
     h("div",{id:"today"}, TODAY ? TODAY.card() : null),
@@ -2069,7 +2078,7 @@ function postCard(p){
   const tv = TR.view("post:"+p.id, [p.title || "", p.body || ""]);
   card.append(h("h3",{translate:"no"},tv.texts[0]));
   if (p.price) card.append(h("div",{class:"price"}, p.price));
-  if (p.rent) card.append(h("div",{class:"price"}, p.rent, p.htype ? h("span",{class:"muted small",style:"font-weight:400"},"　"+p.htype) : null));
+  if (p.rent) card.append(h("div",{class:"price"}, p.rent, p.htype ? h("span",{class:"muted small",style:"font-weight:400"},"　"+htypeZh(p.htype)) : null));
   if (p.ratings) card.append(h("div",{class:"scores"}, [["隔音",p.ratings.sound],["房東態度",p.ratings.landlord],["CP 值",p.ratings.cp]].map(([k,n]) => h("div",{class:"score"},k,dots(n)))));
   card.append(h("p",{class:"body",translate:"no"},tv.texts[1]));
   if (PH && p.photos && p.photos.length && !hidden){ const th = PH.thumbs(p.photos); if (th) card.append(h("div",{class:"post-photos"}, th)); }
@@ -2656,6 +2665,10 @@ function forumPage(){
 const DAYN = ["","一","二","三","四","五","六","日"];
 const CCOLORS = ["#235c45","#1d4f9e","#c2552b","#7a3fa0","#c98a00","#c23a6e","#2a7a8a","#5a677a"];
 function tt(){ return S.timetable || { courses:[], remind:10, until:"2027-01-15" }; }
+// 🎤 用說的建立課表（web/tt-voice.js）：AI 整理成清單 → 預覽修改 → 確認才寫入
+const TTV = window.sgTTVoice || null;
+if (TTV) TTV.init({ h, tr:s=>tr(s), voice:VOICE, toast:m=>toast(m), tt:()=>tt(), save:next=>saveTimetable(next), colors:CCOLORS,
+  open:()=>openModal({k:"ttvoice"}), closeModal:()=>closeModal(), rerender:()=>{ if (S.modal && S.modal.k==="ttvoice") render(); } });
 async function saveTimetable(next){
   S.timetable = next; LS.set("pc.tt", JSON.stringify(next)); scheduleReminders(); render();
   if (S.db && S.uid && S.canWrite !== false){ try { await S.db.doc(`data/users/${S.uid}/timetable`).set(next); } catch(e){ toast("課表已存在這台裝置，但同步失敗：" + writeErr(e)); } }
@@ -2701,6 +2714,7 @@ function schedulePage(){
     nextClassCard(),
     h("div",{class:"bar"},
       h("button",{class:"primary",onclick:()=>openModal({k:"course",c:null})},"＋ 新增課程"),
+      TTV ? TTV.button() : null,
       h("span",{class:"spacer"}),
       h("button",{class:"ghost",disabled:!cs.length,onclick:()=>downloadIcs()},"匯入手機行事曆"),
       h("button",{class:"ghost",onclick:()=>openModal({k:"ttset"})},"提醒設定")),
@@ -3061,7 +3075,7 @@ function openModal(m){ S.modal = m; render(); const f = document.querySelector("
 function closeModal(){ S.modal = null; S.dirty = false; render(); }
 function renderOverlay(){
   if (!S.modal) return;
-  const B = { profile:profileSheet, loc:locSheet, post:postSheet, report:reportSheet, del:delSheet, ride:rideSheet, delride:delRideSheet, dmreq:dmReqSheet, install:installSheet, bus:busSheet, food:foodSheet, delfood:delFoodSheet, landmarks:landmarkSheet, course:courseSheet, ttset:ttSettingsSheet, spot:spotSheet, create:createSheet, event:eventSheet };
+  const B = { profile:profileSheet, loc:locSheet, post:postSheet, report:reportSheet, del:delSheet, ride:rideSheet, delride:delRideSheet, dmreq:dmReqSheet, install:installSheet, bus:busSheet, food:foodSheet, delfood:delFoodSheet, landmarks:landmarkSheet, course:courseSheet, ttset:ttSettingsSheet, ttvoice:()=>TTV ? TTV.sheet() : sheet(""), spot:spotSheet, create:createSheet, event:eventSheet };
   overlayEl = h("div",{class:"scrim",onclick:e=>{ if (e.target===overlayEl) closeModal(); }}, B[S.modal.k]());
   overlayEl.addEventListener("keydown", e => { if (e.key==="Escape") closeModal(); });
   app.append(overlayEl);
@@ -3155,7 +3169,8 @@ function postSheet(){
   title.addEventListener("input", saveDraft); body.addEventListener("input", saveDraft);
   const price = sp.price ? h("input",{type:"text",id:"p-price",maxlength:"20",placeholder:"例：NT$300、免費",value:m.price||""}) : null;
   const rent = sp.rent ? h("input",{type:"text",id:"p-rent",maxlength:"24",placeholder:"例：月租 6,500（含水）",value:m.price||""}) : null;
-  const htype = sp.rent ? h("select",{id:"p-htype"}, HOUSE_TYPES.map(t => h("option",{},t))) : null;
+  // 選項加上固定的中文 value：英文介面時選項文字會被翻成英文，但存進資料庫的房型一律是中文
+  const htype = sp.rent ? h("select",{id:"p-htype"}, HOUSE_TYPES.map(t => h("option",{value:t},t))) : null;
   // 照片（web/photos.js）：市集、招租可以放 4 張；網址暫存在 S.modal，重繪也不會不見
   const photoPick = PH && (sp.price || sp.rent) ? PH.picker({ max:4, value:m.photos||[], onChange:urls=>{ m.photos = urls; } }) : null;
   // AI 發文助手：讀使用者寫的一句話，填好標題、分類、內文、價格；失敗時表單不動。結果存進 S.modal，重繪也不會不見
