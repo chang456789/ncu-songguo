@@ -178,7 +178,7 @@
   function hello(onAsk, n){
     return el("div", { class: "ai-hello" },
       el("b", {}, t("嗨，我是松果 AI 助理")),
-      el("p", {}, t("可以問我公車、活動、美食和你的課表。我只會根據松果網站上的資料回答。")),
+      el("p", {}, t("可以問我公車、活動、美食、課表，也能幫你上網查最新消息。")),
       VOICE() && !VOICE().supported ? el("p", { class: "ai-novoice" }, t("這個瀏覽器不支援語音輸入，可以改用 Chrome 或 Edge，或直接打字。")) : null,
       el("div", { class: "ai-sugs" }, SUGGEST.slice(0, n || SUGGEST.length).map(q => el("button", { type: "button", class: "ai-sug", onclick: () => onAsk(t(q)) }, t(q)))));
   }

@@ -205,7 +205,7 @@
     // ---------- AI assistant (web/assistant.js) ----------
     "問松果":"Ask Songguo", "松果 AI 助理":"Songguo AI assistant", "AI 助理幫你查公車、活動、美食和課表":"Your AI assistant for buses, events, food and classes",
     "自己問…":"Ask your own…", "嗨，我是松果 AI 助理":"Hi, I'm the Songguo AI assistant",
-    "可以問我公車、活動、美食和你的課表。我只會根據松果網站上的資料回答。":"Ask me about buses, events, food and your timetable. I only answer from data on Songguo.",
+    "可以問我公車、活動、美食、課表，也能幫你上網查最新消息。":"Ask me about buses, events, food and your timetable. I can also search the web for the latest news.",
     "下一班到中壢火車站的公車是幾點？":"When is the next bus to Zhongli Station?", "這週有什麼活動？有提供餐點的嗎？":"What events are on this week? Any with free food?",
     "評價最高的店有哪些？":"Which places are rated highest?", "我的下一堂課是什麼時候、在哪裡？":"When and where is my next class?",
   // 全站語音問答
