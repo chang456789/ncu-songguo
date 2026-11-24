@@ -8,7 +8,10 @@
    index.html 用法：
      AI.init({ context: async () => ({...}), lang: () => I18N.lang, tr: s => I18N.tr(s),
                translate: el => I18N.translate(el), visible: () => true/false, openRides: () => {...} })
-     AI.homeCard()   // 首頁的「問松果」卡片
+     AI.homeCard()   // 首頁的「問松果」卡片（舊首頁用）
+     AI.ask(q, { inline: true })   // 首頁大輸入框：不開視窗，回答畫在 AI.thread() 裡
+     AI.thread()     // 首頁輸入框下面的對話（同一個節點重複使用，重繪不會清掉）
+     AI.dock()       // 電腦版右欄常駐的問松果（有自己的輸入框）
      AI.sync()       // 每次 render() 後呼叫，決定右下角按鈕要不要顯示
    ===================================================================== */
 (() => {
@@ -26,6 +29,8 @@
   let app = { context: async () => ({}), lang: () => "zh", tr: s => s, translate: () => {}, visible: () => true, openRides: () => {} };
   const msgs = [];          // { role: "user" | "assistant", content, showRides?, kind? }  kind: "notice" = 系統提示（不送給 AI）
   let busy = false, panel = null, fab = null, listEl = null, inputEl = null, sendBtn = null;
+  // 首頁與右欄的對話區：和浮動視窗共用同一份 msgs，每次 draw() 一起更新
+  const views = { thread: null, dock: null };
   const t = s => app.tr(s);
 
   /* ---------- 小工具：產生 DOM ---------- */
@@ -69,9 +74,10 @@
   }
 
   /* ---------- 發問 ---------- */
-  async function ask(text){
+  async function ask(text, opts){
     text = String(text || "").trim().slice(0, MAX_INPUT);
     if (!text || busy) return;
+    const inline = !!(opts && opts.inline);
     const history = msgs.filter(m => m.kind !== "notice").slice(-6).map(m => ({ role: m.role, content: m.content }));
     msgs.push({ role: "user", content: text });
     busy = true; draw();
@@ -86,7 +92,7 @@
         const AGENT_NOTE = { not_configured: "AI 尚未設定，以下是程式直接找到的結果。", rate_limited: "AI 使用太頻繁了，以下是程式直接找到的結果。",
           timeout: "AI 回應逾時，以下是程式直接找到的結果。", error: "AI 暫時無法使用，以下是程式直接找到的結果。" };
         msgs.push({ role: "assistant", content: out.reply, cards: out.cards, note: out.byAI ? null : AGENT_NOTE[out.status] || null });
-        busy = false; draw();
+        busy = false; draw(); if (inline) reveal();
         if (inputEl && panel && !panel.hidden) inputEl.focus({ preventScroll: true });
         return;
       }
@@ -111,8 +117,15 @@
       // 失敗的問題不放進之後的對話紀錄，避免 AI 看到沒有回答的問題
       const i = msgs.length - 2; if (msgs[i] && msgs[i].role === "user") msgs[i].kind = "notice";
     }
-    busy = false; draw();
+    busy = false; draw(); if (inline) reveal();
     if (inputEl && panel && !panel.hidden) inputEl.focus({ preventScroll: true });
+  }
+  // 首頁：回答出來後把最新的一則捲進畫面（不搶輸入框的焦點）
+  function reveal(){
+    const v = views.thread && views.thread.el;
+    if (!v || !v.isConnected || !v.offsetParent) return;
+    const last = v.querySelector(".ai-row:last-child");
+    if (last) last.scrollIntoView({ block: "nearest", behavior: "smooth" });
   }
 
   /* ---------- 畫面 ---------- */
@@ -129,17 +142,35 @@
             el("span", { class: "ai-card-txt" }, el("b", {}, c.title), c.sub ? el("small", {}, c.sub) : null),
             el("span", { class: "ai-card-go", "aria-hidden": "true" }, "›")))) : null));
   }
+  function hello(onAsk, n){
+    return el("div", { class: "ai-hello" },
+      el("b", {}, t("嗨，我是松果 AI 助理")),
+      el("p", {}, t("可以問我公車、活動、美食和你的課表。我只會根據松果網站上的資料回答。")),
+      el("div", { class: "ai-sugs" }, SUGGEST.slice(0, n || SUGGEST.length).map(q => el("button", { type: "button", class: "ai-sug", onclick: () => onAsk(t(q)) }, t(q)))));
+  }
+  function typing(){ return el("div", { class: "ai-row" }, el("div", { class: "ai-bubble ai-typing", role: "status" }, el("i"), el("i"), el("i"), el("span", {}, t("松果正在想…")))); }
+  // 首頁、右欄的對話區
+  function drawViews(){
+    const th = views.thread;
+    if (th){
+      th.el.hidden = !msgs.length && !busy;
+      th.list.replaceChildren(...msgs.slice(-6).map(bubble), ...(busy ? [typing()] : []));
+      th.clear.hidden = !msgs.length || busy;
+    }
+    const dk = views.dock;
+    if (dk){
+      dk.list.replaceChildren(...(msgs.length ? [] : [hello(q => ask(q), 3)]), ...msgs.map(bubble), ...(busy ? [typing()] : []));
+      dk.list.scrollTop = dk.list.scrollHeight;
+      dk.send.disabled = busy; dk.clear.hidden = !msgs.length || busy;
+    }
+  }
   function draw(){
+    drawViews();
     if (!panel) return;
     const kids = [];
-    if (!msgs.length){
-      kids.push(el("div", { class: "ai-hello" },
-        el("b", {}, t("嗨，我是松果 AI 助理")),
-        el("p", {}, t("可以問我公車、活動、美食和你的課表。我只會根據松果網站上的資料回答。")),
-        el("div", { class: "ai-sugs" }, SUGGEST.map(q => el("button", { type: "button", class: "ai-sug", onclick: () => ask(t(q)) }, t(q))))));
-    }
+    if (!msgs.length) kids.push(hello(q => ask(q)));
     for (const m of msgs) kids.push(bubble(m));
-    if (busy) kids.push(el("div", { class: "ai-row" }, el("div", { class: "ai-bubble ai-typing", role: "status" }, el("i"), el("i"), el("i"), el("span", {}, t("松果正在想…")))));
+    if (busy) kids.push(typing());
     listEl.replaceChildren(...kids);
     listEl.scrollTop = listEl.scrollHeight;
     sendBtn.disabled = busy;
@@ -188,7 +219,43 @@
     // fabVisible：右下角按鈕要不要出現（首頁有大輸入框、地圖有自己的按鈕時不顯示）；不影響聊天視窗本身
     const fabOk = app.fabVisible ? !!app.fabVisible() : true;
     fab.hidden = !show || !fabOk || !panel.hidden;
+    // 有浮動按鈕時頁面底部多留空間，捲到最下面時按鈕不會蓋住最後一則內容
+    document.body.classList.toggle("has-fab", !fab.hidden);
     if (!show && !panel.hidden) close();
+  }
+
+  const clearAll = () => { if (busy) return; msgs.length = 0; draw(); };
+  // 首頁大輸入框下面的對話：同一個節點重複使用（index.html 重繪時搬回畫面），換語言時重建
+  function thread(){
+    if (!views.thread || views.thread.lang !== app.lang()){
+      const list = el("div", { class: "ai-tlist", "aria-live": "polite" });
+      const clear = el("button", { type: "button", class: "ai-clear", onclick: clearAll }, t("清除對話"));
+      const box = el("div", { class: "ai-thread", hidden: true }, list,
+        el("div", { class: "ai-tfoot" }, el("span", {}, t("AI 可能出錯，重要資訊請以網站頁面與學校公告為準。")), clear));
+      views.thread = { el: box, list, clear, lang: app.lang() };
+      drawViews();
+    }
+    return views.thread.el;
+  }
+  // 電腦版右欄：常駐的問松果（標題、對話、自己的輸入框）
+  function dock(){
+    if (!views.dock || views.dock.lang !== app.lang()){
+      const list = el("div", { class: "ai-list ai-dlist", "aria-live": "polite" });
+      const input = el("textarea", { class: "ai-dinput", id: "ai-dock-in", rows: "1", maxlength: String(MAX_INPUT), placeholder: t("輸入問題…"), "aria-label": t("輸入問題…") });
+      const go = () => { const v = input.value; if (!v.trim() || busy) return; input.value = ""; input.style.height = "auto"; ask(v); };
+      input.addEventListener("keydown", e => { if (e.key === "Enter" && !e.shiftKey && !e.isComposing && e.keyCode !== 229){ e.preventDefault(); go(); } });
+      input.addEventListener("input", () => { input.style.height = "auto"; input.style.height = Math.min(input.scrollHeight, 120) + "px"; });
+      const send = el("button", { type: "submit", class: "ai-send" }, t("送出"));
+      const clear = el("button", { type: "button", class: "ai-clear", onclick: clearAll }, t("清除對話"));
+      const box = el("section", { class: "ai-dock", "aria-label": t("松果 AI 助理") },
+        el("div", { class: "ai-head" }, spark(), el("b", {}, t("問松果")), clear),
+        list,
+        el("form", { class: "ai-form", onsubmit: e => { e.preventDefault(); go(); } }, input, send),
+        el("p", { class: "ai-foot" }, t("AI 可能出錯，重要資訊請以網站頁面與學校公告為準。")));
+      views.dock = { el: box, list, send, clear, lang: app.lang() };
+      drawViews();
+    }
+    return views.dock.el;
   }
 
   function homeCard(){
@@ -247,6 +314,23 @@
 .ai-send:disabled{opacity:.5;cursor:default}
 .ai-foot{margin:0;padding:2px 14px 10px;font-size:11.5px;color:var(--muted);line-height:1.4}
 .ai-card{display:flex;flex-direction:column;gap:10px}
+.ai-thread{display:flex;flex-direction:column;gap:10px;margin-top:4px;padding-top:12px;border-top:1px solid var(--line)}
+.ai-thread[hidden]{display:none}
+.ai-tlist{display:flex;flex-direction:column;gap:10px}
+.ai-tfoot{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--muted);line-height:1.4}
+.ai-tfoot span{flex:1}
+.ai-dock{display:flex;flex-direction:column;background:var(--surface);color:var(--ink);border:1px solid var(--line);border-radius:18px;overflow:hidden;height:min(460px,calc(100dvh - 300px));min-height:320px}
+.ai-dock .ai-head{padding:10px 8px 10px 14px}
+.ai-dock .ai-head b{font-size:15px}
+.ai-dock .ai-list{padding:12px}
+.ai-dock .ai-bubble{max-width:92%;font-size:14px}
+.ai-dock .ai-sug{font-size:13px;padding:7px 10px}
+.ai-dock textarea.ai-dinput{flex:1;width:auto;min-width:0;min-height:40px;height:40px;resize:none;background:var(--sunk);color:var(--ink);border:1px solid var(--line);border-radius:18px;padding:8px 12px;font:inherit;font-size:15px;line-height:1.4;max-height:120px}
+.ai-dock textarea.ai-dinput:focus{outline:none;border-color:var(--pine);background:var(--surface)}
+.ai-dock .ai-send{padding:9px 14px}
+/* 電腦版右欄有常駐的問松果：不需要右下角按鈕（右欄在 1180px 以下會收起來） */
+@media (min-width:1181px){ .ai-fab{display:none} }
+@media (min-width:721px) and (max-width:1180px){ body.has-fab .wrap{padding-bottom:96px} }
 .ai-card-top{display:flex;gap:10px;align-items:center;color:var(--pine)}
 .ai-card-top .ai-ico{width:28px;height:28px}
 .ai-card-top div{display:flex;flex-direction:column;gap:2px}
@@ -256,6 +340,7 @@
   .ai-fab{right:14px;bottom:calc(76px + env(safe-area-inset-bottom,0px));padding:11px 16px 11px 12px}
   .ai-panel{left:0;right:0;bottom:0;width:auto;height:min(88dvh,680px);border-radius:18px 18px 0 0;border-bottom:0;padding-bottom:env(safe-area-inset-bottom,0px)}
   body.ai-open{overflow:hidden}
+  body.has-fab .wrap{padding-bottom:calc(140px + env(safe-area-inset-bottom,0px))}
 }
 @media (prefers-reduced-motion:reduce){.ai-typing i{animation:none;opacity:.6}}
 `;
@@ -263,7 +348,7 @@
 
   window.sgAssistant = {
     init(opts){ app = { ...app, ...opts }; },
-    open, close, sync, homeCard, fit,
+    open, close, sync, homeCard, fit, ask, thread, dock,
     suggestions: () => SUGGEST.slice(),   // 首頁大輸入框下面的建議問題
   };
 })();

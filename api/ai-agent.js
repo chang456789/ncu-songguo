@@ -119,6 +119,26 @@ function cleanRoute(j, places, message = ""){
   return { tool, args };
 }
 
+// weather 工具的 result：伺服器的 Open-Meteo 抓不到時，改用前端已經載入的預報（中央氣象署或 Open-Meteo），
+// 並且直接挑出使用者問的那一天，AI 不用自己對日期（以前 result 常常只有 {day}，AI 就會自己編天氣）
+const taipeiDate = (off = 0, now = Date.now()) => new Date(now + 8 * 3600e3 + off * 864e5).toISOString().slice(0, 10);
+const n = v => v == null || v === "" || !Number.isFinite(+v) ? null : Math.round(+v);
+function clientForecast(f){
+  if (!f || typeof f !== "object" || !Array.isArray(f.days)) return null;
+  const days = f.days.slice(0, 7).map(d => d && typeof d === "object" ? { 日期: isoD(d.t), 天氣: text(d.wx, 12) || "", 最低: n(d.min), 最高: n(d.max), 降雨機率: n(d.pop) } : null)
+    .filter(d => d && d.日期 && d.最低 != null && d.最高 != null);
+  if (!days.length) return null;
+  const now = f.now && typeof f.now === "object" && n(f.now.temp) != null ? `${n(f.now.temp)}°C ${text(f.now.wx, 12) || ""}`.trim() : null;
+  return { 地點: "中央大學（桃園中壢）", 來源: text(f.source, 40) || "網站的天氣預報", 現在: now, 預報: days };
+}
+function weatherResult(day, server, client, now = Date.now()){
+  day = pick(day, ["today", "tomorrow", "dayafter"]) || "today";
+  const date = taipeiDate(day === "tomorrow" ? 1 : day === "dayafter" ? 2 : 0, now);
+  const wx = server || clientForecast(client);
+  const target = wx ? wx.預報.find(x => x.日期 === date) || null : null;
+  return { day, 日期: date, 當天預報: target, 天氣: wx, ...(wx ? {} : { 注意: "抓不到預報，請照實說抓不到，不要猜溫度或降雨機率" }) };
+}
+
 function answerPrompt(lang){
   return [
     "你是「松果」中央大學校園生活網站的 AI 代理人。程式已經依使用者的問題執行了工具，結果在 result。",
@@ -157,7 +177,7 @@ module.exports = async (req, res) => {
   } else if (body.step === "answer"){
     if (!TOOLS.includes(body.tool)) return fail(400, "bad_request", "不支援的工具");
     // weather 工具：天氣資料由伺服器向 Open-Meteo 取得（和 ai-chat 同一個來源），不用前端給
-    if (body.tool === "weather") body.result = { day: (body.args && body.args.day) || "today", 天氣: await weather() };
+    if (body.tool === "weather") body.result = weatherResult(body.args && body.args.day, await weather(), body.result && body.result.forecast);
     const resultText = JSON.stringify(body.result ?? null);
     if (resultText.length > 5000) return fail(413, "bad_request", "資料太長了");
     messages = [{ role: "system", content: answerPrompt(lang) },
@@ -179,3 +199,4 @@ module.exports = async (req, res) => {
   }
 };
 module.exports.cleanRoute = cleanRoute;
+module.exports.weatherResult = weatherResult;
