@@ -802,7 +802,7 @@ const RAI = window.sgRAI || { init(){}, view:()=>h("p",{},"說明頁暫時無法
 RAI.init({ lang:()=>I18N.lang, onChange:()=>renderKeep() });
 const AISTATS = window.sgAIStats || { init(){}, flush(){}, load(){}, summary:()=>({ status:"error", total:0, rate:0, avg:0, list:[] }) };
 AISTATS.init({ db:()=>S.db, uid:()=>S.uid, canWrite:()=>S.canWrite, onChange:()=>renderKeep() });
-const AI_FEATURES = { "ai-chat":"問松果（一般回答）", "ai-agent:route":"AI 代理人：選工具", "ai-agent:answer":"AI 代理人：寫回答",
+const AI_FEATURES = { "ai-chat":"問松果（一般回答）", "ai-agent:route":"AI 代理人：選工具", "ai-agent:answer":"AI 代理人：寫回答", "ai-agent:web_search":"AI 代理人：上網搜尋",
   "ai-ride:commute_advisor":"交通精算", "ai-ride:parse_ride":"一句話找車・開團", "ai-translate":"AI 翻譯", "ai-today":"今日松果", "ai-timetable":"用說的建立課表",
   "ai-chatroom:summary":"大廳懶人包", "ai-chatroom:icebreaker":"大廳破冰話題", "ai-chatroom:moderate":"內容安全檢查", "events:match":"活動空檔媒合" };
 function aistatsPage(){

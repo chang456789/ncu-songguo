@@ -45,7 +45,22 @@ const CASES = [
   ["Help me sell my desk lamp", "create_post_draft", a => a.space === "m:all"],
   ["把週五的音樂會加到行事曆", "add_to_calendar", a => a.keyword === "音樂會" && new Date(a.date + "T12:00").getDay() === 5],
   ["幫我把講座加入行事曆", "add_to_calendar", a => a.keyword === "講座"],
+  // 上網查最新消息（web_search）：query 一定要是中文；跟地點有關但沒說地點 → 自動加上「中壢 中央大學 附近」
+  ["中央大學附近最近很紅的餐廳", "web_search", a => /很紅/.test(a.query) && /中央大學/.test(a.query)],
+  ["這週末中壢有什麼活動", "web_search", a => /中壢/.test(a.query) && /活動/.test(a.query)],
+  ["桃園最近有什麼展覽", "web_search", a => /桃園/.test(a.query) && /展覽/.test(a.query)],
+  ["中壢新開的咖啡廳", "web_search", a => /中壢/.test(a.query) && /咖啡/.test(a.query)],
+  ["多益最近一次報名時間", "web_search", a => /多益/.test(a.query) && /報名/.test(a.query) && !/中央大學/.test(a.query)],
+  ["最近有什麼好吃的新開的店", "web_search", a => /新開/.test(a.query) && /中壢 中央大學 附近/.test(a.query)],
+  ["What's trending to eat near NCU?", "web_search", a => /[\u4e00-\u9fff]/.test(a.query) && /熱門/.test(a.query) && /中央大學/.test(a.query)],
+  ["Any concerts in Taoyuan this month?", "web_search", a => /演唱會/.test(a.query) && /桃園/.test(a.query)],
+  ["New cafes in Zhongli?", "web_search", a => /咖啡/.test(a.query) && /中壢/.test(a.query)],
+  ["When is the next TOEIC registration?", "web_search", a => /多益/.test(a.query) && /報名/.test(a.query)],
+  ["Any exhibitions in Taoyuan recently?", "web_search", a => /展覽/.test(a.query) && /桃園/.test(a.query)],
+  ["Latest news about Zhongli traffic", "web_search", a => /中壢/.test(a.query) && a.topic === "news"],
 ];
+// 這些一定不能跑去上網搜尋（校內的公車、課表、市集用原本的工具）
+const NOT_WEB = ["下一班132", "我週三有什麼課", "市集有人賣電風扇嗎", "後門附近有什麼宵夜", "這週有什麼免費的講座", "怎麼去中壢火車站最快", "最近壓力好大怎麼辦"];
 
 let fail = 0;
 const ok = (cond, label) => { console.log((cond ? "  ✓ " : "  ✗ ") + label); if (!cond) fail++; };
@@ -62,6 +77,7 @@ for (const [q, tool, check] of CASES){
   if (good) ruleOK++;
   ok(good, `${q.padEnd(20)} → ${r.tool}${good ? "" : `（應該是 ${tool}）`}  ${JSON.stringify(r.args)}`);
 }
+for (const q of NOT_WEB){ const r = ruleRoute(q); ok(r.tool !== "web_search", `不上網：${q.padEnd(16)} → ${r.tool}`); }
 console.log(`  關鍵字備援：${ruleOK} / ${CASES.length} 正確\n`);
 
 // ---------- ② 伺服器檢查 ----------
@@ -84,6 +100,20 @@ ok(cleanRoute({ tool: "add_to_calendar", args: { keyword: "音樂會", date: "�
 ok(cleanRoute({ tool: "find_rides", args: { to: "台北車站", when: "2026-11-27T15:00" }, confidence: 0.9 }, P, "幫我揪週五下午回台北的車").tool === "draft_ride", "「幫我揪」被選成找車 → 改成開團（draft_ride）");
 ok(cleanRoute({ tool: "create_post_draft", args: { space: "g:lost", category: "遺失", title: "撿到學生證" }, confidence: 0.9 }, P, "幫我發一篇撿到學生證的失物招領").args.category === "拾獲", "失物招領「撿到」→ 拾獲");
 ok(cleanRoute({ tool: "create_post_draft", args: { space: "m:all", category: "機車單車", title: "賣二手腳踏車", price: null }, confidence: 0.9 }, P, "幫我寫一篇賣二手腳踏車的文，1500 元").args.price === "NT$1500", "使用者說了 1500 元 → 價格一定是 NT$1500");
+// web_search：沒有 Tavily 金鑰 → 關閉；有金鑰 → 檢查參數、自動加地點、修正選錯的工具
+{ const saved = process.env.TAVILY_API_KEY;
+  delete process.env.TAVILY_API_KEY;
+  ok(cleanRoute({ tool: "web_search", args: { query: "中壢 新開 咖啡廳" }, confidence: 0.9 }, P, "中壢新開的咖啡廳").tool === "none", "web_search：沒有金鑰 → none（問松果照舊）");
+  ok(cleanRoute({ tool: "find_food", args: {}, confidence: 0.9 }, P, "中壢新開的咖啡廳").tool === "find_food", "web_search：沒有金鑰 → 不會把找店改成上網");
+  process.env.TAVILY_API_KEY = "tvly-test";
+  const w1 = cleanRoute({ tool: "web_search", args: { query: "最近很紅的餐廳", topic: "hack", days: 9999 }, confidence: 0.9 }, P, "最近很紅的餐廳");
+  ok(w1.tool === "web_search" && w1.args.query === "最近很紅的餐廳 中壢 中央大學 附近" && w1.args.topic === "general" && w1.args.days === null, "web_search：沒說地點 → 加「中壢 中央大學 附近」；不合法的 topic、days → 預設");
+  ok(cleanRoute({ tool: "web_search", args: { query: "多益 報名 時間", topic: "general", days: 60 }, confidence: 0.9 }, P, "多益最近一次報名時間").args.query === "多益 報名 時間", "web_search：考試報名跟地點無關 → 不加地點");
+  ok(cleanRoute({ tool: "web_search", args: { query: "" }, confidence: 0.9 }, P, "桃園最近有什麼展覽").args.query.includes("桃園"), "web_search：AI 沒給查詢字串 → 用原話");
+  ok(cleanRoute({ tool: "find_food", args: {}, confidence: 0.9 }, P, "中央大學附近最近很紅的餐廳").tool === "web_search", "AI 把「最近很紅的餐廳」選成 find_food → 改成 web_search");
+  ok(cleanRoute({ tool: "web_search", args: { query: "132 公車" }, confidence: 0.9 }, P, "下一班132").tool === "none", "AI 把「下一班132」選成 web_search → 不准上網");
+  ok(cleanRoute({ tool: "web_search", args: { query: "x" }, confidence: 0.3 }, P, "中壢新開的咖啡廳").tool === "none", "web_search：沒把握 → none");
+  if (saved) process.env.TAVILY_API_KEY = saved; else delete process.env.TAVILY_API_KEY; }
 // weather 工具：伺服器抓不到預報時改用前端送來的預報，並挑出問的那一天
 { const { weatherResult } = require(path.join(ROOT, "api/ai-agent.js"));
   const NOW = new Date("2026-11-23T22:30:00+08:00").getTime();   // 台灣晚上 10 點半（UTC 已經是同一天下午）

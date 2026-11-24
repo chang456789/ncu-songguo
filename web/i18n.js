@@ -299,7 +299,11 @@
     "統計最近":"Based on the latest", "筆紀錄":"entries", "（從":" (since",
     "起）":")", "。數據由使用者的瀏覽器回報，適合看使用趨勢。":". Reported by users' browsers — good for seeing usage trends.", "秒":"s",
     "毫秒":"ms", "問松果（一般回答）":"Ask Songguo (general)", "AI 代理人：選工具":"AI agent: pick tool",
-    "AI 代理人：寫回答":"AI agent: write answer", "交通精算":"Commute advisor", "AI 翻譯":"AI translation",
+    "AI 代理人：寫回答":"AI agent: write answer", "AI 代理人：上網搜尋":"AI agent: web search",
+    "今天的網路搜尋次數用完了，以下用網站上的資料回答。":"Today's web searches are used up, so this answer uses Songguo's own data.",
+    "網路搜尋的額度用完了，以下用網站上的資料回答。":"The web search quota is used up, so this answer uses Songguo's own data.",
+    "網路搜尋逾時，以下用網站上的資料回答。":"The web search timed out, so this answer uses Songguo's own data.",
+    "網路搜尋暫時無法使用，以下用網站上的資料回答。":"Web search is unavailable right now, so this answer uses Songguo's own data.", "交通精算":"Commute advisor", "AI 翻譯":"AI translation",
     "大廳懶人包":"Lounge summary", "大廳破冰話題":"Lounge icebreakers", "內容安全檢查":"Content safety check",
     "活動空檔媒合":"Free-time event matching", "AI 數據":"AI stats",
     // ---------- Responsible AI page (web/rai.js) ----------

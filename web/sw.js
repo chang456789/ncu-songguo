@@ -1,5 +1,5 @@
 /* 松果 service worker：讓網站能安裝成 App，並在網路不穩時先顯示上次的畫面。資料一律走網路。 */
-const CACHE = "songguo-v36";
+const CACHE = "songguo-v37";
 const SHELL = ["/", "/index.html", "/i18n.js", "/shim.js", "/aistats.js", "/translate.js", "/assistant.js", "/events-ai.js", "/chatroom-ai.js", "/moderation.js", "/voice.js", "/speak.js", "/ride-ai.js", "/privacy.js", "/agent.js", "/search.js", "/notify.js", "/pixel.js", "/ui.css", "/ui.js", "/photos.js", "/today.js", "/post-ai.js", "/ai-look.js", "/welcome.js", "/rai.js", "/tt-voice.js", "/config.js", "/manifest.webmanifest", "/icons/icon-192.png", "/icons/icon-512.png"];
 self.addEventListener("install", e => { e.waitUntil(caches.open(CACHE).then(c => c.addAll(SHELL)).then(() => self.skipWaiting())); });
 self.addEventListener("activate", e => { e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k !== CACHE).map(k => caches.delete(k)))).then(() => self.clients.claim())); });
