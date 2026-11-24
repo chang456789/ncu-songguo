@@ -63,6 +63,10 @@ begin
   elsif new.collection like 'dms/%'        then lim := 300; pat := 'dms/%';
   elsif new.collection = 'translations'    then lim := 300; pat := 'translations';
   elsif new.collection = 'aistats'         then lim := 200; pat := 'aistats';   -- AI 使用紀錄（只有功能、成功與否、耗時）
+  elsif new.collection = 'nicknames'       then lim := 10;  pat := 'nicknames'; -- 暱稱登記（取名、改名）
+    -- 每人最多保留 30 個暱稱（舊名字會保留給原本的人，避免有人大量占名）
+    select count(*) into n from public.docs where owner = auth.uid() and collection = 'nicknames';
+    if n >= 30 then raise exception 'rate_limited' using errcode = 'P0001', hint = 'too many nicknames'; end if;
   else return new; end if;
   select count(*) into n from public.docs
    where owner = auth.uid() and collection like pat and created_at > now() - interval '1 hour';
@@ -84,8 +88,9 @@ alter table public.admins enable row level security;
 -- data/users/<uid>/... 是個人私密資料（設定、私訊金鑰），只有本人讀得到。
 drop policy if exists docs_read on public.docs;
 create policy docs_read on public.docs for select to authenticated using (
-  path not like 'data/users/%'
-  or path like 'data/users/' || auth.uid()::text || '/%'
+  (path not like 'data/users/%' or path like 'data/users/' || auth.uid()::text || '/%')
+  -- 暱稱登記：只有本人看得到自己登記過哪些名字（別人只會在取名時被告知「已經有人用了」）
+  and (collection <> 'nicknames' or owner = auth.uid())
 );
 
 -- 寫入時一律要是自己的資料；帶有 uid / from 欄位的必須是自己的 ID（不能冒名）。
@@ -100,6 +105,14 @@ language sql stable security definer set search_path = public as $$
     and (p_collection <> 'keys' or p_path = 'keys/' || auth.uid()::text)
     -- 私訊內容只能寫進自己參與的對話
     and (p_collection not like 'dms/%' or position(auth.uid()::text in p_collection) > 0)
+    -- 暱稱登記：文件 ID 必須等於 key（正規化後的暱稱：去空白、轉小寫），uid 必須是自己。
+    -- 同一個 key 只能有一筆（path 是主鍵），別人已經登記的名字寫不進去（修改只限本人），所以暱稱不會重複
+    and (p_collection <> 'nicknames' or (
+      p_path = 'nicknames/' || (p_data->>'key')
+      and p_data->>'uid' = auth.uid()::text
+      and p_data->>'key' !~ '[[:space:]/]'
+      and p_data->>'key' = lower(p_data->>'key')
+      and char_length(p_data->>'key') between 2 and 16))
     -- AI 翻譯快取：文件 ID 必須等於 key（原文雜湊），同一段文字只會有一份翻譯
     and (p_collection <> 'translations' or p_path = 'translations/' || (p_data->>'key'))
     -- 不能冒用別人的 uid / from

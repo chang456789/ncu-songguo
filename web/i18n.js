@@ -129,6 +129,18 @@
     "AI 回應逾時，請稍後再試。":"AI took too long. Please try again later.",
     "AI 暫時無法使用，請稍後再試。":"AI is unavailable right now. Please try again later.",
     // ---------- voice input (web/voice.js) ----------
+  // 暱稱不重複＋我的紀錄
+  "這個暱稱已經有人用了，請換一個。":"That nickname is taken. Please pick another one.", "改名太頻繁了，請過一陣子再試。":"Too many name changes. Please try again later.",
+  "暫時無法確認暱稱，請稍後再試。":"Couldn't check the nickname right now. Please try again later.", "你的暱稱已經有人用了，請到「我的」換一個。":"Someone else already uses your nickname. Please change it in Me.",
+  "」已經有人用了，請按「編輯」換一個。":"” is already taken. Tap Edit to choose another.", "你的暱稱「":"Your nickname “",
+  "我的紀錄":"My activity", "我的貼文、留言、拼車、用過的名字":"My posts, comments, rides and past names", "我的貼文、留言、拼車":"My posts, comments and rides",
+  "用你的帳號（不是暱稱）查，改名後舊紀錄都還在。只有你自己看得到這一頁。":"Found by your account, not your nickname, so everything stays after you rename. Only you can see this page.",
+  "用過的名字":"Past names", "現在的名字":"Current name", "載入中…":"Loading…", "再試一次":"Try again",
+  "連上松果後才看得到你的紀錄。":"Your activity shows up once Songguo is connected.", "暫時讀不到你的紀錄，請稍後再試。":"Couldn't load your activity. Please try again later.",
+  "你還沒有發過貼文。":"You haven't posted yet.", "你還沒有留過言。":"You haven't commented yet.", "你還沒有開過或加入過拼車。":"You haven't started or joined a ride yet.",
+  "我開的團":"Ride I started", "我加入的團":"Ride I joined", "（已結束或取消的團）":"(ended or cancelled ride)", "留言在已刪除的貼文":"On a deleted post", "（空白留言）":"(empty comment)",
+  "這篇貼文已經刪除了":"This post has been deleted", "・以「":" · posted as “", "」發布":"”", "留言在「":"On “", "」":"”",
+  "只有你自己看得到。改名後，舊名字仍然保留給你，別人不能使用；你的貼文、留言、拼車紀錄也都還在。":"Only you can see this. After you rename, your old names stay reserved for you so no one else can take them, and your posts, comments and rides all stay.",
   // 🎤 用說的建立課表
   "🎤 用說的建立課表":"🎤 Speak your timetable", "例：星期一早上九點到十一點微積分在科一101，星期三下午兩點英文":"e.g. Calculus Monday 9 to 11 am in S1-101, English Wednesday 2 pm",
   "你的課":"Your classes", "按麥克風一口氣說完，或直接貼上整段文字（例如選課系統複製的課表）。AI 會整理成課程清單，確認後才會加入。":"Tap the mic and say all your classes at once, or paste a whole block of text (e.g. copied from course registration). AI turns it into a list, and nothing is added until you confirm.",
