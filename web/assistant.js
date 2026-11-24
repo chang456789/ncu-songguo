@@ -104,10 +104,12 @@
     let notice = null;
     // AI 代理人（web/agent.js）：先讓它判斷要用哪個工具；不需要工具的一般問題才走下面原本的 /api/ai-chat
     let keepCards = null;   // 工具沒找到結果、改走一般回答時，工具的卡片（例如「開一團」）照樣附在回答下面
+    let keepNote = null;    // 改走一般回答的原因（例如今天的網路搜尋次數用完了），顯示在回答下面
     if (app.agent){
       let out = null;
       try { out = await app.agent(text, history); } catch (e) { console.error("agent failed", e); }
       if (out && out.general && out.cards && out.cards.length) keepCards = out.cards;
+      if (out && out.general && out.note) keepNote = out.note;
       if (out && !out.general){
         const AGENT_NOTE = { not_configured: "AI 尚未設定，以下是程式直接找到的結果。", rate_limited: "AI 使用太頻繁了，以下是程式直接找到的結果。",
           timeout: "AI 回應逾時，以下是程式直接找到的結果。", error: "AI 暫時無法使用，以下是程式直接找到的結果。" };
@@ -125,7 +127,7 @@
         body: JSON.stringify({ message: text, lang: app.lang() === "en" ? "en" : "zh", context, history }),
       });
       let j = null; try { j = await r.json(); } catch {}
-      if (r.ok && j && j.reply) msgs.push({ role: "assistant", content: j.reply, showRides: !!j.showRides, cards: keepCards });
+      if (r.ok && j && j.reply) msgs.push({ role: "assistant", content: j.reply, showRides: !!j.showRides, cards: keepCards, note: keepNote });
       else if (j && j.code === "ai_not_configured") notice = "松果 AI 助理還在準備中（尚未設定 AI 金鑰），先用網站上的各個頁面查詢吧。";
       else if (r.status === 429 || (j && j.code === "rate_limited")) notice = "問得太快了，請等一分鐘再試。";
       else notice = "AI 暫時無法回答，請稍後再試。";
@@ -156,11 +158,13 @@
         m.showRides ? el("div", {}, el("button", { type: "button", class: "ai-ride", onclick: () => { close(); app.openRides(); } }, t("看拼車"))) : null,
         m.note ? el("p", { class: "ai-note" }, t(m.note)) : null,
         // AI 代理人的結果卡片：點了就關掉視窗、跳到對應頁面並帶入條件
+        // 有 href 的卡片（上網搜尋的來源）：用新分頁打開原網址，不關掉視窗
         m.cards && m.cards.length ? el("div", { class: "ai-cards" }, m.cards.map(c =>
-          el("button", { type: "button", class: "ai-card-btn " + c.kind, onclick: () => { close(); c.action(); } },
+          el(c.href ? "a" : "button", c.href ? { class: "ai-card-btn " + c.kind, href: c.href, target: "_blank", rel: "noopener noreferrer" }
+            : { type: "button", class: "ai-card-btn " + c.kind, onclick: () => { close(); c.action(); } },
             el("span", { class: "ai-card-ico", "aria-hidden": "true" }, c.icon || "›"),
             el("span", { class: "ai-card-txt" }, el("b", {}, c.title), c.sub ? el("small", {}, c.sub) : null),
-            el("span", { class: "ai-card-go", "aria-hidden": "true" }, "›")))) : null,
+            el("span", { class: "ai-card-go", "aria-hidden": "true" }, c.href ? "↗" : "›")))) : null,
         !mine ? ttsBtn(m) : null));
   }
   // 回答下面的朗讀按鈕：正在念 →「停止朗讀」；沒在念 →「朗讀」

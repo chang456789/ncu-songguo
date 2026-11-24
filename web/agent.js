@@ -9,6 +9,8 @@
    工具：commute 交通精算／find_rides 找拼車團／draft_ride 預填開團表單／find_events 找活動／
          find_food 找店家／next_class 下一堂課／my_timetable 整週課表／search_posts 搜尋貼文／weather 天氣／find_course 學校開課與教授
    動作工具（使用者確認後才會真的做）：draft_ride 預填開團表單／create_post_draft 預填貼文草稿／add_to_calendar 活動加入行事曆
+   上網搜尋：web_search（最新、熱門、新開、校外、新聞、考試報名）→ 伺服器用 Tavily 搜尋，AI 只根據結果回答，下面顯示來源卡片
+            沒有設定 Tavily 金鑰、今天的搜尋次數用完時 → 改走一般回答（網站資料），並說明原因
    不需要工具（穿搭、讀書、英文、生活建議、閒聊）或沒把握 → none；工具結果是空的 → 也交給一般回答
    index.html 用法：AGENT.init({ ... })；assistant.js 呼叫 AGENT.ask(message, history)
    ===================================================================== */
@@ -37,7 +39,8 @@
       const r = await fetch("/api/ai-agent", { method: "POST", headers: { "content-type": "application/json" }, signal: ctrl.signal,
         body: JSON.stringify({ ...body, lang: A.lang() === "en" ? "en" : "zh" }) });
       let j = null; try { j = await r.json(); } catch {}
-      if (r.ok && j && j.ok){ try { sessionStorage.setItem(key, JSON.stringify({ at: Date.now(), data: j.data })); } catch {} return { status: "ok", data: j.data }; }
+      if (r.ok && j && j.ok && !(j.data && j.data.unavailable)){ try { sessionStorage.setItem(key, JSON.stringify({ at: Date.now(), data: j.data })); } catch {} return { status: "ok", data: j.data }; }
+      if (r.ok && j && j.ok) return { status: "ok", data: j.data };   // 網路搜尋暫時不能用：不快取，下次再試
       const c = j && j.code;
       return { status: c === "ai_not_configured" ? "not_configured" : (r.status === 429 || c === "rate_limited") ? "rate_limited" : (r.status === 504 || c === "timeout") ? "timeout" : "error" };
     } catch (e) { return { status: e && e.name === "AbortError" ? "timeout" : "error" }; }
@@ -81,8 +84,35 @@
       else if (!/今天|today|tonight|今晚/i.test(t)) return null; }
     return dayISO(d);
   }
+  // 上網搜尋：最新、很紅、新開、新聞、報名；或「最近／推薦／附近」＋校外地點或主題（校內的公車、拼車、課表、市集不算）
+  const WEB_HOT = /很紅|爆紅|熱門|夯|新開|剛開|最新|新聞|報名時間|報名日期|開放報名|異動|改道|停駛|演唱會|trending|popular|latest|news|newly opened|just opened|registration|concerts?|detour/i;
+  const WEB_RECENT = /最近|近期|這陣子|這週末|週末|recent(?:ly)?|these days|this (?:week|weekend|month)/i;
+  const WEB_NEAR = /推薦|附近|recommend|near/i;
+  const WEB_TOPIC = /餐廳|美食|好吃|吃|店|咖啡|甜點|早午餐|酒吧|活動|展覽|演出|景點|新聞|考試|報名|restaurant|eat|food|cafe|coffee|bar|events?|exhibitions?|shows?|news|exam/i;
+  const OFF_CAMPUS = /中壢(?!.{0,2}(?:火)?車站|站)|桃園(?!.{0,2}(?:高鐵|站|機場))|青埔|內壢|平鎮|八德|台北(?!車站)|臺北|新竹|zhongli(?! station)|taoyuan(?! (?:hsr|station|airport))|taipei(?! station)/i;
+  const WEB_SKIP = /揪|拼車|共乘|下一班|下一堂|課表|carpool|next bus|next class|timetable|市集|有人(?:在)?賣|selling/i;
+  function isWeb(t){
+    if (WEB_SKIP.test(t)) return false;
+    return WEB_HOT.test(t) || (WEB_RECENT.test(t) && WEB_TOPIC.test(t)) || (OFF_CAMPUS.test(t) && WEB_TOPIC.test(t)) || (WEB_NEAR.test(t) && WEB_RECENT.test(t));
+  }
+  // 英文的問題：換成中文關鍵字再搜尋（中文的網路資料比較多），回答仍然用英文
+  const EN_ZH = [[/\bNCU\b|national central university/i, "中央大學"], [/zhongli/i, "中壢"], [/taoyuan/i, "桃園"], [/taipei/i, "台北"],
+    [/trending|popular|hot\b/i, "熱門"], [/newly opened|just opened|\bnew\b/i, "新開"], [/latest|recent(?:ly)?/i, "最新"], [/news/i, "新聞"],
+    [/restaurants?|eat|food|dinner|lunch/i, "美食 餐廳"], [/cafes?|coffee/i, "咖啡廳"], [/dessert/i, "甜點"], [/brunch/i, "早午餐"], [/\bbars?\b/i, "酒吧"],
+    [/concerts?/i, "演唱會"], [/exhibitions?/i, "展覽"], [/events?|things to do/i, "活動"], [/this weekend/i, "這週末"], [/this month/i, "這個月"],
+    [/TOEIC/i, "多益"], [/TOEFL/i, "托福"], [/IELTS/i, "雅思"], [/registration|register|sign up/i, "報名 時間"], [/traffic|road|detour/i, "交通 異動"], [/bus route/i, "公車 路線 異動"], [/near/i, "附近"]];
+  const LOCAL_TOPIC = /餐廳|美食|好吃|吃|店|咖啡|甜點|早午餐|酒吧|活動|展覽|演出|景點|附近/;
+  const HAS_PLACE = /中壢|桃園|台北|臺北|新竹|青埔|內壢|平鎮|八德|中央大學|中大|台灣|臺灣|全台|全國/;
+  function webQuery(t){
+    let q = /[\u4e00-\u9fff]/.test(t) ? t : EN_ZH.filter(([re]) => re.test(t)).map(x => x[1]).join(" ");
+    q = q.replace(/[?？!！。，,、~～]+/g, " ").replace(/請問|幫我|查一下|有沒有|有什麼|有哪些|嗎|呢|啊|吧/g, " ").replace(/\s+/g, " ").trim().slice(0, 60);
+    if (q && LOCAL_TOPIC.test(q) && !HAS_PLACE.test(q)) q += " 中壢 中央大學 附近";
+    return q;
+  }
   function ruleRoute(t){
     const now = new Date(), P = placesIn(t);
+    if (!NONE_ALWAYS.test(t) && isWeb(t))
+      return { tool: "web_search", args: { query: webQuery(t), topic: /新聞|news|異動|停駛|改道|detour/i.test(t) ? "news" : "general", days: WEB_RECENT.test(t) || WEB_HOT.test(t) ? 30 : null } };
     if (NONE_ALWAYS.test(t) || (NONE_TOPICS.test(t) && !SITE_NOUNS.test(t))) return { tool: "none", args: {} };
     // 動作：加入行事曆、擬貼文草稿（要放在「找活動」「找貼文」前面）
     if (/行事曆|日曆|加到.{0,3}曆|calendar|\.ics/i.test(t)){
@@ -274,6 +304,8 @@
           : off === 0 && now ? ["現在約 ", Math.round(now.temp), "°，降雨機率 ", now.pop ?? "—", "%。點下面的卡片看完整預報。"]
           : ["點下面的卡片看中壢的天氣預報。"] };
     },
+    // 上網搜尋：真正的搜尋在伺服器的 answer 步驟（金鑰只在伺服器），這裡只是讓 ask() 認得這個工具
+    web_search(){ return { web: true, result: null, cards: [], summary: [] }; },
     next_class(){
       const n = A.nextClass();
       if (!n) return { empty: true, result: { nextClass: null }, cards: [{ kind: "class", icon: "📅", title: ["建立課表"], sub: ["輸入一次，之後就能問下一堂課"], action: () => A.goSchedule() }],
@@ -321,6 +353,7 @@
     let status = routed.status;
     const route = status === "ok" ? routed.data : ruleRoute(message);
     if (route.tool === "none") return { general: true, status, route };
+    if (route.tool === "web_search") return askWeb(message, route, status);
     let out;
     try { out = await TOOLS[route.tool](route.args || {}); }
     catch (e) { console.error("agent tool failed", route.tool, e); return { general: true, status, route }; }
@@ -336,5 +369,21 @@
     return { reply: reply || say(out.summary), byAI: !!reply, cards, status, tool: route.tool, args: route.args };
   }
 
-  window.sgAgent = { init(o){ A = { ...A, ...o }; }, ask, ruleRoute, TOOLS, icsFor };
+  /* ---------- 上網搜尋（web_search） ---------- */
+  const WEB_NOTE = { limit: "今天的網路搜尋次數用完了，以下用網站上的資料回答。", quota: "網路搜尋的額度用完了，以下用網站上的資料回答。",
+    timeout: "網路搜尋逾時，以下用網站上的資料回答。", error: "網路搜尋暫時無法使用，以下用網站上的資料回答。" };
+  async function askWeb(message, route, routeStatus){
+    // 路由的 AI 失敗時（關鍵字判斷出要上網）也照樣搜尋：伺服器會在 AI 不能用時直接列出搜尋結果
+    const ans = await post({ step: "answer", task: "web_search", message, tool: "web_search", args: route.args, result: null },
+      { s: "web", message, args: route.args });
+    const d = ans.status === "ok" ? ans.data : null;
+    // 沒有設定 Tavily 金鑰 → 和以前一樣交給一般回答；其他原因（次數用完、逾時）→ 一般回答＋說明
+    if (!d || d.unavailable) return { general: true, status: routeStatus, route, note: d && d.unavailable === "not_configured" ? null : WEB_NOTE[(d && d.unavailable) || "error"] };
+    const cards = (Array.isArray(d.sources) ? d.sources : []).filter(x => x && /^https?:\/\//i.test(x.url)).slice(0, 5).map(x => ({
+      kind: "web", icon: "🌐", title: String(x.title || x.source || x.url), userTitle: true, href: x.url,
+      sub: `[${x.n}] ${x.published ? x.published + "・" : ""}${x.source || ""}` }));   // 日期放前面，窄螢幕才不會被拆成兩行
+    return { reply: d.reply, byAI: d.byAI !== false, cards, status: d.byAI === false && routeStatus !== "ok" ? routeStatus : "ok", tool: "web_search", args: route.args, web: true };
+  }
+
+  window.sgAgent = { init(o){ A = { ...A, ...o }; }, ask, ruleRoute, TOOLS, icsFor, webQuery };
 })();

@@ -2,7 +2,8 @@
    松果 2.0 問松果面板的外觀（不修改 web/assistant.js、web/agent.js，等畫面出現後再加上效果）
    1. AI 回答一字一字打出來；打完才顯示結果卡片。開了「減少動態效果」就直接顯示全文。
    2. 結果卡片依類型加顏色和像素小圖示：公車＝黃、活動／課表＝紫、美食＝橘、拼車＝綠。
-   3. 視窗上方的松鼠頭像依回答類型換表情：公車＝拿公車牌、美食＝拿便當、活動／課表＝拿行事曆。
+   3. 視窗上方的松鼠頭像依回答類型換表情：公車＝拿公車牌、美食＝拿便當、活動／課表＝拿行事曆、上網搜尋＝拿放大鏡。
+   4. 上網搜尋的來源卡片：藍色＋地球像素圖示。
    需要 web/pixel.js。
    ===================================================================== */
 (() => {
@@ -11,9 +12,9 @@
   const reduced = () => !!(window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches);
 
   /* ---------- 卡片類型 → 顏色與小圖示 ---------- */
-  const GROUP = { bus: "bus", commute: "bus", event: "event", calendar: "event", class: "event", food: "food", ride: "ride" };
-  const ICON = { bus: "ci_bus", event: "ci_cal", food: "ci_food", ride: "ci_car" };
-  const AVATAR = { bus: "avatar_bus", event: "avatar_cal", food: "avatar_food", ride: "avatar_bus" };
+  const GROUP = { bus: "bus", commute: "bus", event: "event", calendar: "event", class: "event", food: "food", ride: "ride", web: "web" };
+  const ICON = { bus: "ci_bus", event: "ci_cal", food: "ci_food", ride: "ci_car", web: "ci_globe" };
+  const AVATAR = { bus: "avatar_bus", event: "avatar_cal", food: "avatar_food", ride: "avatar_bus", web: "avatar_search" };
   function groupOf(card){
     const kind = [...card.classList].find(c => c !== "ai-card-btn") || "";
     if (GROUP[kind]) return GROUP[kind];
