@@ -187,7 +187,7 @@ body.ph-open{overflow:hidden}
 :root{ --px-l:#8fd19e; --px-w:#7fb7e6; --px-sky:#eaf5ef; }
 @media (prefers-color-scheme:dark){ :root:not([data-theme="light"]){ --px-l:#2f7a55; --px-w:#2d5f8f; --px-sky:#18211d; } }
 :root[data-theme="dark"]{ --px-l:#2f7a55; --px-w:#2d5f8f; --px-sky:#18211d; }
-.px .px-k{fill:currentColor} .px .px-l{fill:var(--px-l)} .px .px-w{fill:var(--px-w)}
+.px .px-k{fill:currentColor} .px .px-l{fill:var(--px-l)} .px .px-w{fill:var(--px-w)} .px .px-r{fill:var(--like,#e0435c)}
 
 /* ---------- 分頁圖示 ---------- */
 .px-icon{width:24px;height:24px}
@@ -277,29 +277,9 @@ body:has(.ai-fab:not([hidden])) .wrap{padding-bottom:84px}
 .postai-think{flex:none}
 
 /* =====================================================================
-   v2-polish2：像素字型、米白背景、像素陰影、天空、問松果面板（陳奕晴）
+   v2-polish2：天空、問松果面板、首次進站頁（陳奕晴）
    ===================================================================== */
-/* ---------- 1. 像素中文字型「俐方體11號 Cubic 11」（OFL，從本站載入，授權見 /fonts/OFL-Cubic-11.txt）
-   只用在標題、數字、按鈕；內文維持原本的字型。Cubic 11 只有一種粗細，所以關掉瀏覽器自己加粗（會糊掉） ---------- */
-@font-face{font-family:"Cubic 11";src:url("/fonts/Cubic_11.woff2") format("woff2");font-display:swap}
-:root{--f-pixel:"Cubic 11",var(--f-body)}
-h1,h2,h3,.sphead h1,.gate-card h1,.px-hero-say,.px-empty h3,.today-head b,
-.ais-tile b,.rail .rrow .big,.story .face b,.board .rt,.board .when,.rtag,.trow .tt,.ride .clock b,.wx-temp,.ev .cal b,.wx-h b,
-.primary,.ghost,.chip,.ai-chip,.postai-btn,.ai-fab span{font-family:var(--f-pixel)!important;font-synthesis-weight:none;letter-spacing:.02em}
-
-/* ---------- 2. 背景：淺色＝米白、深色＝深松綠黑；卡片：像素風實心偏移陰影 ---------- */
-:root{--bg:#f6f1e4; --px-shadow:#cfe6d8; --pine-shadow:#0d5a3c; --shadow-1:3px 3px 0 var(--px-shadow)}
-@media (prefers-color-scheme:dark){ :root:not([data-theme="light"]){ --bg:#0c1611; --px-shadow:#050d09; --pine-shadow:#1b6a4a; --shadow-1:3px 3px 0 var(--px-shadow) } }
-:root[data-theme="dark"]{ --bg:#0c1611; --px-shadow:#050d09; --pine-shadow:#1b6a4a; --shadow-1:3px 3px 0 var(--px-shadow) }
-body{background:var(--bg)}
-/* 手機上卡片是滿版的：只留下方 3px 的像素陰影 */
-@media (max-width:720px){ .wrap>.stack>.card,.wrap>.stack>.info,.wrap>.stack>.empty,.wrap>.stack>section>.card{box-shadow:0 3px 0 var(--px-shadow)!important} }
-
-/* ---------- 按鈕：像素陰影，按下時往下 2px、陰影縮小 ---------- */
-.primary,button.primary,.ai-fab{box-shadow:0 3px 0 var(--pine-shadow)!important}
-.primary:active:not(:disabled),.ai-fab:active{transform:translateY(2px);box-shadow:0 1px 0 var(--pine-shadow)!important}
-.ghost,.chip,.iconbtn,.going,.ai-chip,.mic-btn,.ai-card-btn,.ai-sug,.spbtn,.ra-qbtn,.ideas button,.px-ask{box-shadow:0 2px 0 var(--line)!important}
-.ghost:active:not(:disabled),.chip:active:not(:disabled),.iconbtn:active,.going:active:not(:disabled),.ai-chip:active:not(:disabled),.mic-btn:active,.ai-card-btn:active,.ai-sug:active,.spbtn:active,.ra-qbtn:active,.ideas button:active,.px-ask:active{transform:translateY(2px);box-shadow:0 0 0 var(--line)!important}
+/* （v3-look 拿掉了像素字型 Cubic 11、米白背景和像素陰影：全站改回一般字型，外觀改成 IG／Threads 風格，見下方 v3-look 段落） */
 
 /* ---------- 3. 首頁橫幅：天空依時間換色 ---------- */
 .px-banner.px-sky-morning{--sky-top:#cdeaf8;--sky-bot:#eef8fc}
@@ -363,12 +343,165 @@ a.ai-card-btn:focus-visible{outline:2px solid var(--cc,var(--pine));outline-offs
   .gate .gate-card{margin-top:44px}   /* 右上角的中文／English 切換不要蓋到卡片 */
 }
 
+/* =====================================================================
+   v3-look：IG／Threads 風格（陳奕晴）
+   - 白底（深色模式純黑）、細分隔線，不用厚卡片和陰影
+   - 一般字型（系統字）；像素感只留在松鼠、圖示和動畫
+   - 圓角、間距、字級只用下面固定幾種
+   ===================================================================== */
+:root{
+  --f-body:-apple-system,BlinkMacSystemFont,"PingFang TC","Noto Sans TC","Microsoft JhengHei",system-ui,sans-serif;
+  --f-display:var(--f-body); --f-data:var(--f-body);
+  --bg:#ffffff; --surface:#ffffff; --sunk:#f3f3f3; --hover:#f0f0f0; --ink:#101010; --muted:#737373; --line:#ececec;
+  --radius-s:8px; --radius-m:12px; --radius-l:16px; --radius-pill:999px;
+  --space-1:4px; --space-2:8px; --space-3:12px; --space-4:16px; --space-5:24px;
+  --shadow-1:none; --shadow-2:0 4px 16px rgba(0,0,0,.12); --shadow-3:0 12px 40px rgba(0,0,0,.18);
+}
+@media (prefers-color-scheme:dark){ :root:not([data-theme="light"]){ --bg:#000000; --surface:#000000; --sunk:#141414; --hover:#1a1a1a; --ink:#f3f5f7; --muted:#a8a8a8; --line:#262626;
+  --shadow-1:none; --shadow-2:0 4px 16px rgba(0,0,0,.6); --shadow-3:0 12px 40px rgba(0,0,0,.7) } }
+:root[data-theme="dark"]{ --bg:#000000; --surface:#000000; --sunk:#141414; --hover:#1a1a1a; --ink:#f3f5f7; --muted:#a8a8a8; --line:#262626;
+  --shadow-1:none; --shadow-2:0 4px 16px rgba(0,0,0,.6); --shadow-3:0 12px 40px rgba(0,0,0,.7) }
+body{background:var(--bg);font-family:var(--f-body)}
+
+/* ---------- 卡片：不要厚卡片和陰影，用細分隔線 ---------- */
+.card,.info,.empty,.sc-card,.lobby-ai-card,.sk-card,.today-card{background:var(--bg)!important;box-shadow:none!important;border:0!important;border-bottom:1px solid var(--line)!important;border-radius:0!important}
+.gate-card{background:var(--bg)!important;box-shadow:none!important;border:1px solid var(--line)!important;border-radius:var(--radius-l)!important}
+.wrap>.stack{gap:0}
+.wrap>.stack>*:not(.card):not(.info):not(.empty):not(.feed):not(section):not(.px-banner):not(.px-ask-wrap){margin-block:var(--space-2)}
+.feed{gap:0!important}
+.notice{border-radius:var(--radius-m)}
+
+/* ---------- 貼文：Threads 樣式 ---------- */
+.post{gap:var(--space-2)!important;padding:var(--space-3) var(--space-4) var(--space-1)!important}
+.post .phead{gap:var(--space-2);align-items:center;min-width:0}
+.post .phead .av{--s:36px}
+.post .phead .who{flex-direction:row!important;align-items:baseline;gap:6px;min-width:0;flex:1}
+.post .phead .who b{flex:0 1 auto;min-width:3em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:var(--fs-3)}
+/* 時間不縮，太長的是暱稱（加 …）；首頁的「看板 · 時間」最多佔 60% */
+.post .phead .who>span{flex:0 0 auto;max-width:60%;min-width:0;font-size:var(--fs-2)}
+.post .phead .cat{flex:none;background:none!important;color:var(--muted)!important;padding:0!important;font-size:var(--fs-1)!important;font-weight:600}
+.post h3{font-size:var(--fs-3)!important;font-weight:700}
+.post .counts{order:9;font-size:var(--fs-1)!important}
+.post .acts{order:8;border-top:0!important;margin:0 -8px!important;padding:0!important;justify-content:flex-start;gap:var(--space-1)}
+.wrap .post .acts button,.rail .post .acts button{flex:0 0 auto!important;font-size:0!important;width:40px;height:40px;padding:0!important;border-radius:50%!important;color:var(--ink)!important}
+.post .acts button svg{width:22px!important;height:22px!important;stroke-width:1.9}
+.post .acts button.liked{color:var(--like)!important}
+.post .acts button.liked svg{fill:var(--like)}
+.post .acts .share-btn{margin-left:auto}
+
+/* ---------- 頂部列：往下捲自動隱藏、往上捲出現（web/v3.js 切換 class） ---------- */
+header.top{background:var(--bg)!important;border-bottom:1px solid var(--line)}
+@media (prefers-reduced-motion:no-preference){ header.top{transition:transform .22s ease} }
+body.v3-top-hide header.top{transform:translateY(-100%)}
+
+/* ---------- 底部選單：只放圖示，選中的填滿（彩色），其他是灰色 ---------- */
+nav.bottom{background:var(--bg)!important;border-top:1px solid var(--line)!important}
+nav.bottom .tab>span:not(.badge){display:none}
+nav.bottom .tab{padding:10px 2px!important}
+nav.bottom .tab .px-icon,nav.bottom .tab>svg{width:26px!important;height:26px!important}
+nav.bottom .tab:not([aria-current="page"]) .px-icon{filter:grayscale(1) contrast(.9);opacity:.55}
+nav.bottom .tab[aria-current="page"] .px-icon{filter:none;opacity:1;transform:scale(1.12)}
+nav.bottom .tab[aria-current="page"]::after{content:"";position:absolute;bottom:4px;left:50%;width:4px;height:4px;margin-left:-2px;border-radius:50%;background:var(--ink)}
+
+/* ---------- 按鈕：圓角膠囊 ---------- */
+.primary,.ghost,.chip,.going,.ai-chip,.spbtn,.ra-qbtn,.ideas button,.postai-btn,.ai-sug{border-radius:var(--radius-pill)!important;box-shadow:none!important}
+.primary,button.primary{background:var(--pine)!important;border-color:var(--pine)!important;color:var(--pine-ink)!important}
+.ai-fab{background:var(--pine)!important;color:var(--pine-ink)!important;box-shadow:var(--shadow-2)!important}
+.ghost,.chip,.going,.ai-chip,.spbtn,.ra-qbtn,.ideas button,.ai-sug,.ai-card-btn,.iconbtn,.mic-btn,.px-ask{box-shadow:none!important}
+.chip[aria-pressed="true"],.going.on,.ai-chip[aria-pressed="true"]{background:var(--pine)!important;border-color:var(--pine)!important;color:var(--pine-ink)!important}
+@media (prefers-reduced-motion:no-preference){ .primary:active:not(:disabled),.ghost:active:not(:disabled),.chip:active:not(:disabled){transform:scale(.96)} }
+
+/* ---------- 照片：1:1 或 4:5，可以左右滑 ---------- */
+.post-photos{margin:0 calc(-1 * var(--space-4));padding:0!important}
+.post-photos .ph-thumbs,.food-photos .ph-thumbs{display:flex!important;gap:var(--space-1);overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none;border-radius:0;max-width:none;padding:0 var(--space-4)}
+.post-photos .ph-thumbs::-webkit-scrollbar{display:none}
+.post-photos .ph-thumb{flex:0 0 82%;aspect-ratio:1/1!important;scroll-snap-align:start;border-radius:var(--radius-m);overflow:hidden;grid-row:auto!important}
+.post-photos .ph-thumbs.n1 .ph-thumb{flex-basis:100%;aspect-ratio:4/5!important;max-height:72vh}
+.post-photos .ph-more{display:none}
+
+/* ---------- 長暱稱、長標題：省略或換行，不能超出 ---------- */
+.lwho b,.cmt .bubble b,.rail .rrow .t b,.snav .lbl,.me-card b{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;display:inline-block;vertical-align:bottom}
+.post h3,.post .body,.ev h3,.ride .route b,.today-text{overflow-wrap:anywhere}
+
+/* 首頁問松果輸入框外觀跟著換成扁平 */
+.px-ask{background:var(--bg)!important}
+
+/* ---------- v3：開場動畫（web/splash.js） ---------- */
+.px-splash{position:fixed;inset:0;z-index:1000;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:var(--space-3);color:var(--ink);transition:opacity .32s ease}
+.px-splash.out{opacity:0}
+.px-splash-logo{animation:sp-pop .5s cubic-bezier(.3,1.5,.5,1) both}
+.px-splash-name{font-size:var(--fs-4);font-weight:800;letter-spacing:.08em;opacity:0;animation:sp-fade .4s ease .45s forwards}
+@keyframes sp-pop{from{transform:scale(.6);opacity:0}to{transform:scale(1);opacity:1}}
+@keyframes sp-fade{to{opacity:1}}
+
+/* ---------- v3：動態像素角色（web/critters.js） ---------- */
+/* 分頁角色：平常是靜止的姿勢，橫幅加上 .play 才動 */
+.px-banner .cr-drive{transform:translateX(0)}
+.px-banner .cr-f2,.px-banner .cr-page2{opacity:0}
+.px-banner .cr-fly{transform:translateX(0)}
+@media (prefers-reduced-motion:no-preference){
+  .px-banner.play .cr-drive{animation:cr-drive 5s linear}
+  .px-banner.play .cr-wave{animation:cr-wave .6s ease-in-out 4;transform-origin:78px 34px;transform-box:view-box}
+  .px-banner.play .cr-fly{animation:cr-fly 4s linear}
+  .px-banner.play .cr-f1{animation:cr-fly 4s linear,cr-flap1 .3s steps(1) infinite}
+  .px-banner.play .cr-f2{animation:cr-fly 4s linear,cr-flap2 .3s steps(1) infinite}
+  .px-banner.play .cr-page1{animation:cr-flap1 .5s steps(1) 6}
+  .px-banner.play .cr-page2{animation:cr-flap2 .5s steps(1) 6}
+}
+@keyframes cr-drive{from{transform:translateX(0)}to{transform:translateX(-270px)}}
+@keyframes cr-wave{0%,100%{transform:rotate(0)}50%{transform:rotate(-4deg)}}
+@keyframes cr-fly{0%{transform:translate(0,0)}25%{transform:translate(60px,-3px)}50%{transform:translate(120px,2px)}75%{transform:translate(180px,-2px)}100%{transform:translate(240px,0)}}
+@keyframes cr-flap1{0%{opacity:1}50%{opacity:0}}
+@keyframes cr-flap2{0%{opacity:0}50%{opacity:1}}
+
+/* 散步的松鼠：從畫面下緣走過（點牠會跳一下、說話） */
+.cr-walker{position:fixed;z-index:15;left:0;width:40px;height:40px;padding:0;border:0;background:none;cursor:pointer;animation:cr-walk-r var(--cr-walk-ms,9000ms) linear forwards}
+.cr-walker.left{animation-name:cr-walk-l}
+.cr-walker.left svg{transform:scaleX(-1)}
+.cr-walker .cr-w2{position:absolute;left:0;top:0;opacity:0}
+.cr-walker .cr-w1,.cr-walker .cr-w2{animation:cr-flap1 .36s steps(1) infinite}
+.cr-walker .cr-w2{animation-name:cr-flap2}
+@keyframes cr-walk-r{from{transform:translateX(-48px)}to{transform:translateX(calc(100vw + 8px))}}
+@keyframes cr-walk-l{from{transform:translateX(calc(100vw + 8px))}to{transform:translateX(-48px)}}
+.cr-jump{animation:cr-jump .45s cubic-bezier(.3,1.6,.5,1)!important}
+.cr-walker.cr-jump svg{animation:cr-jump .45s cubic-bezier(.3,1.6,.5,1)}
+@keyframes cr-jump{0%,100%{translate:0 0}40%{translate:0 -18px}}
+.cr-say{position:absolute;bottom:46px;left:50%;transform:translateX(-50%);white-space:nowrap;background:var(--bg);color:var(--ink);border:1px solid var(--line);border-radius:var(--radius-pill);
+  padding:4px 10px;font-size:var(--fs-2);font-weight:700;box-shadow:var(--shadow-2);pointer-events:none}
+/* 按讚：愛心松果往上飄 */
+.cr-heart{position:fixed;z-index:60;pointer-events:none;animation:cr-heart .9s ease-out forwards}
+@keyframes cr-heart{0%{transform:translateY(0) scale(.4);opacity:0}25%{transform:translateY(-14px) scale(1.15);opacity:1}100%{transform:translateY(-46px) scale(1);opacity:0}}
+/* 發文成功：像素煙火 */
+.cr-fireworks{position:fixed;inset:0;z-index:59;pointer-events:none}
+.cr-spark{position:absolute;width:6px;height:6px;opacity:0;animation:cr-spark 1.1s ease-out forwards}
+@keyframes cr-spark{0%{transform:translate(0,0);opacity:1}80%{opacity:1}100%{transform:translate(var(--dx),var(--dy));opacity:0}}
+/* 彩蛋：轉一圈＋松果雨 */
+.cr-spin{animation:cr-spin .9s cubic-bezier(.3,1.3,.5,1) 2!important}
+@keyframes cr-spin{to{transform:rotate(360deg)}}
+.cr-rain{position:fixed;inset:0;z-index:58;pointer-events:none;overflow:hidden}
+.cr-drop{position:absolute;top:-60px;animation:cr-drop 1.6s linear forwards}
+@keyframes cr-drop{to{transform:translateY(calc(100vh + 80px)) rotate(200deg)}}
+.cr-secret{position:fixed;left:50%;top:30%;transform:translateX(-50%);z-index:61;pointer-events:none;background:var(--bg);color:var(--ink);border:1px solid var(--line);border-radius:var(--radius-pill);
+  padding:var(--space-2) var(--space-4);font-weight:800;box-shadow:var(--shadow-3);white-space:nowrap}
+/* 下拉更新：松鼠吊在繩子上盪鞦韆 */
+.ptr .px{transform-origin:50% -10px}
+.ptr::before{content:"";position:absolute;left:21px;top:-20px;width:2px;height:24px;background:var(--line)}
+.ptr.busy .px{animation:cr-swing .8s ease-in-out infinite alternate!important}
+@keyframes cr-swing{from{transform:rotate(-16deg)}to{transform:rotate(16deg)}}
+
+/* 減少動態效果：全部停止 */
+@media (prefers-reduced-motion:reduce){
+  .px-splash,.cr-walker,.cr-heart,.cr-fireworks,.cr-rain,.cr-secret{display:none!important}
+  .cr-jump,.cr-spin,.ptr.busy .px{animation:none!important}
+}
+
 /* ---------- 字級統一：全站只用 4 種（12／14／16／22）。這段是自動產生的：從 index.html 與各 js 檔用到的字級，對應到最接近的一種。改版後要重新產生 ---------- */
 body{font-size:var(--fs-3)!important}
 h1,h2,.sphead h1{font-size:var(--fs-4)!important} h3,h4{font-size:var(--fs-3)!important} small{font-size:var(--fs-1)}
 .ai-card-txt small,
 .ai-foot,
 .ai-note,
+.ai-tfoot,
 .ais-head,
 .ais-tile span,
 .badge,
@@ -377,6 +510,8 @@ h1,h2,.sphead h1{font-size:var(--fs-4)!important} h3,h4{font-size:var(--fs-3)!im
 .board-note,
 .cat,
 .cmt .when,
+.ct-kind,
+.ct-sub,
 .ev .cal i,
 .ev .cal small,
 .ev .src,
@@ -421,6 +556,8 @@ h1,h2,.sphead h1{font-size:var(--fs-4)!important} h3,h4{font-size:var(--fs-3)!im
 .ai-card-top span,
 .ai-card-txt b,
 .ai-clear,
+.ai-dock .ai-bubble,
+.ai-dock .ai-sug,
 .ai-hello p,
 .ai-ride,
 .ai-sug,
@@ -480,6 +617,7 @@ h1,h2,.sphead h1{font-size:var(--fs-4)!important} h3,h4{font-size:var(--fs-3)!im
 .ra-more summary,
 .ra-notes,
 .ra-prefs .chip,
+.ra-quick .ra-qbtn,
 .ra-risk,
 .ra-sugg,
 .ra-why,
@@ -490,6 +628,7 @@ h1,h2,.sphead h1{font-size:var(--fs-4)!important} h3,h4{font-size:var(--fs-3)!im
 .rate .stars button,
 .ride .route small,
 .ride-acts,
+.sc3 .sc-card b,
 .seg button,
 .sheet ol,
 .small,
@@ -513,13 +652,18 @@ label.f small{font-size:var(--fs-2)!important}
 .ai-bubble,
 .ai-card-ico,
 .ai-card-top b,
+.ai-dock .ai-head b,
+.ai-dock textarea.ai-dinput,
 .ai-fab,
 .ai-head b,
 .ai-hello b,
 .ai-panel textarea.ai-input,
+.ask-row .primary,
+.ask-row input,
 .board .dest,
 .board .rt,
 .composer .fake,
+.ct-card b,
 .empty h3,
 .ev h3,
 .gate-card .primary,
@@ -599,6 +743,6 @@ textarea{font-size:var(--fs-3)!important}
 [style*="font-size:34px"]{font-size:var(--fs-4)!important}
 [style*="font-size:36px"]{font-size:var(--fs-4)!important}
 
-/* v2-shell 首頁已有大的問松果輸入框：橫幅下方只保留松鼠問候，不再重複一個輸入入口 */
-.px-ask-wrap .px-ask-ph, .px-ask-wrap .px-ask-go { display: none; }
+/* 首頁已有大的問松果輸入框：橫幅下方只保留松鼠問候，不重複輸入入口 */
+.px-ask-wrap .px-ask-ph, .px-ask-wrap .px-ask-go { display: none !important; }
 .px-ask-wrap .px-ask { cursor: default; }

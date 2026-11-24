@@ -877,15 +877,264 @@
       "...............kccccccck",
       "...............kkkkkkkkk",
     ],
+    // ---------- v3-look：散步、愛心松果、小鳥、拿地圖、讀書、節日服裝（帽子、頭帶） ----------
+    walk1: [
+      "................................",
+      "................................",
+      "..............ooo......ooo......",
+      "..............ofo......ofo......",
+      ".....oooooo..ofcfo....ofcfo.....",
+      "....offffffo.ofcfoooooofcfo.....",
+      "...offffffffo.oooffffffooo......",
+      "..offfffcffffooffffffffffo......",
+      "..offfcccccffoffffffffffffo.....",
+      "..offfcccccffoffffffffffffo.....",
+      "..offfcccccffoffcofffffcofo.....",
+      "..offcccccccfoffoofffffoofo.....",
+      "..offcccccccfoffffccccffffo.....",
+      "..offcccccccfoffcccoocccffo.....",
+      "..offfcccccffoffccccccccffo.....",
+      "..offfcccccffoofcccococcfo......",
+      "..offfcccccffo.oocccoccoo.......",
+      "...offffcffffo.oooooooo.........",
+      "....offfffffffoffffffgfo........",
+      ".....offfffffoffffffoggfo.......",
+      ".....offfffffoffccoonnnoo.......",
+      ".....offfffffoffccfoonnof.......",
+      ".....offffffoffcccfonnoofo......",
+      ".....offfffffofcccooonnoo.......",
+      "......offffffofcccconnooo.......",
+      "......offffffofcccccooofo.......",
+      ".......oooooo.ofccccccfo........",
+      ".............oooooccooooo.......",
+      ".............offfoooofffo.......",
+      "..............ooo....ooo........",
+      "................................",
+      "................................",
+    ],
+    walk2: [
+      "................................",
+      "................................",
+      "..............ooo......ooo......",
+      "..............ofo......ofo......",
+      ".....oooooo..ofcfo....ofcfo.....",
+      "....offffffo.ofcfoooooofcfo.....",
+      "...offffffffo.oooffffffooo......",
+      "..offfffcffffooffffffffffo......",
+      "..offfcccccffoffffffffffffo.....",
+      "..offfcccccffoffffffffffffo.....",
+      "..offfcccccffoffcofffffcofo.....",
+      "..offcccccccfoffoofffffoofo.....",
+      "..offcccccccfoffffccccffffo.....",
+      "..offcccccccfoffcccoocccffo.....",
+      "..offfcccccffoffccccccccffo.....",
+      "..offfcccccffoofcccococcfo......",
+      "..offfcccccffo.oocccoccoo.......",
+      "...offffcffffo.oooooooo.........",
+      "....offfffffffoffffffgfo........",
+      ".....offfffffoffffffoggfo.......",
+      ".....offfffffoffccoonnnoo.......",
+      ".....offfffffoffccfoonnof.......",
+      ".....offffffoffcccfonnoofo......",
+      ".....offfffffofcccooonnoo.......",
+      "......offffffofcccconnooo.......",
+      "......offffffofcccccooofo.......",
+      ".......oooooooooooccccfo........",
+      ".............offfoocooooo.......",
+      "..............ooo..oofffo.......",
+      ".....................ooo........",
+      "................................",
+      "................................",
+    ],
+    heartcone: [
+      ".oo....oo...",
+      "onno..onno..",
+      "onnnoonnnno.",
+      "onrnnnnonno.",
+      "onnnonnnnno.",
+      "onnnnnnonno.",
+      ".onnonnnno..",
+      "..onnnnno...",
+      "...onnno....",
+      "....ono.....",
+      ".....o......",
+      "............",
+    ],
+    bird1: [
+      "............",
+      "..oo........",
+      ".occo...ooo.",
+      "occcco.occco",
+      "occcccocccco",
+      ".ocfccccccco",
+      "..oooooooooo",
+      "............",
+    ],
+    bird2: [
+      "....ooo.....",
+      "...occco....",
+      "..occccooo..",
+      ".occcccccco.",
+      "occfcccccco.",
+      ".oooooooooo.",
+      "............",
+      "............",
+    ],
+    sqmap: [
+      "................................",
+      "................................",
+      "..............ooo......ooo......",
+      "..............ofo......ofo......",
+      ".....oooooo..ofcfo....ofcfo.....",
+      "....offffffo.ofcfoooooofcfo.....",
+      "...offffffffo.oooffffffooo......",
+      "..offfffcffffooffffffffffo......",
+      "..offfcccccffoffffffffffffo.....",
+      "..offfcccccffoffffffffffffo.....",
+      "..offfcccccffoffcofffffcofo.....",
+      "..offcccccccfoffoofffffoofo.....",
+      "..offcccccccfoffffccccffffo.....",
+      "..offcccccccfoffcccoocccffo.....",
+      "..offfcccccffoffccccccccffo.....",
+      "..offfcccccffoofcccococcfo......",
+      "..offfcccccffo.oocccoccoo.......",
+      "...offffcffffo.oooooooo.........",
+      "....offfffffffoffffffgfo........",
+      ".....offfffffoffoooooooooo......",
+      ".....offfffffoffolcolcolco......",
+      ".....offfffffoffolcolcolco......",
+      ".....offffffoffcolgolcolco......",
+      ".....offfffffofcolcolcolco......",
+      "......offffffofcoooooooooo......",
+      "......offffffofcccccooofo.......",
+      ".......oooooo.ofccccccfo........",
+      ".............oooooccooooo.......",
+      ".............offfoooofffo.......",
+      "..............ooo....ooo........",
+      "................................",
+      "................................",
+    ],
+    sqbook1: [
+      "................................",
+      "................................",
+      "..............ooo......ooo......",
+      "..............ofo......ofo......",
+      ".....oooooo..ofcfo....ofcfo.....",
+      "....offffffo.ofcfoooooofcfo.....",
+      "...offffffffo.oooffffffooo......",
+      "..offfffcffffooffffffffffo......",
+      "..offfcccccffoffffffffffffo.....",
+      "..offfcccccffoffffffffffffo.....",
+      "..offfcccccffoffcofffffcofo.....",
+      "..offcccccccfoffoofffffoofo.....",
+      "..offcccccccfoffffccccffffo.....",
+      "..offcccccccfoffcccoocccffo.....",
+      "..offfcccccffoffccccccccffo.....",
+      "..offfcccccffoofcccococcfo......",
+      "..offfcccccffo.oocccoccoo.......",
+      "...offffcffffo.oooooooo.........",
+      "....offfffffffoffffffgfo........",
+      ".....offfffffooooooooooooo......",
+      ".....offfffffooccccocccco.......",
+      ".....offfffffoocoocococoo.......",
+      ".....offffffofoccccoccccoo......",
+      ".....offfffffoocoocococoo.......",
+      "......offffffooooooooooooo......",
+      "......offffffofcccccooofo.......",
+      ".......oooooo.ofccccccfo........",
+      ".............oooooccooooo.......",
+      ".............offfoooofffo.......",
+      "..............ooo....ooo........",
+      "................................",
+      "................................",
+    ],
+    sqbook2: [
+      "................................",
+      "................................",
+      "..............ooo......ooo......",
+      "..............ofo......ofo......",
+      ".....oooooo..ofcfo....ofcfo.....",
+      "....offffffo.ofcfoooooofcfo.....",
+      "...offffffffo.oooffffffooo......",
+      "..offfffcffffooffffffffffo......",
+      "..offfcccccffoffffffffffffo.....",
+      "..offfcccccffoffffffffffffo.....",
+      "..offfcccccffoffcofffffcofo.....",
+      "..offcccccccfoffoofffffoofo.....",
+      "..offcccccccfoffffccccffffo.....",
+      "..offcccccccfoffcccoocccffo.....",
+      "..offfcccccffoffccccccccffo.....",
+      "..offfcccccffoofcccococcfo......",
+      "..offfcccccffo.oocccoccoo.......",
+      "...offffcffffo.oooooooo.........",
+      "....offfffffffoffffffgfo........",
+      ".....offfffffooooooooooooo......",
+      ".....offfffffoocccccooccco......",
+      ".....offfffffoocooccocooco......",
+      ".....offffffofocccccooccco......",
+      ".....offfffffoocooccocooco......",
+      "......offffffooooooooooooo......",
+      "......offffffofcccccooofo.......",
+      ".......oooooo.ofccccccfo........",
+      ".............oooooccooooo.......",
+      ".............offfoooofffo.......",
+      "..............ooo....ooo........",
+      "................................",
+      "................................",
+    ],
+    hat_santa: [
+      "..........oc...",
+      "........orro...",
+      "......orrrro...",
+      "....orrrrrro...",
+      "..orrrrrrrro...",
+      "occcccccccccco.",
+      "oooooooooooooo.",
+    ],
+    hat_party: [
+      "....cc....",
+      "....oo....",
+      "...ofgo...",
+      "...oggo...",
+      "..offgo...",
+      "..ogggfo..",
+      ".offggfo..",
+      "oooooooooo",
+    ],
+    headband: [
+      "oooooooooooooooo",
+      "orrrrrccrrrrrrro",
+      "oooooooooooooooo",
+    ],
   };
-  const CLASS = { o: "px-o", f: "px-f", c: "px-c", n: "px-n", g: "px-g", k: "px-k", l: "px-l", w: "px-w" };
+  const CLASS = { o: "px-o", f: "px-f", c: "px-c", n: "px-n", g: "px-g", k: "px-k", l: "px-l", w: "px-w", r: "px-r" };
+
+  /* ---------- 節日自動換裝：聖誕節戴聖誕帽、跨年戴派對帽、期末考週綁「必勝」頭帶 ----------
+     期末考週的日期請依學校行事曆調整（FINALS）。測試或展示時可以用 localStorage「pc.costume」指定 santa／party／exam／none。 */
+  const FINALS = [["01-04", "01-15"], ["06-07", "06-18"]];
+  const COSTUME = { santa: ["hat_santa", 13, 0], party: ["hat_party", 15, 0], exam: ["headband", 12, 6] };
+  const WEARS = new Set(["normal", "happy", "sad", "search", "blink", "walk1", "walk2", "sqmap", "sqbook1", "sqbook2"]);
+  function costumeOf(d = new Date()){
+    try { const o = localStorage.getItem("pc.costume"); if (o) return COSTUME[o] ? o : ""; } catch {}
+    const md = String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
+    if (md >= "12-20" && md <= "12-26") return "santa";
+    if (md >= "12-30" || md <= "01-02") return "party";
+    if (FINALS.some(([a, b]) => md >= a && md <= b)) return "exam";
+    return "";
+  }
   const reduced = () => !!(window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches);
 
   /* ---------- 文字格子 → SVG（同一列相同顏色的連續像素合併成一個長方形，檔案比較小） ---------- */
   const cache = new Map();
   function markup(name){
-    if (cache.has(name)) return cache.get(name);
-    const rows = G[name]; if (!rows) return "";
+    const cos = WEARS.has(name) ? costumeOf() : "", key = name + "|" + cos;
+    if (cache.has(key)) return cache.get(key);
+    let rows = G[name]; if (!rows) return "";
+    if (cos){   // 把帽子／頭帶疊在松鼠頭上
+      const [hat, hx, hy] = COSTUME[cos], g = rows.map(r => r.split(""));
+      G[hat].forEach((r, dy) => [...r].forEach((ch, dx) => { if (ch !== "." && g[hy + dy] && g[hy + dy][hx + dx] !== undefined) g[hy + dy][hx + dx] = ch; }));
+      rows = g.map(r => r.join(""));
+    }
     let s = "";
     rows.forEach((row, y) => {
       let x = 0;
@@ -896,7 +1145,7 @@
         x += n;
       }
     });
-    cache.set(name, s); return s;
+    cache.set(key, s); return s;
   }
   function sprite(name, opts = {}){
     const rows = G[name] || G.normal;
@@ -995,16 +1244,31 @@
     me:        [["normal", 58, 13], ["desk", 44, 30], ["lamp", 44, 18], ["laptop", 90, 23], ["books", 104, 23], ["tree", 170, 8]],                       // 松鼠書桌
   };
   const BW = 200, BH = 48, BSCALE = 2;
+  // 分頁角色（web/critters.js 在橫幅加上 .play 時才會動）：交通＝公車開過、地圖＝松鼠拿地圖、社群＝小鳥飛過、我的＝松鼠讀書
+  // swap：把場景裡原本的小圖換成會動的角色（保持原本的前後順序）；add：多加在最上層
+  const SCENE_ANIM = {
+    transit:   { add: [["bus", 200, 30, 0, 1, "cr-drive"]] },
+    map:       { swap: { happy: [["sqmap", 0, 0, 0, 1, "cr-wave"]] } },
+    community: { add: [["bird1", -16, 6, 0, 1, "cr-fly cr-f1"], ["bird2", -16, 6, 0, 1, "cr-fly cr-f2"]] },
+    me:        { swap: { normal: [["sqbook1", 0, 0, 0, 1, "cr-page1"], ["sqbook2", 0, 0, 0, 1, "cr-page2"]] } },
+  };
+  const groupOf = (k, x, y, flip, z, cls) => {
+    const w = G[k][0].length; z = z || 1;
+    const t = flip ? `translate(${x + w * z} ${y}) scale(${-z} ${z})` : `translate(${x} ${y}) scale(${z})`;
+    return `<g class="${cls || ""}"><g transform="${t}">${markup(k)}</g></g>`;
+  };
   function bannerSVG(name, hide = []){
     const svg = document.createElementNS(SVGNS, "svg");
     svg.setAttribute("viewBox", `0 0 ${BW} ${BH}`); svg.setAttribute("width", String(BW * BSCALE)); svg.setAttribute("height", String(BH * BSCALE));
     svg.setAttribute("shape-rendering", "crispEdges"); svg.setAttribute("class", "px px-scene-svg"); svg.setAttribute("aria-hidden", "true");
     let s = `<rect class="px-l" x="0" y="44" width="${BW}" height="1"/><rect class="px-g" x="0" y="45" width="${BW}" height="3"/>`;
+    const anim = SCENE_ANIM[name] || {};
     for (const [k, x, y, flip, sc] of SCENES[name] || []){
-      const rows = G[k]; if (!rows || hide.includes(k)) continue; const w = rows[0].length, z = sc || 1;
-      const t = flip ? `translate(${x + w * z} ${y}) scale(${-z} ${z})` : `translate(${x} ${y}) scale(${z})`;
-      s += `<g transform="${t}">${markup(k)}</g>`;
+      if (!G[k] || hide.includes(k)) continue;
+      if (anim.swap && anim.swap[k]){ for (const [k2, dx, dy, f2, z2, cls] of anim.swap[k]) s += groupOf(k2, x + dx, y + dy, flip || f2, sc || z2, cls); continue; }
+      s += groupOf(k, x, y, flip, sc);
     }
+    for (const [k, x, y, flip, z, cls] of anim.add || []) s += groupOf(k, x, y, flip, z, cls);
     svg.innerHTML = s; return svg;
   }
   // 天空依時間換色：早上淺藍、傍晚橘粉、晚上深藍加星星（opts.sky）
@@ -1098,6 +1362,6 @@
   }
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", watchAI); else watchAI();
 
-  window.sgPixel = { sprite, loading, thinking, empty, error, celebrate, weather, icon, banner, mount, mood, greeting, skyOf, grids: G, scenes: SCENES, reduced };
+  window.sgPixel = { sprite, loading, thinking, empty, error, celebrate, weather, icon, banner, mount, mood, greeting, skyOf, costumeOf, markup, grids: G, scenes: SCENES, reduced };
   window.PIXEL = window.sgPixel;
 })();

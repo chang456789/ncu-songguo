@@ -646,12 +646,15 @@ a.ghost{color:var(--ink)}
 <script src="/search.js"></script>
 <script src="/notify.js"></script>
 <script src="/pixel.js"></script>
+<script src="/splash.js"></script>
 <script src="/ui.js"></script>
 <script src="/photos.js"></script>
 <script src="/today.js"></script>
 <script src="/post-ai.js"></script>
 <script src="/ai-look.js"></script>
 <script src="/welcome.js"></script>
+<script src="/v3.js"></script>
+<script src="/critters.js"></script>
 <script src="/rai.js"></script>
 <script src="/profs.js"></script>
 <script src="/mine.js"></script>
@@ -927,7 +930,13 @@ function topBanner(tab){
 // 載入中：骨架屏；空白：松鼠畫面（沒載入新檔案時用原本的文字）
 const skeleton = (kind, n, fallback) => UIX ? UIX.skeleton(kind, n || 3) : h("div",{class:"empty"}, h("h3",{}, fallback || "載入中…"));
 const pxLoading = fallback => PX ? PX.loading({ compact:true }) : h("p",{class:"muted"}, fallback || "載入中…");
-const celebrate = text => { if (PX) PX.celebrate(text, { translate:el=>I18N.translate(el) }); };
+const celebrate = text => { if (PX) PX.celebrate(text, { translate:el=>I18N.translate(el) }); if (CR) CR.fireworks(); };
+// v3：動態像素角色（web/critters.js）、分享與頂部列（web/v3.js）
+const CR = window.sgCritters || null, V3 = window.sgV3 || null;
+if (CR) CR.init({ tr:s=>I18N.tr(s), translate:el=>I18N.translate(el), lang:()=>I18N.lang });
+// 下拉重新整理（手機）：松鼠盪鞦韆，重新抓活動和天氣
+if (UIX) UIX.pullToRefresh(async () => { EVS = null; WX = null; loadEvents(); loadWeather(); render(); await new Promise(r => setTimeout(r, 900)); }, { tr:s=>I18N.tr(s) });
+const sharePost = (p, sp) => V3 && V3.share({ title: p.title || "松果", text: String(p.body || "").slice(0, 80), url: location.origin + location.pathname + "#/" + (sp ? sp.tab : "home") }, toast);
 // 今日松果需要的資料（web/today.js）
 async function todayContext(){
   loadWeather(); loadEvents();
@@ -1018,6 +1027,7 @@ const ICONS = {
   campus:"M3 9l9-5 9 5-9 5zM7 11v5c0 1.5 2.2 3 5 3s5-1.5 5-3v-5",
   chat:"M4 5h16v11H9l-5 4z",
   heart:"M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z",
+  share:"M12 3v12M8 7l4-4 4 4M6 11H5a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-8a1 1 0 0 0-1-1h-1",
   reply:"M4 5h16v11H9l-5 4z",
   flag:"M5 21V4h11l-2 4 2 4H5",
   trash:"M5 7h14M10 7V4h4v3M7 7l1 13h8l1-13",
@@ -2097,9 +2107,10 @@ function postCard(p){
       !mine && canPost() ? h("button",{class:"linkbtn",style:"color:var(--muted);font-weight:500;font-size:13px",disabled:reported,onclick:()=>openModal({k:"report",pid:p.id})}, reported?"已檢舉":"檢舉") : null,
       mine || S.isOwner ? h("button",{class:"linkbtn",style:"color:var(--muted);font-weight:500;font-size:13px",onclick:()=>openModal({k:"del",pid:p.id})},"刪除") : null)));
   card.append(h("div",{class:"acts"},
-    h("button",{class:liked?"liked":"",disabled:!canPost(),onclick:()=>toggleLike(p),"aria-pressed":liked?"true":"false"}, icon("heart"), liked ? "已按讚" : "讚"),
-    h("button",{onclick:()=>isOpen?closeThread():openThread(p.id),"aria-expanded":isOpen?"true":"false"}, icon("reply"), "留言"),
-    !mine && p.uid && canPost() ? h("button",{onclick:()=>openModal({k:"dmreq",to:p.uid,toNick:p.nick,from:p.space})}, icon("send"),"私訊") : null));
+    h("button",{class:liked?"liked":"",disabled:!canPost(),onclick:e=>{ if (CR) CR.like(e.currentTarget); toggleLike(p); },"aria-pressed":liked?"true":"false","aria-label":liked ? "已按讚" : "讚"}, icon("heart"), liked ? "已按讚" : "讚"),
+    h("button",{onclick:()=>isOpen?closeThread():openThread(p.id),"aria-expanded":isOpen?"true":"false","aria-label":"留言"}, icon("reply"), "留言"),
+    !mine && p.uid && canPost() ? h("button",{onclick:()=>openModal({k:"dmreq",to:p.uid,toNick:p.nick,from:p.space}),"aria-label":"私訊"}, icon("send"),"私訊") : null,
+    V3 ? h("button",{class:"share-btn",onclick:()=>sharePost(p, sp),"aria-label":"分享"}, icon("share"), "分享") : null));
   if (isOpen) card.append(thread("posts/"+p.id+"/comments"));
   return card;
 }

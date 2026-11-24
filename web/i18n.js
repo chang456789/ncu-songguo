@@ -40,6 +40,11 @@
     "我是松果，中大的 AI 生活助理":"I'm Songguo, NCU's AI campus-life helper", "試著問我：":"Try asking me:",
     "下一班 132 公車幾點？":"When is the next bus 132?", "今天有什麼免費活動？":"Any free events today?", "後門宵夜吃什麼好？":"Late-night food near the back gate?",
     "問我公車、活動、美食…":"Ask me about buses, events, food…",
+    // ---------- v3：散步松鼠說的話、彩蛋、分享 ----------
+    "今天也要記得喝水喔！":"Remember to drink water today!", "132 公車來了嗎？":"Is bus 132 here yet?", "中大湖的鵝今天很兇…":"The NCU Lake geese are grumpy today…",
+    "後門宵夜吃什麼好呢？":"What's for late-night snacks at the back gate?", "期末加油，你可以的！":"Good luck with finals — you've got this!", "我在找我的松果…":"I'm looking for my pinecone…",
+    "下雨記得帶傘 ☔":"Bring an umbrella if it rains ☔", "早八好想睡…":"8 a.m. class… so sleepy…", "要不要一起揪團？":"Want to team up?", "松果超好吃的！":"Pinecones are delicious!",
+    "松鼠":"Squirrel", "你找到隱藏彩蛋了！🎉":"You found the secret! 🎉", "已複製，可以貼給朋友":"Copied — paste it to a friend", "這個瀏覽器不能分享，請複製網址":"This browser can't share — copy the link instead",
     "下拉重新整理":"Pull to refresh", "放開重新整理":"Release to refresh", "重新整理中…":"Refreshing…",
     // ---------- shell & navigation ----------
     "松果":"Songguo", "松果首頁":"Songguo home", "主選單":"Main menu", "選單":"Menu", "即時資訊":"Live info", "快速查看":"At a glance",
