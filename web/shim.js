@@ -146,7 +146,17 @@
         add: async data => { const d = doc(collection + "/" + randId()); await d.set(data); return d; },
       });
     }
-    return { doc, collection: collectionRef };
+    // 自己寫過的資料（用 owner＝自己的 uid 查，不看暱稱，所以改名後舊紀錄都還在）
+    //   pattern：collection 名稱，可用 % 萬用字元，例如 "posts"、"%/comments"
+    async function mine(pattern, n = 100) {
+      let r = sb.from("docs").select("doc_id,collection,data").eq("owner", ctx.uid);
+      r = pattern.includes("%") ? r.like("collection", pattern) : r.eq("collection", pattern);
+      const { data, error } = await r.order("created_at", { ascending: false }).limit(n);
+      if (error) throw mapErr(error);
+      return (data || []).map(x => ({ id: x.doc_id, collection: x.collection, data: x.data }));
+    }
+
+    return { doc, collection: collectionRef, mine };
   }
 
   function makeUser(ctx) {
