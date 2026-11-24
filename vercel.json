@@ -32,9 +32,6 @@
     "api/ai-translate.js": {
       "maxDuration": 30
     },
-    "api/ai-timetable.js": {
-      "maxDuration": 30
-    },
     "api/ai-chat.js": {
       "maxDuration": 30
     },
@@ -56,5 +53,11 @@
     "api/ai-post.js": {
       "maxDuration": 30
     }
-  }
+  },
+  "rewrites": [
+    {
+      "source": "/api/ai-timetable",
+      "destination": "/api/ai-agent?task=timetable"
+    }
+  ]
 }

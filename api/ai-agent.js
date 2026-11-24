@@ -154,6 +154,8 @@ function answerPrompt(lang){
 }
 
 module.exports = async (req, res) => {
+  // /api/ai-timetable（用說的建立課表）借用這個 function 執行，見 api/_lib/timetable.js 開頭的說明
+  if (req.query && req.query.task === "timetable") return require("./_lib/timetable")(req, res);
   res.setHeader("cache-control", "no-store");
   const fail = (status, code, error) => res.status(status).json({ ok: false, code, error });
   if (req.method !== "POST") return fail(405, "bad_request", "請用 POST");

@@ -1,10 +1,14 @@
 // POST /api/ai-timetable — 用說的（或貼上一段文字）建立課表
 //
+// 為什麼放在 _lib：Vercel 免費方案最多 12 個 serverless function（api/ 底下每個 .js 算一個，_lib 不算），
+// 目前已經用滿 12 個。所以這支程式由 api/ai-agent.js 代為執行，vercel.json 的 rewrites 把
+// /api/ai-timetable 轉到 /api/ai-agent?task=timetable，前端照樣呼叫 /api/ai-timetable。
+//
 // 前端（web/tt-voice.js）送：{ text: "星期一早上九點到十一點微積分在科一101，星期三下午兩點英文", lang: "zh" | "en" }
 // 回傳：{ courses: [{ day: 1, start: "09:00", end: "11:00", name: "微積分", room: "科一101", endGuessed: false }, …] }
 //   day：1＝週一 … 7＝週日；沒說下課時間時，end 預設上課後 1 小時 50 分（兩節課），endGuessed = true，前端會標出來請使用者確認。
 // AI 只負責「把話整理成清單」，不會寫入任何資料；使用者在預覽確認後，由前端寫進自己的課表。
-const { chat, rateLimit } = require("./_lib/ai");
+const { chat, rateLimit } = require("./ai");
 
 const MAX_TEXT = 1000, MAX_COURSES = 30, DEFAULT_LEN = 110;
 
@@ -51,7 +55,7 @@ function systemPrompt() {
 module.exports = async (req, res) => {
   res.setHeader("cache-control", "no-store");
   if (req.method !== "POST") return res.status(405).json({ error: "請用 POST" });
-  if (!rateLimit(req, 6)) return res.status(429).json({ error: "太頻繁了，請稍後再試", code: "rate_limited" });
+  if (!rateLimit(req, 6, "timetable")) return res.status(429).json({ error: "太頻繁了，請稍後再試", code: "rate_limited" });
   const b = readBody(req);
   const text = b && typeof b.text === "string" ? b.text.trim() : "";
   if (!text) return res.status(400).json({ error: "請先說或輸入你的課", code: "bad_request" });

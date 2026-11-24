@@ -1,9 +1,9 @@
-// 用說的建立課表（api/ai-timetable.js）的測試
+// 用說的建立課表（api/_lib/timetable.js，網址 /api/ai-timetable）的測試
 //   ① 伺服器檢查 AI 輸出（clean）— 一定會跑
 //   ② 真正的 AI：設定 BASE_URL 就打已部署網站的 /api/ai-timetable（用 Vercel 上的 Azure，本機不需要金鑰）
 //      BASE_URL=https://ncu-songguo-git-ai-timetable-eric-dcad.vercel.app node tests/ai-timetable.test.js
 const path = require("path");
-const { clean } = require(path.join(__dirname, "../api/ai-timetable.js"));
+const { clean } = require(path.join(__dirname, "../api/_lib/timetable.js"));
 let fail = 0;
 const ok = (c, m) => { console.log((c ? "  ✓ " : "  ✗ ") + m); if (!c) fail++; };
 
