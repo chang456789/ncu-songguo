@@ -109,7 +109,7 @@
       } else {
         const j = await getJSON("/api/ncu-profs?q=" + encodeURIComponent(q));
         put(j.profs.length
-          ? [el("p", { class: "muted small" }, `${tr("共")} ${j.total} ${tr("位教授")}${j.total > j.profs.length ? `，${tr("顯示前")} ${j.profs.length} ${tr("位教授")}` : ""}`), ...j.profs.map(profCard)]
+          ? [el("p", { class: "muted small" }, `${tr("共")} ${j.total} ${tr("位教授")}${j.total > j.profs.length ? `・${tr("顯示前")} ${j.profs.length} ${tr("位教授")}` : ""}`), ...j.profs.map(profCard)]
           : el("p", { class: "muted" }, tr("沒有查到符合的教授，試試全名、系所或研究專長。")));
       }
     } catch (err) {
@@ -152,6 +152,7 @@
 .pf-bar{display:flex;gap:8px}
 .pf-input{flex:1;min-width:0;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--bg);color:var(--ink);font-size:16px}
 .pf-results{display:flex;flex-direction:column;gap:10px}
+.pf-results>p,.pf-results>.info{margin:0;padding:0 16px}
 .pf-card{display:flex;flex-direction:column;gap:6px;overflow-wrap:anywhere}
 .pf-head{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
 .pf-head b{font-size:16px;color:var(--ink)}
