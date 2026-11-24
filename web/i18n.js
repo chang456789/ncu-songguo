@@ -129,6 +129,18 @@
     "AI 回應逾時，請稍後再試。":"AI took too long. Please try again later.",
     "AI 暫時無法使用，請稍後再試。":"AI is unavailable right now. Please try again later.",
     // ---------- voice input (web/voice.js) ----------
+  // 🎤 用說的建立課表
+  "🎤 用說的建立課表":"🎤 Speak your timetable", "例：星期一早上九點到十一點微積分在科一101，星期三下午兩點英文":"e.g. Calculus Monday 9 to 11 am in S1-101, English Wednesday 2 pm",
+  "你的課":"Your classes", "按麥克風一口氣說完，或直接貼上整段文字（例如選課系統複製的課表）。AI 會整理成課程清單，確認後才會加入。":"Tap the mic and say all your classes at once, or paste a whole block of text (e.g. copied from course registration). AI turns it into a list, and nothing is added until you confirm.",
+  "直接打字或貼上整段文字（例如選課系統複製的課表），AI 會整理成課程清單，確認後才會加入。":"Type or paste a whole block of text (e.g. copied from course registration). AI turns it into a list, and nothing is added until you confirm.",
+  "整理成課程":"Make my list", "重新整理":"Redo", "整理中…":"Working…", "AI 正在整理你的課…":"AI is sorting out your classes…", "確認加入":"Add",
+  "刪掉這堂":"Remove this class", "上課時間":"Start time", "下課時間":"End time", "教室（選填）":"Room (optional)", "教室":"Room",
+  "沒聽到下課時間，先填兩節課，請確認。":"No end time was given, so two periods were filled in. Please check.",
+  "請先說或輸入你的課。":"Say or type your classes first.", "請填課名":"Enter a class name", "請填時間":"Enter the times", "下課時間要比上課時間晚":"The end time must be after the start time",
+  "AI 還沒設定，請先用「＋ 新增課程」一堂一堂輸入。":"AI isn't set up yet. Add classes one by one with “+ Add class” for now.",
+  "用得太頻繁了，請等一分鐘再試。":"Too many tries. Please wait a minute.", "文字太長了，請分幾次輸入。":"That's too long. Please split it into a few parts.",
+  "聽不出任何一堂課，請說出星期、時間和課名，例如「星期二下午兩點英文」。":"Couldn't find any classes. Say the day, time and class name, e.g. “English Tuesday 2 pm”.",
+  "用說的建立課表":"Speak your timetable", "這個瀏覽器不支援語音輸入，可以改用 Chrome 或 Edge，或直接打字。":"This browser doesn't support voice input. Try Chrome or Edge, or just type.",
     "語音輸入":"Voice input", "停止語音輸入":"Stop voice input", "請允許松果使用麥克風，才能用語音輸入。":"Allow Songguo to use your microphone for voice input.",
     "沒有聽到聲音，請再試一次。":"Didn't hear anything — please try again.", "找不到麥克風。":"No microphone found.",
     "語音辨識需要網路連線，請稍後再試。":"Voice input needs an internet connection. Please try again later.", "語音辨識失敗，請再試一次。":"Voice input failed. Please try again.",
@@ -179,6 +191,8 @@
     "可以問我公車、活動、美食和你的課表。我只會根據松果網站上的資料回答。":"Ask me about buses, events, food and your timetable. I only answer from data on Songguo.",
     "下一班到中壢火車站的公車是幾點？":"When is the next bus to Zhongli Station?", "這週有什麼活動？有提供餐點的嗎？":"What events are on this week? Any with free food?",
     "評價最高的店有哪些？":"Which places are rated highest?", "我的下一堂課是什麼時候、在哪裡？":"When and where is my next class?",
+  // 全站語音問答
+  "朗讀":"Read aloud", "停止朗讀":"Stop reading", "這個瀏覽器不支援語音輸入，可以改用 Chrome 或 Edge，或直接打字。":"This browser doesn't support voice input. Try Chrome or Edge, or just type.",
   // 松果 2.0 首頁精簡、右欄問松果、交通膠囊按鈕
   "現在出發去":"Leave now for", "今天的校園":"Campus today", "AI 可能出錯，重要資訊請以網站頁面與學校公告為準。":"AI can make mistakes. Check the site pages and official school notices for anything important.",
     "輸入問題…":"Type a question…", "清除對話":"Clear chat", "松果正在想…":"Songguo is thinking…", "看拼車":"See ride shares",
@@ -500,6 +514,11 @@
     [/^松果店家 (\d+)$/, (m,a) => `Songguo ${a}`], [/^附近餐廳 (\d+)$/, (m,a) => `Nearby ${a}`], [/^由 (.+) 加入・(.+)$/, (m,a,b) => `Added by ${a} · ${T(b)}`],
     [/^把圖釘拖到「(.+)」（(.+)）$/, (m,a,b) => `Drag the pin to ${a} (${b})`], [/^把圖釘拖到「(.+)」$/, (m,a) => `Drag the pin to ${a}`],
     [/^降雨機率 (.+)%$/, (m,a) => `Rain ${a}%`],
+    // 🎤 用說的建立課表
+    [/^確認加入 (\d+) 堂$/, (m,a) => `Add ${a} class${a === "1" ? "" : "es"}`], [/^已加入 (\d+) 堂課$/, (m,a) => `Added ${a} class${a === "1" ? "" : "es"}`],
+    [/^預覽（共 (\d+) 堂，可以直接修改）$/, (m,a) => `Preview (${a} class${a === "1" ? "" : "es"} — edit anything)`],
+    [/^清掉原本的 (\d+) 堂課，改用這份$/, (m,a) => `Replace my current ${a} class${a === "1" ? "" : "es"} with this list`],
+    [/^和「(.+)」時間重疊$/, (m,a) => `Overlaps with “${a}”`], [/^第 (\d+) 堂：(.+)$/, (m,a,b) => `Class ${a}: ${T(b)}`],
     [/^(\d+) 分鐘前$/, (m,a) => `${a} min ago`], [/^(\d+) 小時前$/, (m,a) => `${a} h ago`], [/^(\d+) 天前$/, (m,a) => `${a} d ago`],
     [/^(\d+) 分鐘後$/, (m,a) => `in ${a} min`], [/^(\d+) 小時 (\d+) 分後$/, (m,a,b) => `in ${a} h ${b} min`],
     [/^(.+)，想聊點什麼？$/, (m,a) => `What's on your mind, ${a}?`], [/^(.+)，想說點什麼？$/, (m,a) => `What's on your mind, ${a}?`],

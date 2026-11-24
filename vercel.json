@@ -59,5 +59,11 @@
     "api/ncu-profs.js": {
       "maxDuration": 30
     }
-  }
+  },
+  "rewrites": [
+    {
+      "source": "/api/ai-timetable",
+      "destination": "/api/ai-agent?task=timetable"
+    }
+  ]
 }

@@ -350,6 +350,14 @@ body{background:var(--bg)}
 .wl-demos{display:flex;flex-direction:column;gap:var(--space-2);width:100%}
 .wl-demo{width:100%;min-width:0;white-space:normal!important;justify-content:center;text-align:center;color:var(--pine)!important;border-color:var(--pine)!important}
 
+/* ---------- mobile-fixes：很窄的手機（例如 iPhone SE 第一代 320px）——首次進站頁的對話泡泡改放在松鼠下面，不要擠成一直條 ---------- */
+@media (max-width:360px){
+  .wl-hero .px-hero{flex-direction:column;align-items:center;gap:var(--space-1)}
+  .wl-hero .px-hero-say{margin-bottom:0;max-width:none;text-align:center}
+  .wl-hero .px-hero-say::before{left:calc(50% - 6px);top:-7px;bottom:auto;transform:rotate(135deg)}
+  .gate .gate-card{margin-top:44px}   /* 右上角的中文／English 切換不要蓋到卡片 */
+}
+
 /* ---------- 字級統一：全站只用 4 種（12／14／16／22）。這段是自動產生的：從 index.html 與各 js 檔用到的字級，對應到最接近的一種。改版後要重新產生 ---------- */
 body{font-size:var(--fs-3)!important}
 h1,h2,.sphead h1{font-size:var(--fs-4)!important} h3,h4{font-size:var(--fs-3)!important} small{font-size:var(--fs-1)}
