@@ -7,7 +7,7 @@
      3. POST /api/ai-agent step:"answer" → AI 只根據 result 寫成回答（失敗時用程式寫的摘要）
      不需要工具的一般問題（tool:"none"）交回 web/assistant.js，照舊呼叫 /api/ai-chat。
    工具：commute 交通精算／find_rides 找拼車團／draft_ride 預填開團表單／find_events 找活動／
-         find_food 找店家／next_class 下一堂課／my_timetable 整週課表／search_posts 搜尋貼文／weather 天氣
+         find_food 找店家／next_class 下一堂課／my_timetable 整週課表／search_posts 搜尋貼文／weather 天氣／find_course 學校開課與教授
    動作工具（使用者確認後才會真的做）：draft_ride 預填開團表單／create_post_draft 預填貼文草稿／add_to_calendar 活動加入行事曆
    上網搜尋：web_search（最新、熱門、新開、校外、新聞、考試報名）→ 伺服器用 Tavily 搜尋，AI 只根據結果回答，下面顯示來源卡片
             沒有設定 Tavily 金鑰、今天的搜尋次數用完時 → 改走一般回答（網站資料），並說明原因
@@ -135,6 +135,10 @@
     const dm = /(?:週|星期|禮拜)([一二三四五六日天])/.exec(t);
     if (/課表|課程表|幾堂課|有什麼課|哪些課|timetable|schedule|my classes|classes on/i.test(t) || (dm && /課/.test(t)))
       return { tool: "my_timetable", args: { day: dm ? (DAYS.indexOf(dm[1] === "天" ? "日" : dm[1]) + 1) : /今天|today/i.test(t) ? ((now.getDay() + 6) % 7) + 1 : /明天|tomorrow/i.test(t) ? ((now.getDay() + 7) % 7) + 1 : null } };
+    if (/誰教|教授|老師|開課|課號|信箱|email|professor|instructor|who teaches|syllabus|課程綱要/i.test(t)){
+      const kw = t.replace(/(請問|是誰教的|誰教的|誰教|的?信箱|email|老師|教授|開了?什麼課|開的課|在哪(?:裡|間)?上課|幾點上課|課號|嗎|呢|？|\?|有哪些|研究|的|\b(?:who|teaches|teach|is|the|what|where|when|does|do|professor|prof|instructor|email|of|for|course|class|taught|by|a)\b)/gi, " ").trim().split(/\s+/).filter(w => w.length >= 2)[0] || null;
+      if (kw) return { tool: "find_course", args: { keyword: kw, kind: /信箱|email|系有哪些|研究|教授們|professor/i.test(t) ? "prof" : "course" } };
+    }
     if (/課|教室|上課|class|lecture|classroom/i.test(t)) return { tool: "next_class", args: {} };
     if (/天氣|下雨|會不會雨|帶傘|溫度|幾度|冷不冷|熱不熱|weather|rain|umbrella|temperature/i.test(t))
       return { tool: "weather", args: { day: /後天|day after/i.test(t) ? "dayafter" : /明天|明早|tomorrow/i.test(t) ? "tomorrow" : "today" } };
@@ -256,6 +260,31 @@
         result: { criteria: a, posts: list.map(p => ({ board: p.spaceName, title: p.title, excerpt: String(p.body || "").slice(0, 80), category: p.cat || "", price: p.price || p.rent || "", daysAgo: Math.floor((Date.now() - p.ts) / 864e5) })) },
         cards: list.slice(0, 3).map(p => ({ kind: "post", icon: "📝", title: [p.title || "（無標題）"], userTitle: true, sub: [p.spaceName, p.price ? "・" + p.price : p.rent ? "・" + p.rent : ""], action: () => A.openPost(p.id) })),
         summary: list.length ? ["找到 ", list.length, " 篇相關的貼文，點下面的卡片看內容。"] : ["目前沒有相關的貼文，可以自己發一篇。"] };
+    },
+    async find_course(a){
+      // 學校公開資料：/api/ncu-courses、/api/ncu-profs（伺服器每天更新一次）
+      const get = async u => { try { const r = await fetch(u); return r.ok ? await r.json() : null; } catch { return null; } };
+      const timeOf = c => c.times.map(x => `週${x.day} ${x.start}–${x.end} ${c.rooms[x.room] || x.room || ""}`.trim()).join("；");
+      const courseRow = c => ({ name: c.name, code: [c.code, c.cls].filter(Boolean).join("-"), teachers: c.teachers, time: timeOf(c) || "未排定", credits: c.credits, type: c.type });
+      const go = (q, m) => () => A.goProfs && A.goProfs(q, m);
+      if (a.kind === "prof"){
+        const pj = await get("/api/ncu-profs?q=" + encodeURIComponent(a.keyword));
+        if (!pj) return { result: { error: "unavailable" }, cards: [], summary: ["學校的教師資料暫時連不上，請稍後再試。"] };
+        const profs = pj.profs.slice(0, 3);
+        let taught = [];
+        if (profs.length === 1){ const cj = await get("/api/ncu-courses?q=" + encodeURIComponent(profs[0].name)); taught = cj ? cj.courses.filter(c => c.teachers.includes(profs[0].name)).slice(0, 5) : []; }
+        return { empty: !profs.length,
+          result: { keyword: a.keyword, totalFound: pj.total, profs: profs.map(p => ({ name: p.name, dept: p.dept, title: p.title, email: p.email || "（點卡片看信箱）", research: p.keywords })), coursesThisSemester: taught.map(courseRow) },
+          cards: profs.map(p => ({ kind: "prof", icon: "🎓", title: [p.name], userTitle: true, sub: [p.title, "・", p.dept], action: go(p.name, "prof") })),
+          summary: profs.length ? ["找到 ", pj.total, " 位教授，點下面的卡片看信箱和開的課。"] : ["沒有查到這位教授，試試全名或系所。"] };
+      }
+      const cj = await get("/api/ncu-courses?q=" + encodeURIComponent(a.keyword));
+      if (!cj) return { result: { error: "unavailable" }, cards: [], summary: ["學校的課程查詢暫時連不上，請稍後再試。"] };
+      const list = cj.courses.slice(0, 5);
+      return { empty: !list.length,
+        result: { keyword: a.keyword, semester: cj.semester, totalFound: cj.courses.length, courses: list.map(courseRow) },
+        cards: list.slice(0, 3).map(c => ({ kind: "course", icon: "📘", title: [c.name, " ", [c.code, c.cls].filter(Boolean).join("-")], userTitle: true, sub: [c.teachers.join("、") || "未定", "・", timeOf(c) || "未排定"], action: go(a.keyword, "course") })),
+        summary: list.length ? ["這學期找到 ", cj.courses.length, " 門相關的課，點下面的卡片看時間、教室和教授。"] : ["這學期沒有查到相關的課，換個關鍵字試試。"] };
     },
     async weather(a){
       // 前端的預報（中央氣象署，失敗時 Open-Meteo）還在載入就最多等 3 秒；伺服器抓不到預報時會改用這份

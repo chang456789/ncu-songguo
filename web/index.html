@@ -653,6 +653,8 @@ a.ghost{color:var(--ink)}
 <script src="/ai-look.js"></script>
 <script src="/welcome.js"></script>
 <script src="/rai.js"></script>
+<script src="/profs.js"></script>
+<script src="/mine.js"></script>
 <script src="/tt-voice.js"></script>
 
 
@@ -790,6 +792,13 @@ RA.init({ h, tr:s=>I18N.tr(s), lang:()=>I18N.lang, renderKeep:()=>renderKeep(), 
   goBus:d=>{ S.busDest=d; LS.set("pc.busDest",d); S.busDir="out"; LS.set("pc.busDir","out"); S.space.transit="bus"; saveSpace(); go("transit"); },
   goRides:f=>{ RA.setRideFilter(f); S.space.transit="rides"; saveSpace(); go("transit"); },
   openRide:m=>openModal({ k:"ride", ...m }), rideCard:r=>rideCard(r), live:(k,fn)=>live(k,fn) });
+// 暱稱不重複＋我的紀錄（web/mine.js）：暱稱登記在 nicknames，紀錄一律用 uid 查
+const MINE = window.sgMine || { init(){}, key:v=>String(v||"").trim().toLowerCase(), claim:async()=>"ok", record(){}, history:async()=>[], page:()=>null, message:()=>null };
+MINE.init({ h, db:()=>S.db, uid:()=>S.uid, tr:s=>I18N.tr(s), rerender:()=>renderKeep(), nick:()=>S.nick,
+  openPost:id=>{ const p = S.posts.find(x => x.id === id); if (p) jumpToPost(p); else toast("這篇貼文已經刪除了"); },
+  postTitle:id=>{ const p = S.posts.find(x => x.id === id); return p ? (p.title || String(p.body||"").slice(0,30) || "（無標題）") : null; },
+  goRides:()=>{ S.space.transit="rides"; saveSpace(); go("transit"); }, rideById:id=>S.rides.find(r => r.id === id) || null,
+  spaceLabel:id=>spaceLabel(id), ago:ts=>ago(ts) });
 // 發布前隱私提醒（web/privacy.js）：純規則，偵測到手機、地址等個資時提醒，但不擋發布
 const PRIV = window.sgPrivacy || { init(){}, review:async x => x };
 PRIV.init({ tr:s=>I18N.tr(s), translate:el=>I18N.translate(el) });
@@ -800,6 +809,9 @@ function goFood(id){ go("food"); selectFood(id, true); }
 // 負責任的 AI 說明頁（web/rai.js）：內容是謝恩妮維護的 docs/responsible-ai.md，依目前語言顯示
 const RAI = window.sgRAI || { init(){}, view:()=>h("p",{},"說明頁暫時無法顯示。") };
 RAI.init({ lang:()=>I18N.lang, onChange:()=>renderKeep() });
+// 找課程／教授（web/profs.js）：學校公開的課程查詢與教師履歷，資料由 /api/ncu-courses、/api/ncu-profs 提供
+const PROFS = window.sgProfs || { init(){}, view:()=>h("p",{},"找課程／教授暫時無法顯示。"), search(){} };
+PROFS.init({ lang:()=>I18N.lang });
 const AISTATS = window.sgAIStats || { init(){}, flush(){}, load(){}, summary:()=>({ status:"error", total:0, rate:0, avg:0, list:[] }) };
 AISTATS.init({ db:()=>S.db, uid:()=>S.uid, canWrite:()=>S.canWrite, onChange:()=>renderKeep() });
 const AI_FEATURES = { "ai-chat":"問松果（一般回答）", "ai-agent:route":"AI 代理人：選工具", "ai-agent:answer":"AI 代理人：寫回答", "ai-agent:web_search":"AI 代理人：上網搜尋",
@@ -868,7 +880,7 @@ const SEARCH = window.sgSearch || { init(){}, open(){} };
 SEARCH.init({ tr:s=>I18N.tr(s), translate:el=>I18N.translate(el), onOpen:()=>loadPlaces(), sources:()=>searchSources() });
 // 問松果 AI 代理人（web/agent.js）：AI 選工具 → 程式用網站資料算結果 → 回答下面附可以點的卡片
 const AGENT = window.sgAgent || { init(){}, ask:async()=>({ general:true }) };
-AGENT.init({ lang:()=>I18N.lang, tr:s=>I18N.tr(s), places:()=>RIDE_PLACES.filter(p => p !== "其他"),
+AGENT.init({ lang:()=>I18N.lang, tr:s=>I18N.tr(s), goProfs:(q,m)=>{ go("profs"); setTimeout(()=>PROFS.search(q,m),0); }, places:()=>RIDE_PLACES.filter(p => p !== "其他"),
   events:()=>upcomingEvents(), evWhen:e=>evWhen(e), seatsLeft:r=>Math.max(0, (r.seats||0) - 1 - (S.riders[r.id]?.size||0)),
   // 美食：松果美食地圖的店（有評分、價位）＋ OpenStreetMap 上的附近店家（沒有價位與評分）
   foods:()=>{
@@ -1234,11 +1246,15 @@ function gate(){
   let val = randNick();
   const input = h("input",{type:"text",id:"nick-in",maxlength:"16",value:val,"aria-label":"匿名暱稱",oninput:e=>val=e.target.value});
   const err = h("p",{class:"err",hidden:true});
-  const enter = () => { const v = val.trim();
+  // 進站：先登記暱稱（不能和別人重複）；資料庫還沒連上就先進站，連上後再登記
+  let entering = false;
+  const enter = async () => { const v = val.trim(); if (entering) return false;
     if (v.length < 2){ err.textContent=tr("暱稱至少要 2 個字。"); err.hidden=false; return false; }
-    S.nick = v; LS.set("pc.nick", v); saveProfile(); render(); return true; };
+    entering = true; const r = await MINE.claim(v); entering = false;
+    if (MINE.message(r) && r !== "error"){ err.textContent=tr(MINE.message(r)); err.hidden=false; return false; }
+    S.nick = v; LS.set("pc.nick", v); saveProfile(); if (r === "ok") MINE.record(v); render(); return true; };
   // 松果 2.0 首次進站（web/welcome.js）：大松鼠＋自我介紹＋示範問題；點問題＝用這個暱稱進站並打開問松果
-  const welcome = window.sgWelcome ? window.sgWelcome.block({ tr:s=>I18N.tr(s), translate:el=>I18N.translate(el), onAsk:q=>{ if (enter()) setTimeout(()=>AI.open(q), 0); } }) : null;
+  const welcome = window.sgWelcome ? window.sgWelcome.block({ tr:s=>I18N.tr(s), translate:el=>I18N.translate(el), onAsk:q=>{ enter().then(ok => { if (ok) setTimeout(()=>AI.open(q), 0); }); } }) : null;
   input.addEventListener("keydown", e => { if (e.key==="Enter" && !e.isComposing) enter(); });
   const logo = brandMark(); logo.setAttribute("class","logo");
   return h("div",{class:"gate"},
@@ -1259,8 +1275,8 @@ const TABS = [
   ["home","首頁","home",1],["transit","交通","bus",1,,"公車時刻・拼車"],["news","活動","mega",0,,"近期活動・學校公告"],["forum","論壇","chat",1,,"即時大廳・看板"],
   ["schedule","課表","calendar",0,,"我的課表與提醒"],["food","美食","pin",0,,"共同編輯的美食地圖"],["nav","導航","map",0,,"校內建築・步行導航"],
   ["market","市集","bag",0,,"二手・免費送・徵求"],["housing","租屋","house",0,,"租屋大廳・避雷"],["campus","系所","campus",0,,"各系看板"],
-  ["weather","天氣","cloud",0,,"中壢天氣預報"],["aistats","AI 數據","star",0,,"松果 AI 數據"],["responsible-ai","負責任的 AI","lock",0,,"AI 怎麼處理你的資料"],
-  ["map","地圖","map",0,,"美食・校內地點"],["settings","設定","user",0,,"暱稱、語言、安裝"],["online","在線","users",0,,"現在誰在線上"],["inbox","私訊","send",0,,"加密私訊"],
+  ["weather","天氣","cloud",0,,"中壢天氣預報"],["aistats","AI 數據","star",0,,"松果 AI 數據"],["responsible-ai","負責任的 AI","lock",0,,"AI 怎麼處理你的資料"],["profs","找課程／教授","search",0,,"課名、課號、教授姓名與信箱"],
+  ["map","地圖","map",0,,"美食・校內地點"],["settings","設定","user",0,,"暱稱、語言、安裝"],["online","在線","users",0,,"現在誰在線上"],["inbox","私訊","send",0,,"加密私訊"],["mine","我的紀錄","star",0,,"我的貼文、留言、拼車"],
 ];
 /* 松果 2.0：底部 5 個分頁（首頁｜交通｜地圖｜社群｜我的），「＋建立」移到社群右上角。
    舊分頁全部保留、只是不在選單上（網址 #/food、#/news… 照樣能開），GROUP_OF 決定它們歸在哪一類、導覽列亮哪一個。
@@ -1269,7 +1285,7 @@ const TABS = [
 const GROUPS = [["home","首頁","home"],["transit","交通","bus"],["map","地圖","map"],["community","社群","chat"],["me","我的","user"]];
 const GROUP_OF = { home:"home", weather:"home", transit:"transit", map:"map", food:"map", nav:"map",
   forum:"community", news:"community", campus:"community", market:"community", housing:"community", community:"community",
-  me:"me", more:"me", schedule:"me", inbox:"me", settings:"me", online:"me", aistats:"me", "responsible-ai":"me" };
+  me:"me", more:"me", mine:"me", schedule:"me", inbox:"me", settings:"me", online:"me", aistats:"me", "responsible-ai":"me", profs:"me" };
 // 設定底下的頁面：「‹ 設定」回去
 const UNDER_SETTINGS = ["online", "aistats", "responsible-ai"];
 const groupOf = tab => GROUP_OF[tab] || "home";
@@ -1390,7 +1406,7 @@ function rightRailV1(){
 }
 /* 網址：#/food、#/news、#/lobby… 每個分頁都有自己的網址，舊連結點了照樣能打開；
    手機的「上一頁」也能回到前一個分頁。首頁不加 #。 */
-const ROUTE_TABS = ["home","transit","news","forum","schedule","food","nav","market","housing","campus","weather","online","inbox","me","more","aistats","responsible-ai","map","settings"];
+const ROUTE_TABS = ["home","transit","news","forum","schedule","food","nav","market","housing","campus","weather","online","inbox","me","more","aistats","responsible-ai","map","settings","mine","profs"];
 function routeFromHash(){
   const parts = decodeURIComponent((location.hash || "").replace(/^#\/?/, "")).split(/[/?]/), k = parts[0];
   if (k === "lobby" || k === "boards" || k === "community") return { tab:"forum", seg: k === "boards" ? "boards" : "lobby" };
@@ -1433,7 +1449,7 @@ function currentSpaceId(){
 function page(){
   const P = { transit:transitPage, market:()=>spaceView("m:all"), housing:housingPage, campus:campusPage, inbox:inboxPage, food:foodPage,
     schedule:schedulePage, forum:forumPage, news:eventsPage, weather:weatherPage, online:onlinePage, nav:navPage,
-    me:mePage, more:mePage, community:forumPage, map:mapPage, settings:settingsPage, aistats:aistatsPage, "responsible-ai":()=>h("div",{class:"stack"}, RAI.view()) };
+    me:mePage, more:mePage, community:forumPage, map:mapPage, settings:settingsPage, mine:()=>MINE.page(), aistats:aistatsPage, "responsible-ai":()=>h("div",{class:"stack"}, RAI.view()), profs:()=>PROFS.view() };
   const body = (P[S.tab] || homePage)();
   const banner = topBanner(P[S.tab] ? S.tab : "home");
   if (groupOf(S.tab) === "community") return h("div",{class:"stack"}, [].concat(banner || []), communitySeg(), body);
@@ -1584,6 +1600,7 @@ const meRow = (ic, title, sub, onclick, badge) => h("button",{class:"qbtn",oncli
 function mePage(){
   const pending = pendingReqs(), n = nextClass(), unread = NOTIFY.unreadCount ? NOTIFY.unreadCount() : 0;
   return h("div",{class:"stack"},
+    S.nickTaken ? h("div",{class:"notice",role:"alert"}, "你的暱稱「", h("span",{translate:"no"}, S.nick), "」已經有人用了，請按「編輯」換一個。") : null,
     h("section",{class:"card me-card"}, avatar(S.nick),
       h("div",{class:"me-who"}, h("b",{translate:"no"}, S.nick), h("span",{class:"small muted"}, S.dept && spaceById(S.dept) ? spaceById(S.dept).name : "匿名使用者・不用註冊")),
       h("button",{class:"ghost",onclick:()=>openModal({k:"profile"})},"編輯")),
@@ -1591,6 +1608,8 @@ function mePage(){
       meRow("calendar","課表", n ? [n.c.name, "・", n.ongoing ? "上課中" : n.c.start] : "我的課表與提醒", ()=>go("schedule")),
       meRow("send","私訊","加密私訊", ()=>go("inbox"), pending),
       meRow("bell","通知","私訊請求、拼車、活動、留言", ()=>NOTIFY.open && NOTIFY.open(), unread),
+      meRow("star","我的紀錄","我的貼文、留言、拼車、用過的名字", ()=>go("mine")),
+      meRow("search","找課程／教授","課名、課號、教授姓名與信箱", ()=>go("profs")),
       meRow("user","設定","暱稱、語言、安裝、AI 數據", ()=>go("settings"))));
 }
 // 設定：原本放在「我的」的在線、安裝、語言、AI 數據、負責任的 AI 都在這裡（藏一層，沒有刪）
@@ -3083,7 +3102,12 @@ function profileSheet(){
     h("button",{class:"linkbtn",style:"align-self:flex-start",onclick:()=>openModal({k:"loc"})},"清單裡沒有我的租屋處？新增"),
     S.uid ? h("p",{class:"muted small",style:"margin:0;overflow-wrap:anywhere"},"使用者 ID（設定管理員時用）：", h("span",{class:"mono",style:"user-select:all"},S.uid)) : null,
     err,
-    foot(h("button",{class:"primary",onclick:()=>{ const v = nick.value.trim(); if (v.length<2) return fail(err,"暱稱至少要 2 個字。");
+    foot(h("button",{class:"primary",onclick:async e=>{ const v = nick.value.trim(); if (v.length<2) return fail(err,"暱稱至少要 2 個字。");
+      // 改名：先登記新名字（不能和別人重複）；舊名字仍然保留給自己
+      if (MINE.key(v) !== MINE.key(S.nick) || S.nickTaken){ const b = e.currentTarget; b.disabled = true; const r = await MINE.claim(v); b.disabled = false;
+        if (MINE.message(r)) return fail(err, MINE.message(r));
+        if (r === "ok"){ S.nickTaken = false; MINE.record(v); } }
+      else if (v !== S.nick) MINE.record(v);
       S.nick=v; S.dept=dept.value; S.home=home.value; LS.set("pc.nick",v); dept.value?LS.set("pc.dept",dept.value):LS.del("pc.dept"); home.value?LS.set("pc.home",home.value):LS.del("pc.home");
       saveProfile(); presence(); toast("已儲存"); closeModal(); }},"儲存")));
 }
@@ -3325,6 +3349,11 @@ setInterval(() => { if (S.nick) renderKeep(); }, 30000);
       if (p.exists){ const d = p.data(); if (d.nick) { S.nick = d.nick; LS.set("pc.nick", d.nick); } if (d.dept != null){ S.dept = d.dept; LS.set("pc.dept", d.dept); } if (d.home != null){ S.home = d.home; LS.set("pc.home", d.home); } }
       else if (S.nick) saveProfile();
     } catch {}
+    // 暱稱登記：舊使用者（功能上線前取的名字）第一次連上時補登記；已經被別人登記走就請他換一個
+    if (S.nick) MINE.claim(S.nick).then(r => {
+      if (r === "ok"){ MINE.history().then(l => { if (!l.length || l[l.length-1].nick !== S.nick) MINE.record(S.nick); }); }
+      else if (r === "taken"){ S.nickTaken = true; toast("你的暱稱已經有人用了，請到「我的」換一個。"); renderKeep(); }
+    });
   }
   const sub = (q, fn) => q.onSnapshot(s => { fn(s); renderKeep(); }, () => {});
   sub(db.collection("posts").orderBy("ts","desc").limit(1000), s => { S.posts = s.docs.map(d => ({ id:d.id, ...d.data() })); if (S.dbState==="loading") S.dbState = "ok"; watchMyComments(); });
