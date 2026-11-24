@@ -20,7 +20,7 @@ const hh = h => String(h).padStart(2, "0");
 function parseTimes(raw) {
   const rooms = {}, times = [];
   for (const line of raw.split("\n").map(s => s.trim()).filter(Boolean)) {
-    const full = /\(([^)]+)\)\s*$/.exec(line);
+    const full = /\s\((.+)\)\s*$/.exec(line);   // 教室全名可能有括號，例如「健雄館(科學四館)-101」
     const m = /^([一二三四五六日])([0-9ZA-D]+)(?:\/([^\s(]+))?/.exec(line);
     if (!m) continue;
     const ps = [...m[2]].filter(p => p in PERIOD);

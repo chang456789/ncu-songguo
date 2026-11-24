@@ -17,7 +17,13 @@ function session() {
     lastAt.set(host, Date.now());
     const headers = { "user-agent": "Songguo campus site (ncu-songguo.vercel.app)", "accept-language": "zh-TW,zh;q=0.9", ...(opts.headers || {}) };
     if (jar.size) headers.cookie = [...jar].map(([k, v]) => `${k}=${v}`).join("; ");
-    const r = await fetch(url, { ...opts, headers, redirect: "follow", signal: AbortSignal.timeout(opts.timeoutMs || 12000) });
+    const go = () => fetch(url, { ...opts, headers, redirect: "follow", signal: AbortSignal.timeout(opts.timeoutMs || 12000) });
+    let r;
+    try { r = await go(); }
+    catch (e) {   // 連線偶爾中斷：等 1.5 秒再試一次（只重試一次）
+      if (e.name === "TimeoutError") throw e;
+      await sleep(1500); lastAt.set(host, Date.now()); r = await go();
+    }
     const set = typeof r.headers.getSetCookie === "function" ? r.headers.getSetCookie() : [r.headers.get("set-cookie")].filter(Boolean);
     for (const c of set) { const m = /^([^=;\s]+)=([^;]*)/.exec(c); if (m) jar.set(m[1], m[2]); }
     if (!r.ok) throw Object.assign(new Error(`${host} 回應 ${r.status}`), { code: "upstream" });
