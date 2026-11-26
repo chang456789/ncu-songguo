@@ -27,12 +27,16 @@
     const db = A.db(), uid = A.uid();
     if (!db || !uid) return "offline";      // 資料庫還沒連上：先讓使用者進站，連上後 index.html 會再登記一次
     const ref = db.doc("nicknames/" + k);
-    try { const cur = await ref.get(); if (cur.exists) return "ok"; } catch {}   // 已經是我的（別人的名字讀不到）
-    try { await ref.set({ key: k, uid, ts: Date.now() }); return "ok"; }
+    try {
+      const cur = await ref.get();
+      if (cur.exists) { const d = cur.data() || {}; return d.uid === uid ? "ok" : "taken"; }
+    } catch {}
+    try { await ref.create({ key: k, uid, ts: Date.now() }); return "ok"; }
     catch (e){
+      if (e && e.code === "already_exists") return "taken";
       if (e && e.code === "resource_exhausted") return "limit";
-      if (e && e.code === "invalid_argument") return "taken";
-      return "error";
+      console.warn("nickname claim failed, letting user in", e);
+      return "ok";   // 無法確認時先讓使用者進站，不擋人
     }
   }
   const CLAIM_MSG = {

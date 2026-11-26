@@ -118,6 +118,10 @@
           const { error } = await sb.from("docs").upsert({ path, collection, doc_id: id, data }, { onConflict: "path" });
           if (error) throw mapErr(error);
         },
+        async create(data) {   // 純新增（不覆蓋）：已存在時丟出 already_exists
+          const { error } = await sb.from("docs").insert({ path, collection, doc_id: id, data });
+          if (error) { if (error.code === "23505") throw { code: "already_exists", message: "exists" }; throw mapErr(error); }
+        },
         async update(patch) {
           const cur = await get();
           if (!cur.exists) throw { code: "invalid_argument", message: "missing" };
