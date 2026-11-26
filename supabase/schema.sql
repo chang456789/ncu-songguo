@@ -90,7 +90,6 @@ drop policy if exists docs_read on public.docs;
 create policy docs_read on public.docs for select to authenticated using (
   (path not like 'data/users/%' or path like 'data/users/' || auth.uid()::text || '/%')
   -- 暱稱登記：只有本人看得到自己登記過哪些名字（別人只會在取名時被告知「已經有人用了」）
-  and (collection <> 'nicknames' or owner = auth.uid())
 );
 
 -- 寫入時一律要是自己的資料；帶有 uid / from 欄位的必須是自己的 ID（不能冒名）。
